@@ -1,0 +1,21 @@
+name: compose-validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate CPU stack
+        run: docker compose -f compose.yaml config -q
+
+      - name: Validate GPU overlay
+        run: docker compose -f compose.yaml -f compose.gpu.yaml config -q

@@ -1,0 +1,77 @@
+# Mathom — Your Local AI Memory House
+# CPU stack. For NVIDIA GPUs: docker compose -f compose.yaml -f compose.gpu.yaml up -d
+
+name: mathom
+
+services:
+  proxy:
+    build:
+      context: .
+      dockerfile: proxy/Dockerfile
+    image: mathom-proxy:latest
+    restart: unless-stopped
+    ports:
+      - "${MATHOM_PORT:-8080}:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - mathom
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: mathom-backend:latest
+    restart: unless-stopped
+    environment:
+      MATHOM_DATA_DIR: /data
+      MATHOM_OLLAMA_BASE_URL: http://ollama:11434
+      MATHOM_OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2}
+      MATHOM_WHISPER_MODEL: ${WHISPER_MODEL:-small}
+      MATHOM_WHISPER_DEVICE: ${WHISPER_DEVICE:-cpu}
+      MATHOM_WHISPER_COMPUTE_TYPE: ${WHISPER_COMPUTE_TYPE:-int8}
+      MATHOM_MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-200}
+    volumes:
+      - mathom-data:/data
+      - whisper-models:/models
+    depends_on:
+      ollama:
+        condition: service_started
+    networks:
+      - mathom
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    # No ports: Ollama is only reachable on the internal network.
+    volumes:
+      - ollama-models:/root/.ollama
+    networks:
+      - mathom
+    healthcheck:
+      test: ["CMD", "ollama", "ps"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+networks:
+  mathom:
+
+volumes:
+  mathom-data:
+  ollama-models:
+  whisper-models:

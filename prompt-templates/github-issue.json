@@ -1,0 +1,6 @@
+{
+  "slug": "github-issue",
+  "name": "GitHub Issue",
+  "description": "A well-formed GitHub issue in Markdown.",
+  "prompt": "Create a GitHub issue from the following transcript. Use Markdown with: a concise title (as a level-1 heading), Description, Steps to Reproduce or Context (whichever fits), Expected Behavior, Acceptance Criteria as a checklist, and suggested labels.\n\nTranscript:\n{transcript}"
+}

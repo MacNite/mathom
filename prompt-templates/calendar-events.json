@@ -1,0 +1,6 @@
+{
+  "slug": "calendar-events",
+  "name": "Calendar Events",
+  "description": "Every date, deadline, and meeting mentioned.",
+  "prompt": "Extract every date, deadline, appointment, and proposed meeting from the following transcript. For each, output: Title, Date/Time (as stated; note if relative like 'next Tuesday'), Participants, Notes. Output as a Markdown table. If none are mentioned, say so.\n\nTranscript:\n{transcript}"
+}

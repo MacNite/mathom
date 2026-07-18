@@ -1,0 +1,6 @@
+{
+  "slug": "action-items",
+  "name": "Action Items",
+  "description": "Just the to-dos, as a checklist.",
+  "prompt": "Extract every action item, task, and commitment from the following transcript. Output a Markdown checklist. For each item include the owner and due date if mentioned. If there are no action items, say so.\n\nTranscript:\n{transcript}"
+}

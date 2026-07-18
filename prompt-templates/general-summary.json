@@ -1,0 +1,6 @@
+{
+  "slug": "general-summary",
+  "name": "General Summary",
+  "description": "A balanced, readable summary of the recording.",
+  "prompt": "Summarize the following transcript in clear, well-structured prose. Capture the main topics, key points, decisions, and any open questions. Keep the original language of the transcript.\n\nTranscript:\n{transcript}"
+}

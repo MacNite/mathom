@@ -1,0 +1,6 @@
+{
+  "slug": "jira-issue",
+  "name": "Jira Issue",
+  "description": "A Jira-style ticket with summary, description, and acceptance criteria.",
+  "prompt": "Create a Jira ticket from the following transcript. Provide: Summary (one line), Issue Type (Story, Task, or Bug), Description, Acceptance Criteria (bulleted), Priority suggestion, and Story Point estimate if the scope is clear.\n\nTranscript:\n{transcript}"
+}

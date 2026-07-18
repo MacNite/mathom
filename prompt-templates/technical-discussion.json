@@ -1,0 +1,6 @@
+{
+  "slug": "technical-discussion",
+  "name": "Technical Discussion",
+  "description": "Engineering notes: problems, options, decisions, trade-offs.",
+  "prompt": "Summarize the following technical discussion for an engineering audience. Include: Problem / Context, Options Discussed (with trade-offs), Decisions and Rationale, Risks, Follow-ups. Preserve exact technical terms, names, and version numbers.\n\nTranscript:\n{transcript}"
+}

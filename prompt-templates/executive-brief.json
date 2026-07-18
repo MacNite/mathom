@@ -1,0 +1,6 @@
+{
+  "slug": "executive-brief",
+  "name": "Executive Brief",
+  "description": "One page for leadership: situation, implications, asks.",
+  "prompt": "Write an executive brief of the following transcript, at most one page. Sections: Situation (2-3 sentences), Key Points (max 5 bullets), Business Implications, Risks, Recommended Decisions / Asks. No filler.\n\nTranscript:\n{transcript}"
+}

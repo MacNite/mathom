@@ -1,0 +1,6 @@
+{
+  "slug": "tldr",
+  "name": "TL;DR",
+  "description": "Three sentences or fewer — just the essence.",
+  "prompt": "Give a TL;DR of the following transcript in at most three sentences. Be direct and concrete; no preamble.\n\nTranscript:\n{transcript}"
+}

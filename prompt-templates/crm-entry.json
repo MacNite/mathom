@@ -1,0 +1,6 @@
+{
+  "slug": "crm-entry",
+  "name": "CRM Entry",
+  "description": "A structured CRM activity log entry.",
+  "prompt": "Create a CRM activity entry from the following transcript. Provide: Contact / Account (if identifiable), Activity Type, Summary (2-3 sentences), Key Details, Deal Stage Signals, Next Activity with suggested date.\n\nTranscript:\n{transcript}"
+}

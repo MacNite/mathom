@@ -1,0 +1,6 @@
+{
+  "slug": "customer-call",
+  "name": "Customer Call",
+  "description": "Call report: needs, objections, sentiment, next steps.",
+  "prompt": "Write a customer call report from the following transcript with these sections: Customer & Context, Needs and Pain Points, Objections and Concerns, Sentiment, Commitments Made, Next Steps.\n\nTranscript:\n{transcript}"
+}

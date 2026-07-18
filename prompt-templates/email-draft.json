@@ -1,0 +1,6 @@
+{
+  "slug": "email-draft",
+  "name": "Email Draft",
+  "description": "A ready-to-send follow-up email.",
+  "prompt": "Draft a professional follow-up email based on the following transcript. Include a clear subject line, a brief recap of what was discussed, and any agreed next steps. Keep the tone friendly and concise, and write it in the language of the transcript.\n\nTranscript:\n{transcript}"
+}

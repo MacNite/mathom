@@ -1,0 +1,25 @@
+# NVIDIA GPU overlay. Use together with the base stack:
+#   docker compose -f compose.yaml -f compose.gpu.yaml up -d
+# Requires the NVIDIA Container Toolkit on the host.
+
+services:
+  ollama:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  backend:
+    environment:
+      MATHOM_WHISPER_DEVICE: ${WHISPER_DEVICE:-cuda}
+      MATHOM_WHISPER_COMPUTE_TYPE: ${WHISPER_COMPUTE_TYPE:-float16}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

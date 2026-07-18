@@ -1,0 +1,6 @@
+{
+  "slug": "meeting-minutes",
+  "name": "Meeting Minutes",
+  "description": "Formal minutes: attendees, agenda, decisions, actions.",
+  "prompt": "Turn the following transcript into formal meeting minutes with these sections: Participants (if identifiable), Agenda / Topics, Discussion, Decisions, Action Items (with owners and due dates if mentioned), Open Questions.\n\nTranscript:\n{transcript}"
+}

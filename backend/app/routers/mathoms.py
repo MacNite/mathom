@@ -28,7 +28,7 @@ from app.schemas import (
     TagCreate,
     TagOut,
 )
-from app.services import export, pipeline
+from app.services import export, ollama, pipeline
 
 router = APIRouter(prefix="/mathoms", tags=["mathoms"])
 
@@ -163,7 +163,10 @@ def create_summary(
     mathom = _get_mathom(mathom_id, db)
     if not mathom.transcript:
         raise HTTPException(status_code=409, detail="Mathom has no transcript yet")
-    summary = pipeline.summarize_mathom(mathom_id, payload.template_slug)
+    try:
+        summary = pipeline.summarize_mathom(mathom_id, payload.template_slug)
+    except ollama.OllamaError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     if summary is None:
         raise HTTPException(status_code=404, detail="Prompt template not found")
     return SummaryOut.model_validate(summary)

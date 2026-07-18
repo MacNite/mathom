@@ -13,6 +13,21 @@ SYSTEM_PROMPT = (
 )
 
 
+class OllamaError(RuntimeError):
+    """A call to the local Ollama service failed in a way worth surfacing to the user."""
+
+
+class OllamaModelNotFoundError(OllamaError):
+    """Ollama is reachable but the configured model has not been pulled yet."""
+
+    def __init__(self, model: str) -> None:
+        self.model = model
+        super().__init__(
+            f"The Ollama model '{model}' isn't installed yet. Pull it once with "
+            "`make models` (or `scripts/pull-model.sh`), then try again."
+        )
+
+
 def _client() -> httpx.Client:
     settings = get_settings()
     return httpx.Client(
@@ -37,10 +52,25 @@ def chat(messages: list[dict[str, str]]) -> str:
         "messages": [{"role": "system", "content": SYSTEM_PROMPT}, *messages],
         "stream": False,
     }
-    with _client() as client:
-        response = client.post("/api/chat", json=payload)
+    try:
+        with _client() as client:
+            response = client.post("/api/chat", json=payload)
+    except httpx.HTTPError as exc:
+        raise OllamaError(
+            f"Couldn't reach Ollama at {settings.ollama_base_url}. "
+            "Is the Ollama service running?"
+        ) from exc
+    # Ollama answers /api/chat with 404 when the requested model has never been
+    # pulled — translate that into an actionable message instead of a raw HTTP error.
+    if response.status_code == 404:
+        raise OllamaModelNotFoundError(settings.ollama_model)
+    try:
         response.raise_for_status()
-        data = response.json()
+    except httpx.HTTPStatusError as exc:
+        raise OllamaError(
+            f"Ollama returned an error ({response.status_code}) for the chat request."
+        ) from exc
+    data = response.json()
     return str(data.get("message", {}).get("content", "")).strip()
 
 

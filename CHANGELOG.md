@@ -8,6 +8,13 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ### Security
 
+- **OIDC nonce binding.** The login is now bound to the ID token's `nonce`, so a
+  replayed or injected token is rejected (`auth_error=invalid_nonce`).
+- **Shorter default session lifetime** — 14 days instead of 30
+  (`SESSION_TTL_HOURS`).
+- **Content-Security-Policy and HSTS** headers at the proxy; the self-contained
+  frontend is locked to `'self'`.
+- **CycloneDX SBOM** generated and archived in CI (`security.yml`).
 - **Loopback bind by default.** With authentication off (the default) the web UI
   now publishes on `127.0.0.1`; opt into LAN exposure with `MATHOM_BIND=0.0.0.0`.
 - **Per-client rate limiting** on uploads, chat, summaries, search, and the

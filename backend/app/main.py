@@ -19,6 +19,7 @@ from app.routers import (
     users,
 )
 from app.seed import seed_templates
+from app.services import pipeline
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 
@@ -28,6 +29,8 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     init_db()
     with get_session_factory()() as session:
         seed_templates(session)
+    # Any Mathom still "in flight" was interrupted by a previous restart.
+    pipeline.recover_interrupted_jobs()
     yield
 
 

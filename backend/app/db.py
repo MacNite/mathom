@@ -26,6 +26,10 @@ def _make_engine() -> Engine:
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA foreign_keys=ON")
         cursor.execute("PRAGMA journal_mode=WAL")
+        # Background worker threads and request threads both write; without a
+        # busy timeout concurrent writers fail immediately with "database is
+        # locked". Wait up to 5s for the lock instead.
+        cursor.execute("PRAGMA busy_timeout=5000")
         cursor.close()
 
     return engine

@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     whisper_model: str = "small"
     whisper_device: str = "auto"
     whisper_compute_type: str = "auto"
+    # Hard wall-clock ceiling for a single FFmpeg normalization run, so a
+    # pathological upload cannot occupy a worker indefinitely.
+    ffmpeg_timeout_seconds: float = 600.0
     max_upload_mb: int = 200
     allowed_audio_extensions: str = ".mp3,.m4a,.wav,.ogg,.opus,.flac,.webm,.mp4,.aac"
 

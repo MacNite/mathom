@@ -37,6 +37,7 @@ def client(monkeypatch: pytest.MonkeyPatch) -> Generator[TestClient, None, None]
             transcription, "transcribe", lambda path: ("This is a mocked transcript.", "en")
         )
         monkeypatch.setattr(transcription, "probe_duration_seconds", lambda path: 12.5)
+        monkeypatch.setattr(transcription, "validate_audio", lambda path: None)
 
         from app.main import app
 
@@ -104,6 +105,7 @@ def auth_harness(monkeypatch: pytest.MonkeyPatch) -> Generator[AuthHarness, None
             transcription, "transcribe", lambda path: ("This is a mocked transcript.", "en")
         )
         monkeypatch.setattr(transcription, "probe_duration_seconds", lambda path: 12.5)
+        monkeypatch.setattr(transcription, "validate_audio", lambda path: None)
 
         harness = AuthHarness(app=None)
 

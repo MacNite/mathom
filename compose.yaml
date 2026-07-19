@@ -63,7 +63,9 @@ services:
       start_period: 30s
 
   ollama:
-    image: ollama/ollama:latest
+    # Pinned for reproducible, auditable deployments. Bump deliberately;
+    # override with OLLAMA_IMAGE if you track a different release.
+    image: ${OLLAMA_IMAGE:-ollama/ollama:0.32.1}
     restart: unless-stopped
     # No ports: Ollama is only reachable on the internal network.
     volumes:

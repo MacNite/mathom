@@ -1,6 +1,6 @@
 # Mathom
 
-> **Your Local AI Memory House**
+> **Your Local AI Memory**
 
 Mathom listens, remembers, organizes, and helps you rediscover conversations,
 meetings, and ideas — all completely local. It transcribes voice recordings

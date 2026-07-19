@@ -6,6 +6,317 @@
 (function () {
   'use strict';
 
+  // ----- i18n ---------------------------------------------------------------
+  // Mirrors the real app's frontend/src/lib/i18n.tsx: same language list, same
+  // localStorage key, same English-fallback + `_one`/`_other` plural logic.
+  // Shared UI strings reuse the app's exact translations; demo-only chrome
+  // (banner, toasts, sample notes) is translated to match.
+  const LANGUAGES = [
+    { code: 'en', label: 'English' },
+    { code: 'de', label: 'Deutsch' },
+    { code: 'es', label: 'Español' },
+  ];
+  const LANG_STORAGE_KEY = 'mathom-lang';
+
+  const translations = {
+    en: {
+      'app.tagline': 'Your Local AI Memory House',
+      'language.label': 'Language',
+
+      'nav.library': 'Library',
+      'nav.collections': 'Collections',
+      'nav.timeline': 'Timeline',
+      'nav.templates': 'Templates',
+
+      'library.title': 'The Mathom-house',
+      'library.newMathom': '+ New Mathom',
+      'library.searchPlaceholder': 'Search transcripts, summaries, titles…',
+      'library.shelf.all': 'All',
+      'library.shelf.favorites': '★ Favorites',
+      'library.shelf.archived': 'Archived',
+      'library.results_one': '{count} result for “{query}”',
+      'library.results_other': '{count} results for “{query}”',
+      'library.emptyTitle': 'The shelves are empty — for now.',
+      'library.emptyBody': 'Upload your first recording and Mathom will remember it for you.',
+      'library.noMatches': 'No matches.',
+
+      'detail.library': '← Library',
+      'detail.favorited': '★ Favorited',
+      'detail.favorite': '☆ Favorite',
+      'detail.unarchive': 'Unarchive',
+      'detail.archive': 'Archive',
+      'detail.delete': 'Delete',
+      'detail.tagsCollections': 'Tags & Collections',
+      'detail.export': 'export .{format}',
+      'detail.removeTag': 'Remove tag',
+      'detail.addTag': 'add tag ⏎',
+      'detail.noCollections': 'No collections yet — create one on the Collections page.',
+      'detail.summaries': 'Summaries',
+      'detail.thinking': 'Thinking…',
+      'detail.generate': 'Generate',
+      'detail.noSummaries': 'No summaries yet.',
+      'detail.transcript': 'Transcript',
+      'detail.transcriptPending': 'The transcript will appear here once processing finishes.',
+      'detail.askTitle': 'Ask about this recording',
+      'detail.clearConversation': 'Clear conversation',
+      'detail.chatReady': 'e.g. What did we agree on?',
+      'detail.chatWaiting': 'Available once the transcript is ready',
+      'detail.ask': 'Ask',
+
+      'collections.title': 'Collections',
+      'collections.subtitle': 'Shelves for related recordings.',
+      'collections.count_one': '{count} Mathom',
+      'collections.count_other': '{count} Mathoms',
+
+      'templates.title': 'Prompt Templates',
+      'templates.subtitle': 'Editable in the real app — the database copy is authoritative.',
+
+      'timeline.title': 'Timeline',
+      'timeline.subtitle': 'Your memory house, month by month.',
+      'timeline.empty': 'Nothing recorded yet.',
+
+      'status.pending': 'Waiting',
+      'status.transcribing': 'Transcribing…',
+      'status.summarizing': 'Summarizing…',
+      'status.ready': 'Ready',
+      'status.error': 'Error',
+
+      'demo.badge': 'Demo mode',
+      'demo.bannerRest': '— sample data, all in your browser. Nothing is uploaded or transcribed here.',
+      'demo.backToSite': '← Back to site',
+      'demo.runReal': 'Run the real thing ↗',
+      'demo.sidebarNote': 'This is a guided sample of the app.',
+      'demo.starGitHub': 'Star on GitHub',
+      'demo.audioPlay': 'Play (demo)',
+
+      'demo.toast.added': 'Recording added — transcribing…',
+      'demo.toast.ready': '“{title}” is ready.',
+      'demo.toast.favorited': 'Marked as favorite.',
+      'demo.toast.unfavorited': 'Removed from favorites.',
+      'demo.toast.archived': 'Archived.',
+      'demo.toast.unarchived': 'Unarchived.',
+      'demo.toast.deleted': 'Mathom deleted.',
+      'demo.toast.playback': 'Audio playback is disabled in the demo.',
+      'demo.toast.export': 'Export ({format}) is available in the real app.',
+      'demo.toast.titleSaved': 'Title saved.',
+      'demo.toast.summaryGenerated': '{name} summary generated.',
+      'demo.confirmDelete': 'Delete this Mathom? (demo only — reload to restore)',
+    },
+    de: {
+      'app.tagline': 'Dein lokales KI-Gedächtnishaus',
+      'language.label': 'Sprache',
+
+      'nav.library': 'Bibliothek',
+      'nav.collections': 'Sammlungen',
+      'nav.timeline': 'Zeitleiste',
+      'nav.templates': 'Vorlagen',
+
+      'library.title': 'Das Mathom-Haus',
+      'library.newMathom': '+ Neues Mathom',
+      'library.searchPlaceholder': 'Transkripte, Zusammenfassungen, Titel durchsuchen…',
+      'library.shelf.all': 'Alle',
+      'library.shelf.favorites': '★ Favoriten',
+      'library.shelf.archived': 'Archiviert',
+      'library.results_one': '{count} Ergebnis für „{query}“',
+      'library.results_other': '{count} Ergebnisse für „{query}“',
+      'library.emptyTitle': 'Die Regale sind leer — noch.',
+      'library.emptyBody': 'Lade deine erste Aufnahme hoch und Mathom bewahrt sie für dich auf.',
+      'library.noMatches': 'Keine Treffer.',
+
+      'detail.library': '← Bibliothek',
+      'detail.favorited': '★ Favorisiert',
+      'detail.favorite': '☆ Favorit',
+      'detail.unarchive': 'Aus Archiv holen',
+      'detail.archive': 'Archivieren',
+      'detail.delete': 'Löschen',
+      'detail.tagsCollections': 'Schlagwörter & Sammlungen',
+      'detail.export': 'als .{format} exportieren',
+      'detail.removeTag': 'Schlagwort entfernen',
+      'detail.addTag': 'Schlagwort hinzufügen ⏎',
+      'detail.noCollections': 'Noch keine Sammlungen — lege eine auf der Sammlungen-Seite an.',
+      'detail.summaries': 'Zusammenfassungen',
+      'detail.thinking': 'Denkt nach…',
+      'detail.generate': 'Erstellen',
+      'detail.noSummaries': 'Noch keine Zusammenfassungen.',
+      'detail.transcript': 'Transkript',
+      'detail.transcriptPending': 'Das Transkript erscheint hier, sobald die Verarbeitung fertig ist.',
+      'detail.askTitle': 'Frage zu dieser Aufnahme stellen',
+      'detail.clearConversation': 'Unterhaltung löschen',
+      'detail.chatReady': 'z. B. Worauf haben wir uns geeinigt?',
+      'detail.chatWaiting': 'Verfügbar, sobald das Transkript bereit ist',
+      'detail.ask': 'Fragen',
+
+      'collections.title': 'Sammlungen',
+      'collections.subtitle': 'Regale für zusammengehörige Aufnahmen.',
+      'collections.count_one': '{count} Mathom',
+      'collections.count_other': '{count} Mathoms',
+
+      'templates.title': 'Prompt-Vorlagen',
+      'templates.subtitle': 'In der echten App bearbeitbar — die Datenbankkopie ist maßgeblich.',
+
+      'timeline.title': 'Zeitleiste',
+      'timeline.subtitle': 'Dein Gedächtnishaus, Monat für Monat.',
+      'timeline.empty': 'Noch nichts aufgenommen.',
+
+      'status.pending': 'Wartet',
+      'status.transcribing': 'Transkribiert…',
+      'status.summarizing': 'Fasst zusammen…',
+      'status.ready': 'Fertig',
+      'status.error': 'Fehler',
+
+      'demo.badge': 'Demo-Modus',
+      'demo.bannerRest': '— Beispieldaten, komplett im Browser. Nichts wird hochgeladen oder transkribiert.',
+      'demo.backToSite': '← Zurück zur Seite',
+      'demo.runReal': 'Das Original ausführen ↗',
+      'demo.sidebarNote': 'Dies ist ein geführtes Beispiel der App.',
+      'demo.starGitHub': 'Auf GitHub favorisieren',
+      'demo.audioPlay': 'Abspielen (Demo)',
+
+      'demo.toast.added': 'Aufnahme hinzugefügt — wird transkribiert…',
+      'demo.toast.ready': '„{title}“ ist fertig.',
+      'demo.toast.favorited': 'Als Favorit markiert.',
+      'demo.toast.unfavorited': 'Aus Favoriten entfernt.',
+      'demo.toast.archived': 'Archiviert.',
+      'demo.toast.unarchived': 'Aus Archiv geholt.',
+      'demo.toast.deleted': 'Mathom gelöscht.',
+      'demo.toast.playback': 'Audiowiedergabe ist in der Demo deaktiviert.',
+      'demo.toast.export': 'Export ({format}) ist in der echten App verfügbar.',
+      'demo.toast.titleSaved': 'Titel gespeichert.',
+      'demo.toast.summaryGenerated': 'Zusammenfassung „{name}“ erstellt.',
+      'demo.confirmDelete': 'Dieses Mathom löschen? (nur Demo — zum Wiederherstellen neu laden)',
+    },
+    es: {
+      'app.tagline': 'Tu casa de memoria con IA local',
+      'language.label': 'Idioma',
+
+      'nav.library': 'Biblioteca',
+      'nav.collections': 'Colecciones',
+      'nav.timeline': 'Cronología',
+      'nav.templates': 'Plantillas',
+
+      'library.title': 'La casa Mathom',
+      'library.newMathom': '+ Nuevo Mathom',
+      'library.searchPlaceholder': 'Buscar transcripciones, resúmenes, títulos…',
+      'library.shelf.all': 'Todos',
+      'library.shelf.favorites': '★ Favoritos',
+      'library.shelf.archived': 'Archivados',
+      'library.results_one': '{count} resultado para «{query}»',
+      'library.results_other': '{count} resultados para «{query}»',
+      'library.emptyTitle': 'Los estantes están vacíos — por ahora.',
+      'library.emptyBody': 'Sube tu primera grabación y Mathom la recordará por ti.',
+      'library.noMatches': 'Sin coincidencias.',
+
+      'detail.library': '← Biblioteca',
+      'detail.favorited': '★ Favorito',
+      'detail.favorite': '☆ Favorito',
+      'detail.unarchive': 'Desarchivar',
+      'detail.archive': 'Archivar',
+      'detail.delete': 'Eliminar',
+      'detail.tagsCollections': 'Etiquetas y colecciones',
+      'detail.export': 'exportar .{format}',
+      'detail.removeTag': 'Quitar etiqueta',
+      'detail.addTag': 'añadir etiqueta ⏎',
+      'detail.noCollections': 'Aún no hay colecciones — crea una en la página de Colecciones.',
+      'detail.summaries': 'Resúmenes',
+      'detail.thinking': 'Pensando…',
+      'detail.generate': 'Generar',
+      'detail.noSummaries': 'Aún no hay resúmenes.',
+      'detail.transcript': 'Transcripción',
+      'detail.transcriptPending': 'La transcripción aparecerá aquí cuando termine el procesamiento.',
+      'detail.askTitle': 'Pregunta sobre esta grabación',
+      'detail.clearConversation': 'Borrar conversación',
+      'detail.chatReady': 'p. ej. ¿En qué quedamos?',
+      'detail.chatWaiting': 'Disponible cuando la transcripción esté lista',
+      'detail.ask': 'Preguntar',
+
+      'collections.title': 'Colecciones',
+      'collections.subtitle': 'Estantes para grabaciones relacionadas.',
+      'collections.count_one': '{count} Mathom',
+      'collections.count_other': '{count} Mathoms',
+
+      'templates.title': 'Plantillas de prompt',
+      'templates.subtitle': 'Editable en la app real — la copia de la base de datos es la autoritativa.',
+
+      'timeline.title': 'Cronología',
+      'timeline.subtitle': 'Tu casa de memoria, mes a mes.',
+      'timeline.empty': 'Aún no hay nada grabado.',
+
+      'status.pending': 'En espera',
+      'status.transcribing': 'Transcribiendo…',
+      'status.summarizing': 'Resumiendo…',
+      'status.ready': 'Listo',
+      'status.error': 'Error',
+
+      'demo.badge': 'Modo demo',
+      'demo.bannerRest': '— datos de ejemplo, todo en tu navegador. Nada se sube ni se transcribe aquí.',
+      'demo.backToSite': '← Volver al sitio',
+      'demo.runReal': 'Ejecutar la app real ↗',
+      'demo.sidebarNote': 'Esta es una muestra guiada de la app.',
+      'demo.starGitHub': 'Marcar con estrella en GitHub',
+      'demo.audioPlay': 'Reproducir (demo)',
+
+      'demo.toast.added': 'Grabación añadida — transcribiendo…',
+      'demo.toast.ready': '«{title}» está lista.',
+      'demo.toast.favorited': 'Marcado como favorito.',
+      'demo.toast.unfavorited': 'Quitado de favoritos.',
+      'demo.toast.archived': 'Archivado.',
+      'demo.toast.unarchived': 'Desarchivado.',
+      'demo.toast.deleted': 'Mathom eliminado.',
+      'demo.toast.playback': 'La reproducción de audio está desactivada en la demo.',
+      'demo.toast.export': 'La exportación ({format}) está disponible en la app real.',
+      'demo.toast.titleSaved': 'Título guardado.',
+      'demo.toast.summaryGenerated': 'Resumen «{name}» generado.',
+      'demo.confirmDelete': '¿Eliminar este Mathom? (solo demo — recarga para restaurar)',
+    },
+  };
+
+  function interpolate(template, vars) {
+    if (!vars) return template;
+    return template.replace(/\{(\w+)\}/g, (m, name) => (name in vars ? String(vars[name]) : m));
+  }
+
+  function detectInitialLang() {
+    try {
+      const stored = window.localStorage.getItem(LANG_STORAGE_KEY);
+      if (stored === 'en' || stored === 'de' || stored === 'es') return stored;
+    } catch (_) {}
+    const browser = (window.navigator.language || 'en').slice(0, 2).toLowerCase();
+    if (browser === 'de' || browser === 'es') return browser;
+    return 'en';
+  }
+
+  let lang = detectInitialLang();
+
+  function t(key, vars) {
+    const table = translations[lang] || translations.en;
+    const fallback = translations.en;
+    let lookup = key;
+    if (vars && 'count' in vars) {
+      const plural = Number(vars.count) === 1 ? `${key}_one` : `${key}_other`;
+      if (plural in table || plural in fallback) lookup = plural;
+    }
+    const template = table[lookup] != null ? table[lookup] : fallback[lookup] != null ? fallback[lookup] : key;
+    return interpolate(template, vars);
+  }
+
+  // Translate the static chrome that lives in demo.html (banner, sidebar).
+  function applyStaticI18n() {
+    document.documentElement.lang = lang;
+    document.querySelectorAll('[data-i18n]').forEach((el) => {
+      el.textContent = t(el.getAttribute('data-i18n'));
+    });
+    document.querySelectorAll('[data-i18n-aria]').forEach((el) => {
+      el.setAttribute('aria-label', t(el.getAttribute('data-i18n-aria')));
+    });
+  }
+
+  function setLang(next) {
+    lang = next;
+    try { window.localStorage.setItem(LANG_STORAGE_KEY, next); } catch (_) {}
+    applyStaticI18n();
+    render();
+  }
+
   // ----- tiny helpers -------------------------------------------------------
   const $ = (sel, root) => (root || document).querySelector(sel);
   const main = $('#main');
@@ -36,11 +347,6 @@
   }
 
   // ----- seed data ----------------------------------------------------------
-  const STATUS_LABEL = {
-    pending: 'Pending', transcribing: 'Transcribing', summarizing: 'Summarizing',
-    ready: 'Ready', error: 'Error',
-  };
-
   const templates = [
     { id: 1, slug: 'tldr', name: 'TL;DR', description: 'A two-sentence gist of the whole recording.' },
     { id: 2, slug: 'meeting-minutes', name: 'Meeting Minutes', description: 'Structured minutes: attendees, decisions, next steps.' },
@@ -192,7 +498,7 @@
 
   // ----- renderers ----------------------------------------------------------
   function badge(status) {
-    return `<span class="badge ${status}">${STATUS_LABEL[status]}</span>`;
+    return `<span class="badge ${status}">${esc(t('status.' + status))}</span>`;
   }
 
   function renderLibrary() {
@@ -223,7 +529,7 @@
 
     const shelves = ['all', 'favorites', 'archived'];
     const shelfBtns = shelves
-      .map((s) => `<button class="pill ${state.shelf === s ? 'active-shelf' : ''}" data-shelf="${s}">${s[0].toUpperCase() + s.slice(1)}</button>`)
+      .map((s) => `<button class="pill ${state.shelf === s ? 'active-shelf' : ''}" data-shelf="${s}">${esc(t('library.shelf.' + s))}</button>`)
       .join('');
     const tagBtns = allTags
       .map((name) => `<button class="pill tag ${state.tag === name ? 'active-tag' : ''}" data-tag="${esc(name)}">#${esc(name)}</button>`)
@@ -242,20 +548,20 @@
 
     let body;
     if (searching) {
-      body = `<p class="muted" style="margin-top:1rem">${hits.length} result${hits.length === 1 ? '' : 's'} for “${esc(state.query)}”</p>
-        <div style="display:flex;flex-direction:column;gap:0.75rem;margin-top:0.75rem">${hits.map((h) => `<div>${card(h.mathom, h.snippet)}</div>`).join('') || '<p class="muted">No matches.</p>'}</div>`;
+      body = `<p class="muted" style="margin-top:1rem">${esc(t('library.results', { count: hits.length, query: state.query }))}</p>
+        <div style="display:flex;flex-direction:column;gap:0.75rem;margin-top:0.75rem">${hits.map((h) => `<div>${card(h.mathom, h.snippet)}</div>`).join('') || `<p class="muted">${esc(t('library.noMatches'))}</p>`}</div>`;
     } else if (list.length === 0) {
-      body = `<div class="card" style="margin-top:2rem;text-align:center"><p class="font-display" style="font-size:1.1rem;margin:0">Nothing on this shelf yet</p><p class="muted" style="margin-top:0.25rem">Bring a recording home to start your archive.</p></div>`;
+      body = `<div class="card" style="margin-top:2rem;text-align:center"><p class="font-display" style="font-size:1.1rem;margin:0">${esc(t('library.emptyTitle'))}</p><p class="muted" style="margin-top:0.25rem">${esc(t('library.emptyBody'))}</p></div>`;
     } else {
       body = `<div class="grid">${list.map((m) => card(m)).join('')}</div>`;
     }
 
     main.innerHTML = `
       <div class="page-head">
-        <h2 class="font-display">Library</h2>
-        <button class="btn-primary" id="new-mathom">+ New Mathom</button>
+        <h2 class="font-display">${esc(t('library.title'))}</h2>
+        <button class="btn-primary" id="new-mathom">${esc(t('library.newMathom'))}</button>
       </div>
-      <input class="input" id="search" type="search" placeholder="Search your Mathom-house…" value="${esc(state.query)}" style="margin-top:1rem" />
+      <input class="input" id="search" type="search" placeholder="${esc(t('library.searchPlaceholder'))}" value="${esc(state.query)}" style="margin-top:1rem" />
       ${!searching ? `<div class="filter-row">${shelfBtns}${tagBtns}</div>` : ''}
       ${body}`;
 
@@ -275,7 +581,7 @@
     if (!m) return setView('library');
 
     const exportLinks = ['md', 'txt', 'json']
-      .map((f) => `<a data-export="${f}">Export ${f.toUpperCase()}</a>`)
+      .map((f) => `<a data-export="${f}">${esc(t('detail.export', { format: f }))}</a>`)
       .join('');
 
     const collectionBtns = collections
@@ -290,50 +596,50 @@
     main.innerHTML = `
       <div class="detail">
         <div>
-          <a class="back-link" id="back">← Library</a>
+          <a class="back-link" id="back">${esc(t('detail.library'))}</a>
           <div class="detail-titlebar">
             <input class="detail-title" id="title" value="${esc(m.title)}" aria-label="Title" />
             <div class="detail-actions">
               ${badge(m.status)}
-              <button class="btn-ghost" data-fav>${m.favorite ? '★ Favorited' : '☆ Favorite'}</button>
-              <button class="btn-ghost" data-archive>${m.archived ? 'Unarchive' : 'Archive'}</button>
-              <button class="btn-ghost danger" data-delete>Delete</button>
+              <button class="btn-ghost" data-fav>${esc(m.favorite ? t('detail.favorited') : t('detail.favorite'))}</button>
+              <button class="btn-ghost" data-archive>${esc(m.archived ? t('detail.unarchive') : t('detail.archive'))}</button>
+              <button class="btn-ghost danger" data-delete>${esc(t('detail.delete'))}</button>
             </div>
           </div>
           <p class="detail-meta">${new Date(m.created_at).toLocaleString()}${m.duration_seconds ? ' · ' + fmtDuration(m.duration_seconds) : ''}${m.language ? ' · ' + m.language : ''}${m.original_filename ? ' · ' + esc(m.original_filename) : ''}</p>
         </div>
 
         <div class="audio-mock">
-          <button data-play title="Play (demo)">▶</button>
+          <button data-play title="${esc(t('demo.audioPlay'))}">▶</button>
           <div class="audio-track"><span></span></div>
           <span class="audio-time">0:00 / ${clock(m.duration_seconds)}</span>
         </div>
 
         <section class="card">
           <div class="card-head">
-            <h3 class="section-title">Tags &amp; collections</h3>
+            <h3 class="section-title">${esc(t('detail.tagsCollections'))}</h3>
             <div class="export-links">${exportLinks}</div>
           </div>
           <div style="margin-top:0.75rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center">
-            ${m.tags.map((t) => `<button class="chip" data-remove-tag="${t.id}" title="Remove tag" style="cursor:pointer">#${esc(t.name)} ×</button>`).join('')}
-            <input class="input" id="tag-input" placeholder="+ tag" style="width:8rem;padding:0.3rem 0.6rem;font-size:0.8rem" />
+            ${m.tags.map((tag) => `<button class="chip" data-remove-tag="${tag.id}" title="${esc(t('detail.removeTag'))}" style="cursor:pointer">#${esc(tag.name)} ×</button>`).join('')}
+            <input class="input" id="tag-input" placeholder="${esc(t('detail.addTag'))}" style="width:8rem;padding:0.3rem 0.6rem;font-size:0.8rem" />
           </div>
           <div style="margin-top:0.75rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center">
-            ${collectionBtns || '<span class="muted">No collections yet.</span>'}
+            ${collectionBtns || `<span class="muted">${esc(t('detail.noCollections'))}</span>`}
           </div>
         </section>
 
         <section class="card">
           <div class="card-head">
-            <h3 class="section-title">Summaries</h3>
+            <h3 class="section-title">${esc(t('detail.summaries'))}</h3>
             <div style="display:flex;gap:0.5rem;align-items:center">
               <select class="select" id="tmpl">${templateOpts}</select>
-              <button class="btn-primary" id="gen"${m.transcript ? '' : ' disabled'}>Generate</button>
+              <button class="btn-primary" id="gen"${m.transcript ? '' : ' disabled'}>${esc(t('detail.generate'))}</button>
             </div>
           </div>
           <div id="summaries">
             ${m.summaries.length === 0
-              ? '<p class="muted" style="margin-top:0.75rem">No summaries yet. Pick a template and generate one.</p>'
+              ? `<p class="muted" style="margin-top:0.75rem">${esc(t('detail.noSummaries'))}</p>`
               : m.summaries.map((s) => `
                 <div class="summary-block">
                   <p class="kicker">${esc(s.template_name)} · ${esc(s.model)}</p>
@@ -343,21 +649,21 @@
         </section>
 
         <section class="card">
-          <h3 class="section-title">Transcript</h3>
-          ${m.transcript ? `<p class="transcript">${esc(m.transcript)}</p>` : '<p class="muted" style="margin-top:0.75rem">Transcript is being prepared…</p>'}
+          <h3 class="section-title">${esc(t('detail.transcript'))}</h3>
+          ${m.transcript ? `<p class="transcript">${esc(m.transcript)}</p>` : `<p class="muted" style="margin-top:0.75rem">${esc(t('detail.transcriptPending'))}</p>`}
         </section>
 
         <section class="card">
           <div class="card-head">
-            <h3 class="section-title">Ask this Mathom</h3>
-            ${m.chat_messages.length ? '<button class="btn-ghost" id="clear-chat">Clear</button>' : ''}
+            <h3 class="section-title">${esc(t('detail.askTitle'))}</h3>
+            ${m.chat_messages.length ? `<button class="btn-ghost" id="clear-chat">${esc(t('detail.clearConversation'))}</button>` : ''}
           </div>
           <div class="chat-log" id="chat-log">
             ${m.chat_messages.map((c) => `<div class="bubble ${c.role}">${esc(c.content)}</div>`).join('')}
           </div>
           <form class="chat-form" id="chat-form">
-            <input class="input" id="chat-input" placeholder="${m.transcript ? 'Ask a question about this recording…' : 'Waiting for the transcript…'}"${m.transcript ? '' : ' disabled'} />
-            <button class="btn-primary" type="submit"${m.transcript ? '' : ' disabled'}>Ask</button>
+            <input class="input" id="chat-input" placeholder="${esc(m.transcript ? t('detail.chatReady') : t('detail.chatWaiting'))}"${m.transcript ? '' : ' disabled'} />
+            <button class="btn-primary" type="submit"${m.transcript ? '' : ' disabled'}>${esc(t('detail.ask'))}</button>
           </form>
         </section>
       </div>`;
@@ -376,9 +682,10 @@
       return new Date(y, mo - 1, 1).toLocaleDateString(undefined, { year: 'numeric', month: 'long' });
     };
     main.innerHTML = `
-      <h2 class="font-display" style="font-size:1.5rem;margin:0">Timeline</h2>
-      <p class="muted" style="margin-top:0.25rem">How your Mathom-house has grown, month by month.</p>
+      <h2 class="font-display" style="font-size:1.5rem;margin:0">${esc(t('timeline.title'))}</h2>
+      <p class="muted" style="margin-top:0.25rem">${esc(t('timeline.subtitle'))}</p>
       <div style="margin-top:1.5rem">
+        ${rows.length === 0 ? `<p class="muted">${esc(t('timeline.empty'))}</p>` : ''}
         ${rows.map(([k, n]) => `
           <div class="timeline-row">
             <span class="label">${label(k)}</span>
@@ -389,28 +696,28 @@
 
   function renderTemplates() {
     main.innerHTML = `
-      <h2 class="font-display" style="font-size:1.5rem;margin:0">Prompt templates</h2>
-      <p class="muted" style="margin-top:0.25rem">Editable in the real app — the database copy is authoritative.</p>
+      <h2 class="font-display" style="font-size:1.5rem;margin:0">${esc(t('templates.title'))}</h2>
+      <p class="muted" style="margin-top:0.25rem">${esc(t('templates.subtitle'))}</p>
       <div class="list">
-        ${templates.map((t) => `
+        ${templates.map((tmpl) => `
           <div class="card">
-            <h3>${esc(t.name)} <span class="slug">${esc(t.slug)}</span></h3>
-            <p>${esc(t.description)}</p>
+            <h3>${esc(tmpl.name)} <span class="slug">${esc(tmpl.slug)}</span></h3>
+            <p>${esc(tmpl.description)}</p>
           </div>`).join('')}
       </div>`;
   }
 
   function renderCollections() {
     main.innerHTML = `
-      <h2 class="font-display" style="font-size:1.5rem;margin:0">Collections</h2>
-      <p class="muted" style="margin-top:0.25rem">Group related Mathoms into shelves.</p>
+      <h2 class="font-display" style="font-size:1.5rem;margin:0">${esc(t('collections.title'))}</h2>
+      <p class="muted" style="margin-top:0.25rem">${esc(t('collections.subtitle'))}</p>
       <div class="list">
         ${collections.map((c) => {
           const items = mathoms.filter((m) => m.collections.some((x) => x.id === c.id));
           return `<div class="card">
             <h3>🗂️ ${esc(c.name)}</h3>
             <p>${esc(c.description)}</p>
-            <p class="muted" style="margin-top:0.5rem">${items.length} Mathom${items.length === 1 ? '' : 's'}: ${items.map((m) => esc(m.title)).join(', ') || '—'}</p>
+            <p class="muted" style="margin-top:0.5rem">${esc(t('collections.count', { count: items.length }))}: ${items.map((m) => esc(m.title)).join(', ') || '—'}</p>
           </div>`;
         }).join('')}
       </div>`;
@@ -443,7 +750,7 @@
     mathoms.unshift(m);
     state.view = 'library'; state.query = ''; state.shelf = 'all'; state.tag = null;
     render();
-    toast('Recording added — transcribing…');
+    toast(t('demo.toast.added'));
 
     const steps = [
       [900, () => { m.status = 'transcribing'; }],
@@ -451,7 +758,7 @@
       [1500, () => {
         m.status = 'ready';
         m.summaries = [{ id: nextId(), template_slug: 'tldr', template_name: 'TL;DR', model: 'llama3.2', content: generateSummary(m, 'tldr') }];
-        toast('“' + m.title + '” is ready.');
+        toast(t('demo.toast.ready', { title: m.title }));
       }],
     ];
     let delay = 0;
@@ -485,18 +792,18 @@
     const m = mathoms.find((x) => x.id === state.currentId);
     if (!m) return;
 
-    if (e.target.closest('[data-fav]')) { m.favorite = !m.favorite; renderDetail(); toast(m.favorite ? 'Marked as favorite.' : 'Removed from favorites.'); return; }
-    if (e.target.closest('[data-archive]')) { m.archived = !m.archived; renderDetail(); toast(m.archived ? 'Archived.' : 'Unarchived.'); return; }
+    if (e.target.closest('[data-fav]')) { m.favorite = !m.favorite; renderDetail(); toast(t(m.favorite ? 'demo.toast.favorited' : 'demo.toast.unfavorited')); return; }
+    if (e.target.closest('[data-archive]')) { m.archived = !m.archived; renderDetail(); toast(t(m.archived ? 'demo.toast.archived' : 'demo.toast.unarchived')); return; }
     if (e.target.closest('[data-delete]')) {
-      if (window.confirm('Delete this Mathom? (demo only — reload to restore)')) {
-        const i = mathoms.indexOf(m); mathoms.splice(i, 1); setView('library'); toast('Mathom deleted.');
+      if (window.confirm(t('demo.confirmDelete'))) {
+        const i = mathoms.indexOf(m); mathoms.splice(i, 1); setView('library'); toast(t('demo.toast.deleted'));
       }
       return;
     }
-    if (e.target.closest('[data-play]')) { toast('Audio playback is disabled in the demo.'); return; }
+    if (e.target.closest('[data-play]')) { toast(t('demo.toast.playback')); return; }
 
     const exp = e.target.closest('[data-export]');
-    if (exp) { toast('Export (' + exp.dataset.export.toUpperCase() + ') is available in the real app.'); return; }
+    if (exp) { toast(t('demo.toast.export', { format: exp.dataset.export.toUpperCase() })); return; }
 
     const rmTag = e.target.closest('[data-remove-tag]');
     if (rmTag) { m.tags = m.tags.filter((t) => t.id !== Number(rmTag.dataset.removeTag)); renderDetail(); return; }
@@ -515,14 +822,14 @@
       const slug = $('#tmpl').value;
       const tmpl = templates.find((t) => t.slug === slug);
       const btn = $('#gen');
-      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Thinking…';
+      btn.disabled = true; btn.innerHTML = `<span class="spinner"></span> ${esc(t('detail.thinking'))}`;
       setTimeout(() => {
         m.summaries = [
           { id: nextId(), template_slug: slug, template_name: tmpl.name, model: 'llama3.2', content: generateSummary(m, slug) },
           ...m.summaries.filter((s) => s.template_slug !== slug),
         ];
         renderDetail();
-        toast(tmpl.name + ' summary generated.');
+        toast(t('demo.toast.summaryGenerated', { name: tmpl.name }));
       }, 1100);
       return;
     }
@@ -535,7 +842,7 @@
     if (e.target.id === 'title') {
       const m = mathoms.find((x) => x.id === state.currentId);
       const v = e.target.value.trim();
-      if (m && v) { m.title = v; toast('Title saved.'); }
+      if (m && v) { m.title = v; toast(t('demo.toast.titleSaved')); }
     }
   });
 
@@ -566,6 +873,17 @@
     }
   });
 
+  // ----- language picker ----------------------------------------------------
+  const langSelect = $('#lang-select');
+  if (langSelect) {
+    langSelect.innerHTML = LANGUAGES.map(
+      (l) => `<option value="${l.code}">${esc(l.label)}</option>`,
+    ).join('');
+    langSelect.value = lang;
+    langSelect.addEventListener('change', (e) => setLang(e.target.value));
+  }
+
   // ----- boot ---------------------------------------------------------------
+  applyStaticI18n();
   render();
 })();

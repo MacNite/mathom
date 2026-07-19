@@ -14,9 +14,9 @@
   </head>
   <body>
     <div class="demo-banner">
-      <span>🧪 <strong>Demo mode</strong> — sample data, all in your browser. Nothing is uploaded or transcribed here.</span>
-      <a href="./index.html">← Back to site</a>
-      <a href="https://github.com/MacNite/Mathom-House---Your-Local-AI-Memory-House">Run the real thing ↗</a>
+      <span>🧪 <strong data-i18n="demo.badge">Demo mode</strong> <span data-i18n="demo.bannerRest">— sample data, all in your browser. Nothing is uploaded or transcribed here.</span></span>
+      <a href="./index.html" data-i18n="demo.backToSite">← Back to site</a>
+      <a href="https://github.com/MacNite/Mathom-House---Your-Local-AI-Memory-House" data-i18n="demo.runReal">Run the real thing ↗</a>
     </div>
 
     <div class="app">
@@ -25,19 +25,26 @@
           <img src="./assets/bag-icon.png" alt="Mathom logo" />
           <div>
             <h1>Mathom</h1>
-            <p>Your Local AI Memory House</p>
+            <p data-i18n="app.tagline">Your Local AI Memory House</p>
           </div>
         </div>
         <nav class="nav" id="nav">
-          <a data-view="library" class="active"><span aria-hidden="true">📚</span> Library</a>
-          <a data-view="collections"><span aria-hidden="true">🗂️</span> Collections</a>
-          <a data-view="timeline"><span aria-hidden="true">🗓️</span> Timeline</a>
-          <a data-view="templates"><span aria-hidden="true">✒️</span> Templates</a>
+          <a data-view="library" class="active"><span aria-hidden="true">📚</span> <span data-i18n="nav.library">Library</span></a>
+          <a data-view="collections"><span aria-hidden="true">🗂️</span> <span data-i18n="nav.collections">Collections</span></a>
+          <a data-view="timeline"><span aria-hidden="true">🗓️</span> <span data-i18n="nav.timeline">Timeline</span></a>
+          <a data-view="templates"><span aria-hidden="true">✒️</span> <span data-i18n="nav.templates">Templates</span></a>
         </nav>
+        <div class="lang-picker">
+          <label>
+            <span aria-hidden="true">🌐</span>
+            <span class="sr-only" data-i18n="language.label">Language</span>
+            <select id="lang-select" class="select" data-i18n-aria="language.label" aria-label="Language"></select>
+          </label>
+        </div>
         <div class="sidebar-foot">
-          <p>This is a guided sample of the app.</p>
+          <p data-i18n="demo.sidebarNote">This is a guided sample of the app.</p>
           <a href="https://github.com/MacNite/Mathom-House---Your-Local-AI-Memory-House">
-            <span aria-hidden="true">⭐</span> Star on GitHub
+            <span aria-hidden="true">⭐</span> <span data-i18n="demo.starGitHub">Star on GitHub</span>
           </a>
         </div>
       </aside>

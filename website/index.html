@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Mathom is a private, local-first AI memory house for recordings, transcripts, summaries, and ideas." />
+  <title>Mathom — Your Local AI Memory House</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="Mathom home">
+      <span class="brand-mark">M</span>
+      <span>Mathom</span>
+    </a>
+    <nav class="nav" aria-label="Primary navigation">
+      <a href="#features">Features</a>
+      <a href="#how-it-works">How it works</a>
+      <a href="#setup">Setup</a>
+      <a href="#docs">Docs</a>
+      <a class="nav-cta" href="#demo">Open demo</a>
+    </nav>
+    <button class="menu-button" aria-label="Toggle navigation" aria-expanded="false">Menu</button>
+  </header>
+
+  <main id="top">
+    <section class="hero section-shell">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="status-dot"></span> Private by design · Runs on your hardware</div>
+        <h1>Every conversation has a place to come home to.</h1>
+        <p class="hero-lead">Mathom records, transcribes, summarizes, organizes, and helps you rediscover meetings, voice notes, and ideas — without sending your data to the cloud.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#setup">Start with Docker</a>
+          <a class="button button-secondary" href="#demo">Explore the dashboard</a>
+        </div>
+        <div class="trust-row" aria-label="Technology highlights">
+          <span>FastAPI</span><span>React</span><span>faster-whisper</span><span>Ollama</span><span>SQLite FTS5</span>
+        </div>
+      </div>
+      <div class="hero-visual" aria-label="Illustration of the Mathom workflow">
+        <div class="glow glow-one"></div>
+        <div class="glow glow-two"></div>
+        <div class="recording-card floating-card">
+          <div class="card-topline"><span class="record-dot"></span><span>Recording complete</span><span>42:18</span></div>
+          <div class="waveform" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+          <h3>Product strategy session</h3>
+          <p>Transcribed locally · English detected</p>
+        </div>
+        <div class="summary-card floating-card">
+          <div class="summary-icon">✦</div>
+          <div>
+            <span class="card-kicker">Executive brief</span>
+            <h3>Three priorities emerged</h3>
+            <ul><li>Reduce onboarding friction</li><li>Ship local semantic search</li><li>Validate the team workspace</li></ul>
+          </div>
+        </div>
+        <div class="privacy-pill"><span>●</span> Ollama stays internal</div>
+      </div>
+    </section>
+
+    <section class="statement section-shell">
+      <p>In Tolkien's Shire, a <strong>mathom</strong> is something worth keeping even when it has no immediate use. Mathom turns that idea into a calm, searchable home for everything you say and think.</p>
+    </section>
+
+    <section id="features" class="section section-shell">
+      <div class="section-heading">
+        <div><span class="eyebrow plain">Built for useful memory</span><h2>Capture less. Remember more.</h2></div>
+        <p>From raw audio to a searchable archive, every step happens inside one local-first stack.</p>
+      </div>
+      <div class="feature-grid">
+        <article class="feature-card feature-large"><span class="feature-number">01</span><div class="feature-icon">◉</div><h3>Local transcription</h3><p>Upload common audio formats and let FFmpeg plus faster-whisper produce accurate transcripts on CPU or NVIDIA GPU.</p><div class="mini-transcript"><span>09:42</span><p>“The launch decision depends on completing the migration rehearsal before Thursday.”</p></div></article>
+        <article class="feature-card"><span class="feature-number">02</span><div class="feature-icon">✦</div><h3>Purpose-built summaries</h3><p>Turn transcripts into meeting minutes, action items, executive briefs, email drafts, CRM notes, GitHub issues, and more.</p></article>
+        <article class="feature-card"><span class="feature-number">03</span><div class="feature-icon">⌕</div><h3>Fast full-text search</h3><p>Search titles, transcripts, and summaries through SQLite FTS5 with ranked results and highlighted context.</p></article>
+        <article class="feature-card"><span class="feature-number">04</span><div class="feature-icon">#</div><h3>A real archive</h3><p>Use tags, favorites, collections, timeline views, and archiving to keep knowledge organized instead of buried.</p></article>
+        <article class="feature-card feature-wide"><span class="feature-number">05</span><div class="feature-copy"><div class="feature-icon">⌁</div><h3>Ask follow-up questions</h3><p>Chat with any recording and get answers grounded in its own transcript — useful context, without cloud retrieval.</p></div><div class="chat-preview"><div class="chat-user">What did we decide about the beta?</div><div class="chat-ai"><span>✦</span><p>The team agreed to invite 20 design partners after the migration rehearsal, with onboarding led by Maya.</p></div></div></article>
+        <article class="feature-card"><span class="feature-number">06</span><div class="feature-icon">⇩</div><h3>Portable exports</h3><p>Export each Mathom as Markdown, plain text, or JSON whenever you need it elsewhere.</p></article>
+      </div>
+    </section>
+
+    <section id="how-it-works" class="section workflow-section">
+      <div class="section-shell">
+        <div class="section-heading light"><div><span class="eyebrow plain">How it works</span><h2>A private pipeline from voice to knowledge.</h2></div><p>Only the nginx proxy is exposed. Your model, database, transcripts, and audio remain inside the stack.</p></div>
+        <div class="workflow-grid">
+          <div class="workflow-step"><span>1</span><h3>Upload</h3><p>Audio is saved under a server-generated name and registered as pending.</p></div>
+          <div class="workflow-arrow">→</div>
+          <div class="workflow-step"><span>2</span><h3>Transcribe</h3><p>FFmpeg normalizes the file and faster-whisper produces text and language.</p></div>
+          <div class="workflow-arrow">→</div>
+          <div class="workflow-step"><span>3</span><h3>Summarize</h3><p>Your selected prompt template is rendered and sent to local Ollama.</p></div>
+          <div class="workflow-arrow">→</div>
+          <div class="workflow-step"><span>4</span><h3>Rediscover</h3><p>Search, chat, tag, collect, export, or revisit it from the timeline.</p></div>
+        </div>
+        <div class="architecture"><div class="arch-box">Browser<br><small>React UI</small></div><div class="arch-line">:8080</div><div class="arch-box accent">nginx<br><small>static + /api proxy</small></div><div class="arch-line">/api</div><div class="arch-box">FastAPI<br><small>pipeline + state</small></div><div class="arch-sources"><span>SQLite</span><span>Audio</span><span>Ollama</span></div></div>
+      </div>
+    </section>
+
+    <section id="setup" class="section section-shell setup-section">
+      <div class="section-heading"><div><span class="eyebrow plain">Setup</span><h2>One Compose stack. Four commands.</h2></div><p>Docker Compose v2 is the only requirement. GPU acceleration is optional.</p></div>
+      <div class="setup-grid">
+        <div class="terminal">
+          <div class="terminal-bar"><span></span><span></span><span></span><button class="copy-button" data-copy="git clone https://github.com/MacNite/Mathom-House---Your-Local-AI-Memory-House.git\ncd Mathom-House---Your-Local-AI-Memory-House\ncp .env.example .env\nmake up\nmake models">Copy</button></div>
+          <pre><code><span class="prompt">$</span> git clone https://github.com/MacNite/Mathom-House---Your-Local-AI-Memory-House.git
+<span class="prompt">$</span> cd Mathom-House---Your-Local-AI-Memory-House
+<span class="prompt">$</span> cp .env.example .env
+<span class="prompt">$</span> make up
+<span class="prompt">$</span> make models</code></pre>
+          <div class="terminal-result">✓ Mathom is ready at <strong>http://localhost:8080</strong></div>
+        </div>
+        <div class="setup-options">
+          <article><span class="option-icon">CPU</span><div><h3>Default stack</h3><p>Runs everywhere with Whisper configured for CPU and int8 compute.</p><code>make up</code></div></article>
+          <article><span class="option-icon">GPU</span><div><h3>NVIDIA acceleration</h3><p>Uses the GPU overlay for both Ollama and faster-whisper.</p><code>make up-gpu</code></div></article>
+          <article><span class="option-icon">NAS</span><div><h3>TrueNAS SCALE</h3><p>Deploy as a custom Compose app with persistent datasets for data and models.</p><a href="../docs/deployment.md">Read deployment guide →</a></div></article>
+        </div>
+      </div>
+      <div class="security-note"><span>!</span><p><strong>Keep default installs private.</strong> Authentication is disabled in single-user mode. Keep Mathom on your LAN or behind a VPN. For internet access, enable Authentik SSO and HTTPS.</p></div>
+    </section>
+
+    <section id="demo" class="section demo-section">
+      <div class="section-shell">
+        <div class="section-heading"><div><span class="eyebrow plain">Interactive product demo</span><h2>See the archive in action.</h2></div><p>This dashboard uses fixed sample records only. Nothing is uploaded, processed, or persisted.</p></div>
+        <div class="demo-label">DEMO DATA · STATIC</div>
+        <div class="dashboard">
+          <aside class="sidebar">
+            <div class="sidebar-brand"><span class="brand-mark small">M</span><strong>Mathom</strong></div>
+            <button class="new-mathom">＋ New Mathom</button>
+            <nav class="side-nav">
+              <button class="active" data-view="library"><span>⌂</span>Library <em>6</em></button>
+              <button data-view="favorites"><span>♡</span>Favorites <em>3</em></button>
+              <button data-view="timeline"><span>◷</span>Timeline</button>
+              <button data-view="collections"><span>▦</span>Collections <em>4</em></button>
+            </nav>
+            <div class="sidebar-footer"><span class="local-dot"></span><div><strong>Local stack</strong><small>All systems ready</small></div></div>
+          </aside>
+          <section class="dashboard-main">
+            <div class="dash-header"><div><span class="dash-kicker">YOUR MEMORY HOUSE</span><h3 id="dashboard-title">Library</h3></div><div class="dash-actions"><label class="search-box">⌕<input id="demo-search" type="search" placeholder="Search your Mathoms…" /></label><button>⚙</button></div></div>
+            <div class="stats-row"><div><span>Mathoms</span><strong id="stat-total">6</strong><small>+2 this week</small></div><div><span>Recorded time</span><strong>3h 38m</strong><small>Across all files</small></div><div><span>Ready to revisit</span><strong>5</strong><small>1 processing</small></div><div><span>Collections</span><strong>4</strong><small>12 active tags</small></div></div>
+            <div class="filter-row"><div class="filter-tabs"><button class="active" data-filter="all">All</button><button data-filter="ready">Ready</button><button data-filter="processing">Processing</button><button data-filter="favorite">Favorites</button></div><select id="sort-select" aria-label="Sort demo records"><option value="newest">Newest first</option><option value="title">Title A–Z</option><option value="duration">Longest first</option></select></div>
+            <div id="mathom-grid" class="mathom-grid" aria-live="polite"></div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section id="docs" class="section section-shell docs-section">
+      <div class="section-heading"><div><span class="eyebrow plain">Documentation</span><h2>Everything needed to run and extend Mathom.</h2></div><p>Go from first launch to production deployment, API integration, authentication, and contribution.</p></div>
+      <div class="docs-grid">
+        <a href="../docs/architecture.md"><span>01</span><h3>Architecture</h3><p>Services, lifecycle, data model, search, templates, and frontend structure.</p><b>Open guide →</b></a>
+        <a href="../docs/deployment.md"><span>02</span><h3>Deployment</h3><p>Docker hosts, NVIDIA GPU, TrueNAS SCALE, backups, and upgrades.</p><b>Open guide →</b></a>
+        <a href="../docs/authentication.md"><span>03</span><h3>Authentication</h3><p>Optional Authentik SSO, user roles, private archives, and secure exposure.</p><b>Open guide →</b></a>
+        <a href="../docs/api.md"><span>04</span><h3>API overview</h3><p>Endpoints for Mathoms, summaries, search, chat, tags, collections, and exports.</p><b>Open guide →</b></a>
+        <a href="../docs/pwa.md"><span>05</span><h3>PWA & Android</h3><p>Install Mathom and share recordings directly from Android applications.</p><b>Open guide →</b></a>
+        <a href="../CONTRIBUTING.md"><span>06</span><h3>Contributing</h3><p>Development workflow, test commands, project conventions, and pull requests.</p><b>Open guide →</b></a>
+      </div>
+    </section>
+
+    <section class="cta-section">
+      <div class="section-shell cta-inner"><div><span class="eyebrow plain light-text">Your words belong to you</span><h2>Bring your first recording home.</h2><p>Private, searchable, and ready whenever the idea becomes useful again.</p></div><div class="hero-actions"><a class="button button-light" href="#setup">Install Mathom</a><a class="button button-outline-light" href="https://github.com/MacNite/Mathom-House---Your-Local-AI-Memory-House">View on GitHub</a></div></div>
+    </section>
+  </main>
+
+  <footer class="site-footer section-shell"><a class="brand" href="#top"><span class="brand-mark">M</span><span>Mathom</span></a><p>Your Local AI Memory House · MIT License</p><div><a href="../SECURITY.md">Security</a><a href="../CHANGELOG.md">Changelog</a><a href="../CONTRIBUTING.md">Contribute</a></div></footer>
+  <script src="./app.js"></script>
+</body>
+</html>

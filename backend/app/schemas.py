@@ -143,6 +143,8 @@ class UserOut(ORMModel):
     is_active: bool
     created_at: datetime
     last_login_at: datetime | None
+    has_local_password: bool = False
+    has_authentik_identity: bool = False
 
 
 class AuthStatus(BaseModel):
@@ -151,13 +153,43 @@ class AuthStatus(BaseModel):
     auth_enabled: bool
     configured: bool
     authenticated: bool
+    onboarding_required: bool = False
+    local_login_available: bool = True
+    authentik_configured: bool = False
     login_url: str
     user: UserOut | None = None
 
 
 class UserUpdate(BaseModel):
-    role: str | None = Field(default=None, pattern=r"^(owner|admin|user)$")
+    role: str | None = Field(default=None, pattern=r"^(admin|user)$")
     is_active: bool | None = None
+    email: str | None = Field(default=None, max_length=320)
+    name: str | None = Field(default=None, max_length=200)
+
+
+class LocalLogin(BaseModel):
+    email: str = Field(min_length=3, max_length=320)
+    password: str = Field(min_length=1, max_length=256)
+
+
+class OnboardingCreate(BaseModel):
+    name: str = Field(default="", max_length=200)
+    email: str = Field(min_length=3, max_length=320)
+    password: str = Field(min_length=12, max_length=256)
+    password_confirmation: str = Field(min_length=12, max_length=256)
+
+
+class UserCreate(BaseModel):
+    name: str = Field(default="", max_length=200)
+    email: str = Field(min_length=3, max_length=320)
+    password: str = Field(min_length=12, max_length=256)
+    role: str = Field(default="user", pattern=r"^(admin|user)$")
+    must_change_password: bool = True
+
+
+class PasswordChange(BaseModel):
+    current_password: str | None = Field(default=None, max_length=256)
+    password: str = Field(min_length=12, max_length=256)
 
 
 class AuthentikSettingsOut(BaseModel):

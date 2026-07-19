@@ -8,6 +8,7 @@ import AuthentikSettings from './pages/AuthentikSettings';
 import Collections from './pages/Collections';
 import Library from './pages/Library';
 import Login from './pages/Login';
+import Onboarding from './pages/Onboarding';
 import MathomDetail from './pages/MathomDetail';
 import ShareTarget from './pages/ShareTarget';
 import Templates from './pages/Templates';
@@ -16,7 +17,7 @@ import Users from './pages/Users';
 
 export default function App() {
   const { t } = useI18n();
-  const { loading, status, isAdmin, isOwner } = useAuth();
+  const { loading, status, isAdmin } = useAuth();
 
   if (loading) {
     return (
@@ -28,7 +29,7 @@ export default function App() {
 
   // When auth is enabled and nobody is signed in, the whole app is the login gate.
   if (status.auth_enabled && !status.authenticated) {
-    return <Login />;
+    return status.onboarding_required ? <Onboarding /> : <Login />;
   }
 
   const guard = (allowed: boolean, element: ReactElement): ReactElement =>
@@ -45,7 +46,7 @@ export default function App() {
         <Route path="collections" element={<Collections />} />
         <Route path="timeline" element={<Timeline />} />
         <Route path="admin/users" element={guard(isAdmin, <Users />)} />
-        <Route path="admin/settings" element={guard(isOwner, <AuthentikSettings />)} />
+        <Route path="admin/settings" element={guard(isAdmin, <AuthentikSettings />)} />
       </Route>
     </Routes>
   );

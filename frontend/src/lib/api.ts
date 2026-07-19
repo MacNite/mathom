@@ -178,6 +178,16 @@ export const api = {
     return request('/auth/logout', { method: 'POST' });
   },
 
+  localLogin(email: string, password: string): Promise<User> {
+    return request('/auth/login/local', json('POST', { email, password }));
+  },
+  onboarding(name: string, email: string, password: string, password_confirmation: string): Promise<User> {
+    return request('/auth/onboarding', json('POST', { name, email, password, password_confirmation }));
+  },
+  createUser(data: {name: string; email: string; password: string; role: Role; must_change_password: boolean}): Promise<User> {
+    return request('/users', json('POST', data));
+  },
+
   listUsers(): Promise<User[]> {
     return request('/users');
   },

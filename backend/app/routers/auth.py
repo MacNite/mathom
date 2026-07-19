@@ -6,14 +6,17 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
+from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.db import get_db
 from app.deps import optional_user
 from app.models import User
-from app.schemas import AuthStatus, UserOut
+from app.schemas import AuthStatus, LocalLogin, OnboardingCreate, UserOut
 from app.services import auth, oidc
+from app.services.passwords import hash_password, validate_password
 from app.services.settings_store import AuthentikConfig, get_authentik_config
 
 logger = logging.getLogger("mathom.auth")
@@ -60,13 +63,26 @@ def auth_status(
         auth_enabled=settings.auth_enabled,
         configured=config.configured,
         authenticated=user is not None,
-        login_url=f"/api{LOGIN_PATH}",
+        onboarding_required=settings.auth_enabled
+        and int(db.execute(select(func.count(User.id))).scalar_one()) == 0,
+        local_login_available=settings.auth_enabled,
+        authentik_configured=config.configured,
+        login_url="/api/auth/login/authentik",
         user=UserOut.model_validate(user) if user is not None else None,
     )
 
 
 @router.get("/login")
-def login(request: Request, next: str = "/", db: Session = Depends(get_db)) -> RedirectResponse:
+def login_legacy(
+    request: Request, next: str = "/", db: Session = Depends(get_db)
+) -> RedirectResponse:
+    return login_authentik(request, next, db)
+
+
+@router.get("/login/authentik")
+def login_authentik(
+    request: Request, next: str = "/", db: Session = Depends(get_db)
+) -> RedirectResponse:
     settings = get_settings()
     if not settings.auth_enabled:
         raise HTTPException(status_code=404, detail="User management is disabled")
@@ -85,6 +101,61 @@ def login(request: Request, next: str = "/", db: Session = Depends(get_db)) -> R
         logger.warning("Authentik login could not start: %s", exc)
         raise HTTPException(status_code=502, detail="Could not reach Authentik") from exc
     return RedirectResponse(url, status_code=302)
+
+
+@router.post("/onboarding", response_model=UserOut, status_code=201)
+def onboarding(
+    payload: OnboardingCreate, request: Request, db: Session = Depends(get_db)
+) -> Response:
+    settings = get_settings()
+    if not settings.auth_enabled:
+        raise HTTPException(404, "User management is disabled")
+    if payload.password != payload.password_confirmation:
+        raise HTTPException(422, "Passwords do not match")
+    try:
+        validate_password(payload.password)
+        # SQLite BEGIN IMMEDIATE serializes competing first-start writers.
+        db.connection().exec_driver_sql("BEGIN IMMEDIATE")
+        if int(db.execute(select(func.count(User.id))).scalar_one()) != 0:
+            db.rollback()
+            raise HTTPException(409, "Onboarding has already completed")
+        user = User(
+            email=payload.email.strip().lower(),
+            name=payload.name.strip(),
+            role="admin",
+            password_hash=hash_password(payload.password),
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(409, "Onboarding has already completed") from exc
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    session = auth.create_session(db, user)
+    response = Response(
+        content=UserOut.model_validate(user).model_dump_json(),
+        media_type="application/json",
+        status_code=201,
+    )
+    _set_session_cookie(response, session.token)
+    return response
+
+
+@router.post("/login/local", response_model=UserOut)
+def login_local(payload: LocalLogin, db: Session = Depends(get_db)) -> Response:
+    if not get_settings().auth_enabled:
+        raise HTTPException(404, "User management is disabled")
+    user = auth.local_login(db, payload.email, payload.password)
+    if user is None:
+        raise HTTPException(401, "Invalid email or password")
+    session = auth.create_session(db, user)
+    response = Response(
+        content=UserOut.model_validate(user).model_dump_json(), media_type="application/json"
+    )
+    _set_session_cookie(response, session.token)
+    return response
 
 
 @router.get("/callback")

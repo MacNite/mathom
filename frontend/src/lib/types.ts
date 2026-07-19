@@ -75,7 +75,7 @@ export interface TimelineBucket {
   count: number;
 }
 
-export type Role = 'owner' | 'admin' | 'user';
+export type Role = 'admin' | 'user';
 
 export interface User {
   id: number;
@@ -85,12 +85,17 @@ export interface User {
   is_active: boolean;
   created_at: string;
   last_login_at: string | null;
+  has_local_password?: boolean;
+  has_authentik_identity?: boolean;
 }
 
 export interface AuthStatus {
   auth_enabled: boolean;
   configured: boolean;
   authenticated: boolean;
+  onboarding_required?: boolean;
+  local_login_available?: boolean;
+  authentik_configured?: boolean;
   login_url: string;
   user: User | null;
 }

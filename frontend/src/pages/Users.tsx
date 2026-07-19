@@ -5,11 +5,11 @@ import { useAuth } from '../lib/auth';
 import { useI18n } from '../lib/i18n';
 import type { Role, User } from '../lib/types';
 
-const ROLES: Role[] = ['owner', 'admin', 'user'];
+const ROLES: Role[] = ['admin', 'user'];
 
 export default function Users() {
   const { t } = useI18n();
-  const { user: me, isOwner, refresh: refreshAuth } = useAuth();
+  const { user: me, isAdmin, refresh: refreshAuth } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState('');
 
@@ -82,7 +82,7 @@ export default function Users() {
               </div>
 
               <div className="flex items-center gap-2">
-                {isOwner ? (
+                {isAdmin ? (
                   <select
                     value={entry.role}
                     onChange={(event) => changeRole(entry, event.target.value as Role)}
@@ -109,7 +109,7 @@ export default function Users() {
                   {entry.is_active ? t('users.deactivate') : t('users.activate')}
                 </button>
 
-                {isOwner && !isSelf && (
+                {!isSelf && (
                   <button
                     onClick={() => remove(entry)}
                     className="text-sm text-ink-400 hover:text-red-700"

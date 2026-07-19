@@ -27,8 +27,8 @@ services:
       MATHOM_WHISPER_DEVICE: ${WHISPER_DEVICE:-cpu}
       MATHOM_WHISPER_COMPUTE_TYPE: ${WHISPER_COMPUTE_TYPE:-int8}
       MATHOM_MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-200}
-      # Optional user management + Authentik SSO (disabled by default).
-      MATHOM_AUTH_ENABLED: ${AUTH_ENABLED:-false}
+      # Optional local user management + Authentik SSO (disabled by default).
+      MATHOM_AUTH_ENABLED: ${MATHOM_AUTH_ENABLED:-${AUTH_ENABLED:-false}}
       MATHOM_SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-true}
       MATHOM_SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-336}
       MATHOM_PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}

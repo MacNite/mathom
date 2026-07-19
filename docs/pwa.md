@@ -3,7 +3,7 @@
 Mathom's frontend is an installable Progressive Web App (PWA). Once installed
 on an Android device it registers as a destination in the system **Share
 Sheet**, so you can send a voice message straight from another app (WhatsApp,
-Signal, your recorder, a file manager) into your own Mathom-house.
+Signal, your recorder, a file manager) into your own mathom.
 
 ```
 WhatsApp → Share → Mathom → title / template → Upload → Transcribe → Summarize

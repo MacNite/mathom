@@ -17,18 +17,19 @@ trusted users.
 ## Trust boundaries
 
 ```
-Internet / LAN ──▶ proxy (nginx, only exposed port) ──▶ backend (FastAPI)
-                                                              │
-                                                    SQLite + audio volume
-                                                    Ollama (internal net)
-                                                    Authentik (only if SSO on)
+Internet / LAN ──▶ mathom container ──▶ (nginx ──▶ FastAPI backend)
+                   only exposed port          │
+                                     SQLite + audio volume
+                                     Ollama (internal net)
+                                     Authentik (only if SSO on)
 ```
 
-- The **proxy** is the only service that publishes a port. It binds to
-  `127.0.0.1` by default.
+- The **mathom container** is the only one that publishes a port; inside it,
+  nginx is the front door and binds to `127.0.0.1` by default.
 - **Ollama** is never published; it is reachable only on the internal Compose
   network.
-- The **backend** trusts requests that reach it from the proxy.
+- The **backend** (uvicorn on `127.0.0.1:8000`, in the same container) trusts
+  requests that reach it from nginx.
 
 ## Actors
 

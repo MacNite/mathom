@@ -2,27 +2,34 @@
 
 ## Services
 
+Mathom runs as **two containers**: the single `mathom` image (frontend +
+backend + nginx) and stock Ollama. Inside the `mathom` container, nginx and the
+FastAPI backend run side by side under supervisord.
+
 ```
-┌──────────┐      ┌──────────────────┐      ┌──────────────────┐
-│ Browser   │─────▶│ proxy (nginx)    │─────▶│ backend (FastAPI)│
-│ React UI  │ :8080│ static frontend  │ /api │ Python 3.11      │
-└──────────┘      │ + reverse proxy  │      └───────┬──────────┘
-                   └──────────────────┘              │
-                                          ┌──────────┼──────────────┐
-                                          ▼          ▼              ▼
-                                    ┌─────────┐ ┌──────────┐ ┌────────────┐
-                                    │ SQLite   │ │ audio    │ │ Ollama     │
-                                    │ mathom.db│ │ files    │ │ (internal) │
-                                    └─────────┘ └──────────┘ └────────────┘
+┌──────────┐      ┌───────────────────────────────────────┐      ┌────────────┐
+│ Browser   │────▶│ mathom container            :8080     │      │ Ollama     │
+│ React UI  │      │  nginx ──/api──▶ FastAPI (127.0.0.1)  │─────▶│ (internal) │
+└──────────┘      │  + built React app   (supervisord)    │      └────────────┘
+                   └───────────────────┬───────────────────┘
+                                        │
+                              ┌─────────┼──────────┐
+                              ▼         ▼
+                        ┌─────────┐ ┌──────────┐
+                        │ SQLite   │ │ audio    │
+                        │ mathom.db│ │ files    │
+                        └─────────┘ └──────────┘
 ```
 
-- **proxy** — nginxinc/nginx-unprivileged. The only service with a published
-  port. Serves the built React app and proxies `/api/*` to the backend with
-  long timeouts (transcription can be slow) and a large `client_max_body_size`
-  for uploads.
-- **backend** — FastAPI + SQLAlchemy 2.0 + SQLite. Owns all state. Runs
-  faster-whisper in-process via a **durable job queue** (a `jobs` table drained
-  by one worker thread) and talks to Ollama over HTTP.
+- **mathom** — one image, built from the repository-root `Dockerfile`, running
+  three things in one non-root container via supervisord:
+  - **nginx** (from `docker/nginx.conf`) — the only published port (`:8080`).
+    Serves the built React app and proxies `/api/*` to the backend on
+    `127.0.0.1:8000` with long timeouts (transcription can be slow) and a large
+    `client_max_body_size` for uploads.
+  - **backend** — FastAPI + SQLAlchemy 2.0 + SQLite (uvicorn, loopback-only).
+    Owns all state. Runs faster-whisper in-process via a **durable job queue**
+    (a `jobs` table drained by one worker thread) and talks to Ollama over HTTP.
 - **ollama** — serves the LLM. **No published ports** — reachable only on the
   internal Compose network.
 

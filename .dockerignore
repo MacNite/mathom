@@ -1,0 +1,20 @@
+# Build context is the repository root (docker build -t mathom .).
+# Keep the context small and free of secrets and build artifacts.
+.git/
+.github/
+**/.venv/
+**/__pycache__/
+**/*.pyc
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+backend/tests/
+frontend/node_modules/
+frontend/dist/
+data/
+site/
+docs/
+*.md
+.env
+.env.*
+!.env.example

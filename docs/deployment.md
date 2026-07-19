@@ -54,7 +54,7 @@ Mathom runs as a custom Docker Compose app on TrueNAS SCALE 24.04+
 4. Deploy, then pull the model once:
    `docker exec -it <ollama-container> ollama pull llama3.2`
 
-> The backend container runs as UID/GID 1000. Give the datasets matching
+> The mathom container runs as UID/GID 1000. Give the datasets matching
 > ownership (or an ACL allowing 1000) so it can write.
 
 ## Backups
@@ -86,7 +86,7 @@ To rebuild on a fresh host from a `backups/mathom-<timestamp>/` directory:
 docker compose -f compose.yaml down
 
 # 2. Restore the database and audio into the data volume.
-CONTAINER="$(docker compose -f compose.yaml run -d --no-deps backend sleep 300)"
+CONTAINER="$(docker compose -f compose.yaml run -d --no-deps app sleep 300)"
 docker cp backups/mathom-<timestamp>/mathom.db "$CONTAINER:/data/mathom.db"
 docker cp backups/mathom-<timestamp>/audio "$CONTAINER:/data/audio"
 docker rm -f "$CONTAINER"

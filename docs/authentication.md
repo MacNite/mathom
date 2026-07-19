@@ -3,7 +3,7 @@
 Mathom ships as a single-user local archive. Multi-user mode with
 [Authentik](https://goauthentik.io/) single sign-on is **optional and disabled
 by default** — turn it on only when you want several people to keep separate,
-private Mathom-houses behind one install.
+private mathoms behind one install.
 
 - **Off (default):** no login, no accounts. Every recording belongs to the one
   local keeper. Nothing about the original experience changes.
@@ -17,7 +17,7 @@ private Mathom-houses behind one install.
 | --------- | --------------------------------------------------------------------- |
 | **Owner** | Everything an Admin can, plus change roles, delete users, and edit the Authentik connection settings. There must always be at least one active Owner. |
 | **Admin** | View the user list and activate/deactivate regular users.             |
-| **User**  | Use their own private Mathom-house.                                    |
+| **User**  | Use their own private mathom.                                    |
 
 The **first person to sign in becomes the Owner** and adopts any recordings that
 existed before user management was enabled (see *Backward compatibility*). To

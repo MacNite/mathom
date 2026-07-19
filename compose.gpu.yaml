@@ -12,7 +12,7 @@ services:
               count: all
               capabilities: [gpu]
 
-  backend:
+  app:
     environment:
       MATHOM_WHISPER_DEVICE: ${WHISPER_DEVICE:-cuda}
       MATHOM_WHISPER_COMPUTE_TYPE: ${WHISPER_COMPUTE_TYPE:-float16}

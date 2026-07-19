@@ -1,7 +1,7 @@
 {
-  "name": "Mathom — Your Local AI Memory House",
+  "name": "mathom",
   "short_name": "Mathom",
-  "description": "Transcribe, summarize, and remember your voice recordings on your own hardware. Share audio straight into your local Mathom-house.",
+  "description": "Transcribe, summarize, and remember your voice recordings on your own hardware. Share audio straight into your local mathom.",
   "id": "/",
   "start_url": "/?source=pwa",
   "scope": "/",
@@ -35,7 +35,7 @@
     {
       "name": "New Mathom",
       "short_name": "Upload",
-      "description": "Upload a recording to your Mathom-house",
+      "description": "Upload a recording to your mathom",
       "url": "/?source=shortcut",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }

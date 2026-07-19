@@ -21,7 +21,7 @@ type Vars = Record<string, string | number>;
 // selected automatically when a `count` variable is passed to `t`.
 const translations: Record<Lang, Record<string, string>> = {
   en: {
-    'app.tagline': 'Your Local AI Memory House',
+    'app.tagline': 'mathom',
     'language.label': 'Language',
 
     'nav.library': 'Library',
@@ -29,7 +29,7 @@ const translations: Record<Lang, Record<string, string>> = {
     'nav.timeline': 'Timeline',
     'nav.templates': 'Templates',
 
-    'library.title': 'The Mathom-house',
+    'library.title': 'mathom',
     'library.newMathom': '+ New Mathom',
     'library.searchPlaceholder': 'Search transcripts, summaries, titles…',
     'library.shelf.all': 'All',
@@ -99,12 +99,12 @@ const translations: Record<Lang, Record<string, string>> = {
     'templates.save': 'Save',
 
     'timeline.title': 'Timeline',
-    'timeline.subtitle': 'Your memory house, month by month.',
+    'timeline.subtitle': 'Your mathom, month by month.',
     'timeline.empty': 'Nothing recorded yet.',
 
     'upload.title': 'Bring a recording home',
     'upload.subtitle':
-      'It will be transcribed and summarized, then shelved in your Mathom-house.',
+      'It will be transcribed and summarized, then shelved in your mathom.',
     'upload.audioFile': 'Audio file',
     'upload.chooseFileFirst': 'Choose an audio file first.',
     'upload.titleLabel': 'Title',
@@ -135,7 +135,7 @@ const translations: Record<Lang, Record<string, string>> = {
     'nav.settings': 'Sign-in',
 
     'auth.welcome': 'Welcome to Mathom',
-    'auth.subtitle': 'Sign in to open your memory house.',
+    'auth.subtitle': 'Sign in to open your mathom.',
     'auth.signIn': 'Sign in with Authentik',
     'auth.signOut': 'Sign out',
     'auth.loading': 'Opening the archive…',
@@ -147,7 +147,7 @@ const translations: Record<Lang, Record<string, string>> = {
     'auth.error.generic': 'Sign-in failed. Please try again.',
 
     'users.title': 'Users',
-    'users.subtitle': 'Who can use this Mathom-house.',
+    'users.subtitle': 'Who can use this mathom.',
     'users.role': 'Role',
     'users.active': 'Active',
     'users.disabled': 'Disabled',
@@ -183,7 +183,7 @@ const translations: Record<Lang, Record<string, string>> = {
     'settings.saveFailed': 'Saving failed',
   },
   de: {
-    'app.tagline': 'Dein lokales KI-Gedächtnishaus',
+    'app.tagline': 'mathom',
     'language.label': 'Sprache',
 
     'nav.library': 'Bibliothek',
@@ -191,7 +191,7 @@ const translations: Record<Lang, Record<string, string>> = {
     'nav.timeline': 'Zeitleiste',
     'nav.templates': 'Vorlagen',
 
-    'library.title': 'Das Mathom-Haus',
+    'library.title': 'mathom',
     'library.newMathom': '+ Neues Mathom',
     'library.searchPlaceholder': 'Transkripte, Zusammenfassungen, Titel durchsuchen…',
     'library.shelf.all': 'Alle',
@@ -263,12 +263,12 @@ const translations: Record<Lang, Record<string, string>> = {
     'templates.save': 'Speichern',
 
     'timeline.title': 'Zeitleiste',
-    'timeline.subtitle': 'Dein Gedächtnishaus, Monat für Monat.',
+    'timeline.subtitle': 'Dein mathom, Monat für Monat.',
     'timeline.empty': 'Noch nichts aufgenommen.',
 
     'upload.title': 'Eine Aufnahme nach Hause bringen',
     'upload.subtitle':
-      'Sie wird transkribiert und zusammengefasst, dann in deinem Mathom-Haus einsortiert.',
+      'Sie wird transkribiert und zusammengefasst, dann in deinem mathom einsortiert.',
     'upload.audioFile': 'Audiodatei',
     'upload.chooseFileFirst': 'Wähle zuerst eine Audiodatei aus.',
     'upload.titleLabel': 'Titel',
@@ -299,7 +299,7 @@ const translations: Record<Lang, Record<string, string>> = {
     'nav.settings': 'Anmeldung',
 
     'auth.welcome': 'Willkommen bei Mathom',
-    'auth.subtitle': 'Melde dich an, um dein Gedächtnishaus zu öffnen.',
+    'auth.subtitle': 'Melde dich an, um dein mathom zu öffnen.',
     'auth.signIn': 'Mit Authentik anmelden',
     'auth.signOut': 'Abmelden',
     'auth.loading': 'Das Archiv wird geöffnet…',
@@ -311,7 +311,7 @@ const translations: Record<Lang, Record<string, string>> = {
     'auth.error.generic': 'Anmeldung fehlgeschlagen. Bitte versuche es erneut.',
 
     'users.title': 'Benutzer',
-    'users.subtitle': 'Wer dieses Mathom-Haus nutzen darf.',
+    'users.subtitle': 'Wer dieses mathom nutzen darf.',
     'users.role': 'Rolle',
     'users.active': 'Aktiv',
     'users.disabled': 'Deaktiviert',
@@ -345,7 +345,7 @@ const translations: Record<Lang, Record<string, string>> = {
     'settings.saveFailed': 'Speichern fehlgeschlagen',
   },
   es: {
-    'app.tagline': 'Tu casa de memoria con IA local',
+    'app.tagline': 'mathom',
     'language.label': 'Idioma',
 
     'nav.library': 'Biblioteca',
@@ -353,7 +353,7 @@ const translations: Record<Lang, Record<string, string>> = {
     'nav.timeline': 'Cronología',
     'nav.templates': 'Plantillas',
 
-    'library.title': 'La casa Mathom',
+    'library.title': 'mathom',
     'library.newMathom': '+ Nuevo Mathom',
     'library.searchPlaceholder': 'Buscar transcripciones, resúmenes, títulos…',
     'library.shelf.all': 'Todos',
@@ -424,12 +424,12 @@ const translations: Record<Lang, Record<string, string>> = {
     'templates.save': 'Guardar',
 
     'timeline.title': 'Cronología',
-    'timeline.subtitle': 'Tu casa de memoria, mes a mes.',
+    'timeline.subtitle': 'Tu mathom, mes a mes.',
     'timeline.empty': 'Aún no hay nada grabado.',
 
     'upload.title': 'Trae una grabación a casa',
     'upload.subtitle':
-      'Se transcribirá y resumirá, y luego se guardará en tu casa Mathom.',
+      'Se transcribirá y resumirá, y luego se guardará en tu mathom.',
     'upload.audioFile': 'Archivo de audio',
     'upload.chooseFileFirst': 'Elige primero un archivo de audio.',
     'upload.titleLabel': 'Título',
@@ -460,7 +460,7 @@ const translations: Record<Lang, Record<string, string>> = {
     'nav.settings': 'Acceso',
 
     'auth.welcome': 'Bienvenido a Mathom',
-    'auth.subtitle': 'Inicia sesión para abrir tu casa de memoria.',
+    'auth.subtitle': 'Inicia sesión para abrir tu mathom.',
     'auth.signIn': 'Iniciar sesión con Authentik',
     'auth.signOut': 'Cerrar sesión',
     'auth.loading': 'Abriendo el archivo…',
@@ -472,7 +472,7 @@ const translations: Record<Lang, Record<string, string>> = {
     'auth.error.generic': 'Error al iniciar sesión. Inténtalo de nuevo.',
 
     'users.title': 'Usuarios',
-    'users.subtitle': 'Quién puede usar esta casa Mathom.',
+    'users.subtitle': 'Quién puede usar este mathom.',
     'users.role': 'Rol',
     'users.active': 'Activo',
     'users.disabled': 'Deshabilitado',

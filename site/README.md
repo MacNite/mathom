@@ -60,7 +60,7 @@ workflow can also be run manually via **Actions → pages → Run workflow**.
 The site will be served at:
 
 ```
-https://macnite.github.io/Mathom-House---Your-Local-AI-Memory-House/
+https://macnite.github.io/mathom/
 ```
 
 ## Updating brand assets

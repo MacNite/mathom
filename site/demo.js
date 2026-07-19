@@ -20,7 +20,7 @@
 
   const translations = {
     en: {
-      'app.tagline': 'Your Local AI Memory House',
+      'app.tagline': 'mathom',
       'language.label': 'Language',
 
       'nav.library': 'Library',
@@ -28,7 +28,7 @@
       'nav.timeline': 'Timeline',
       'nav.templates': 'Templates',
 
-      'library.title': 'The Mathom-house',
+      'library.title': 'The mathom',
       'library.newMathom': '+ New Mathom',
       'library.searchPlaceholder': 'Search transcripts, summaries, titles…',
       'library.shelf.all': 'All',
@@ -72,7 +72,7 @@
       'templates.subtitle': 'Editable in the real app — the database copy is authoritative.',
 
       'timeline.title': 'Timeline',
-      'timeline.subtitle': 'Your memory house, month by month.',
+      'timeline.subtitle': 'Your mathom, month by month.',
       'timeline.empty': 'Nothing recorded yet.',
 
       'status.pending': 'Waiting',
@@ -103,7 +103,7 @@
       'demo.confirmDelete': 'Delete this Mathom? (demo only — reload to restore)',
     },
     de: {
-      'app.tagline': 'Dein lokales KI-Gedächtnishaus',
+      'app.tagline': 'mathom',
       'language.label': 'Sprache',
 
       'nav.library': 'Bibliothek',
@@ -111,7 +111,7 @@
       'nav.timeline': 'Zeitleiste',
       'nav.templates': 'Vorlagen',
 
-      'library.title': 'Das Mathom-Haus',
+      'library.title': 'mathom',
       'library.newMathom': '+ Neues Mathom',
       'library.searchPlaceholder': 'Transkripte, Zusammenfassungen, Titel durchsuchen…',
       'library.shelf.all': 'Alle',
@@ -155,7 +155,7 @@
       'templates.subtitle': 'In der echten App bearbeitbar — die Datenbankkopie ist maßgeblich.',
 
       'timeline.title': 'Zeitleiste',
-      'timeline.subtitle': 'Dein Gedächtnishaus, Monat für Monat.',
+      'timeline.subtitle': 'Dein mathom, Monat für Monat.',
       'timeline.empty': 'Noch nichts aufgenommen.',
 
       'status.pending': 'Wartet',
@@ -186,7 +186,7 @@
       'demo.confirmDelete': 'Dieses Mathom löschen? (nur Demo — zum Wiederherstellen neu laden)',
     },
     es: {
-      'app.tagline': 'Tu casa de memoria con IA local',
+      'app.tagline': 'mathom',
       'language.label': 'Idioma',
 
       'nav.library': 'Biblioteca',
@@ -194,7 +194,7 @@
       'nav.timeline': 'Cronología',
       'nav.templates': 'Plantillas',
 
-      'library.title': 'La casa Mathom',
+      'library.title': 'mathom',
       'library.newMathom': '+ Nuevo Mathom',
       'library.searchPlaceholder': 'Buscar transcripciones, resúmenes, títulos…',
       'library.shelf.all': 'Todos',
@@ -238,7 +238,7 @@
       'templates.subtitle': 'Editable en la app real — la copia de la base de datos es la autoritativa.',
 
       'timeline.title': 'Cronología',
-      'timeline.subtitle': 'Tu casa de memoria, mes a mes.',
+      'timeline.subtitle': 'Tu mathom, mes a mes.',
       'timeline.empty': 'Aún no hay nada grabado.',
 
       'status.pending': 'En espera',

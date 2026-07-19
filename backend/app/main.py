@@ -44,7 +44,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
 
 app = FastAPI(
     title="Mathom",
-    summary="Your Local AI Memory House",
+    summary="mathom",
     version=health.VERSION,
     lifespan=lifespan,
 )

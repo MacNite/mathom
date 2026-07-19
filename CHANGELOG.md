@@ -44,7 +44,7 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 - Optional user management with **Authentik single sign-on** (OAuth2/OIDC),
   disabled by default so existing installs are unaffected. When enabled, each
-  person signs in through Authentik and gets a private per-user Mathom-house
+  person signs in through Authentik and gets a private per-user mathom
   (Mathoms, chats, tags, collections are scoped per user). Roles are
   **Owner / Admin / User**; MFA/2FA is delegated to Authentik. The Owner can edit
   the Authentik connection in the UI, and pre-existing recordings are claimed by
@@ -52,7 +52,7 @@ adheres to [Semantic Versioning](https://semver.org/).
   cookies. See [docs/authentication.md](docs/authentication.md).
 - Installable Progressive Web App with Android **Web Share Target** support:
   share a WhatsApp voice message (or any audio file) straight from the Android
-  Share Sheet into your local Mathom-house. A service worker receives the file
+  Share Sheet into your local mathom. A service worker receives the file
   and the app opens the upload dialog pre-filled, so the flow is
   *Share → Mathom → title/template → upload → transcribe → summarize*. Audio
   goes from your device to your own server only — no third parties.
@@ -62,7 +62,7 @@ adheres to [Semantic Versioning](https://semver.org/).
   switcher; the choice is remembered and defaults to the browser language.
 - Initial Mathom stack: FastAPI backend, React + Vite + Tailwind frontend,
   nginx proxy, Ollama and faster-whisper integration, SQLite storage.
-- Mathom-house archive: upload → transcribe → summarize pipeline with status
+- mathom archive: upload → transcribe → summarize pipeline with status
   tracking, tags, favorites, archive, collections, timeline, and exports
   (Markdown / text / JSON).
 - Full-text search (SQLite FTS5) with highlighted snippets.

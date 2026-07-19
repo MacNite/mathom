@@ -6,12 +6,12 @@ Mathom listens, remembers, organizes, and helps you rediscover conversations,
 meetings, and ideas — all completely local. It transcribes voice recordings
 with [faster-whisper](https://github.com/SYSTRAN/faster-whisper), summarizes
 them with [Ollama](https://ollama.com), and shelves every recording as a
-**Mathom** in your searchable **Mathom-house**. Your data never leaves your own
+**Mathom** in your searchable local archive. Your data never leaves your own
 server.
 
 *In Tolkien's Shire, a "mathom" is anything hobbits have no immediate use for
-but are unwilling to throw away. Their mathoms went to the Mathom-house —
-yours go here.*
+but are unwilling to throw away — kept safe rather than tossed out. Yours go
+here.*
 
 ## Features
 
@@ -42,8 +42,8 @@ Requirements: Docker with Compose v2. Optional: NVIDIA Container Toolkit for
 GPU acceleration.
 
 ```bash
-git clone https://github.com/MacNite/Mathom-House---Your-Local-AI-Memory-House.git
-cd Mathom-House---Your-Local-AI-Memory-House
+git clone https://github.com/MacNite/mathom.git
+cd mathom
 cp .env.example .env      # adjust if you like — defaults work
 make up                   # CPU stack
 make models               # pull the Ollama model (first run only)
@@ -56,11 +56,16 @@ GPU users: `make up-gpu` instead of `make up`.
 ## How It Works
 
 ```
-Browser ──▶ proxy (nginx) ──▶ backend (FastAPI) ──▶ Ollama (internal only)
-                 │                   │
-             frontend            SQLite + audio
-             (React)             (persistent volume)
+Browser ──▶ mathom container ──▶ Ollama (internal only)
+             nginx + FastAPI
+             + React frontend
+             SQLite + audio (persistent volume)
 ```
+
+Mathom ships as a **single image** (React frontend, FastAPI backend, and nginx
+in one container, run together by supervisord) plus the stock Ollama image.
+Only the mathom container publishes a port; Ollama stays on the internal
+network.
 
 Each upload becomes a Mathom and moves through
 `pending → transcribing → summarizing → ready`. Everything about it — audio,

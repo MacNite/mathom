@@ -1,4 +1,4 @@
-"""SQLAlchemy models for the Mathom-house."""
+"""SQLAlchemy models for the mathom."""
 
 from __future__ import annotations
 

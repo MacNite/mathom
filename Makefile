@@ -33,7 +33,7 @@ lint: ## Lint and type-check both apps
 	cd backend && python -m ruff check app tests && python -m mypy app
 	cd frontend && npm run lint && npm run typecheck
 
-build: ## Build both container images
+build: ## Build the mathom image
 	docker compose -f compose.yaml build
 
 validate: ## Validate both compose stacks

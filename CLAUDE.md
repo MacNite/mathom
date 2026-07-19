@@ -1,42 +1,48 @@
 # CLAUDE.md — Mathom Project Guide
 
-> Mathom — Your Local AI Memory House.
+> mathom.
 > This file is the source of truth for how the project is structured, built,
 > tested, and shipped. Read it before making changes.
 
 ## What Mathom Is
 
-Mathom is a fully local, self-hosted AI memory house. It transcribes voice
+Mathom is a fully local, self-hosted mathom. It transcribes voice
 recordings with faster-whisper, summarizes them with Ollama, and stores each
 recording as a **Mathom** — audio, transcript, summaries, AI outputs, tags,
-follow-up chat — in a searchable archive called the **Mathom-house**.
+follow-up chat — in a searchable archive called the **mathom**.
 Everything runs on the user's own hardware (TrueNAS SCALE / any Docker host).
 No cloud services, ever.
 
 ## Architecture
 
+Mathom ships as **one custom image** (frontend + backend + nginx, run together
+by supervisord) plus the stock Ollama image.
+
 ```
-┌────────────┐     ┌─────────────────────┐     ┌───────────────┐
-│  Browser    │────▶│  proxy (nginx)      │────▶│  backend      │
-│  (React UI) │     │  serves frontend,   │     │  (FastAPI)    │
-└────────────┘     │  proxies /api       │     └──────┬────────┘
-                    └─────────────────────┘            │
-                                              ┌────────┴────────┐
-                                              │                 │
-                                        ┌─────▼─────┐   ┌───────▼───────┐
-                                        │  SQLite    │   │  Ollama       │
-                                        │  + files   │   │  (internal    │
-                                        │  volume    │   │   only)       │
-                                        └───────────┘   └───────────────┘
+┌────────────┐     ┌───────────────────────────────────┐     ┌───────────────┐
+│  Browser    │────▶│  mathom container                 │────▶│  Ollama       │
+│  (React UI) │     │  nginx ─/api─▶ FastAPI (loopback)  │     │  (internal    │
+└────────────┘     │  + React build   (supervisord)    │     │   only)       │
+                    └──────────────────┬────────────────┘     └───────────────┘
+                                       │
+                                 ┌─────▼─────┐
+                                 │  SQLite    │
+                                 │  + files   │
+                                 │  volume    │
+                                 └───────────┘
 ```
 
+- **Dockerfile** (repo root) — builds the single `mathom` image: the frontend
+  is built, the backend installed, and nginx + uvicorn run together under
+  supervisord as a non-root user.
 - **backend/** — FastAPI (Python 3.11+). Owns the SQLite database, audio file
   storage, transcription (faster-whisper), summarization and chat (Ollama via
   HTTP), prompt templates, search, tags, collections, exports.
 - **frontend/** — React 18 + Vite + TypeScript + Tailwind CSS. Talks only to
-  `/api/*`. Built to static assets and served by the proxy.
-- **proxy/** — nginx. The single public entry point. Serves the frontend
-  build, reverse-proxies `/api` to the backend. Ollama is never exposed.
+  `/api/*`. Built to static assets and served by nginx inside the image.
+- **docker/** — `nginx.conf` (the public entry point: serves the frontend
+  build, reverse-proxies `/api` to the loopback backend, never exposes Ollama)
+  and `supervisord.conf` (runs nginx + uvicorn side by side).
 - **prompt-templates/** — seed JSON templates loaded into SQLite on first
   startup. Users edit templates in the UI; the DB copy is authoritative.
 - **docs/** — architecture, deployment (incl. TrueNAS SCALE), API docs.
@@ -94,12 +100,15 @@ require an explicit migration script in `scripts/`.
 - One Compose stack: `compose.yaml` (CPU). GPU users add
   `compose.gpu.yaml` as an overlay: `docker compose -f compose.yaml -f
   compose.gpu.yaml up`.
+- **One custom image.** The frontend, backend, and nginx are built into a
+  single `mathom` image (repo-root `Dockerfile`) and run together under
+  supervisord. Ollama is the only other container, using its stock image.
 - All containers run as **non-root** users.
 - Every service defines a **healthcheck**.
 - Persistent named volumes for: SQLite + audio (`mathom-data`), Ollama models
   (`ollama-models`), whisper models (`whisper-models`).
 - **Ollama must never publish a host port.** It is reachable only on the
-  internal Compose network. Only the proxy publishes a port.
+  internal Compose network. Only the mathom container publishes a port.
 - Images are multi-stage, pinned base images, `.dockerignore` kept current.
 - TrueNAS SCALE: stack must work with host-path volumes substituted for named
   volumes; document in `docs/deployment.md`.
@@ -108,8 +117,8 @@ require an explicit migration script in `scripts/`.
 
 - Local-first: no telemetry, no outbound calls except backend→Ollama on the
   internal network.
-- The proxy is the only exposed service. Backend binds to the Compose network
-  only.
+- The mathom container is the only exposed service; inside it nginx is the
+  front door and the backend (uvicorn) binds to loopback only.
 - Validate all uploads: extension + content-type allowlist, size limit
   (`MAX_UPLOAD_MB`), filenames are never trusted (server-generated names).
 - SQL only via SQLAlchemy parameterized queries; FTS queries sanitized.
@@ -134,7 +143,7 @@ require an explicit migration script in `scripts/`.
 | `backend-ci.yml`         | PR + main          | ruff, mypy, pytest                      |
 | `frontend-ci.yml`        | PR + main          | eslint, tsc, vitest, vite build         |
 | `compose-validation.yml` | PR + main          | `docker compose config` for both stacks |
-| `docker-build.yml`       | PR + main          | build backend + proxy images; push to GHCR on `main` |
+| `docker-build.yml`       | PR + main          | build the single `mathom` image; push to GHCR on `main` |
 | `security.yml`           | PR + main + weekly | pip-audit, npm audit, Trivy FS scan     |
 | `release-images.yml`     | tags `v*`          | build + push GHCR images                |
 
@@ -179,7 +188,7 @@ non-obvious.
 
 ## Branding
 
-- Name: **Mathom** — tagline: *Your Local AI Memory House*.
+- Name: **Mathom** — tagline: *mathom*.
 - Voice & design: warm, calm, minimal, cozy, professional. Inspired by
   libraries, maps, notebooks, archive shelves, rounded doorways.
 - Rounded corners, parchment/amber/moss palette (defined in Tailwind theme),

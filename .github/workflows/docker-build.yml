@@ -12,13 +12,6 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        image:
-          - name: backend
-            dockerfile: backend/Dockerfile
-          - name: proxy
-            dockerfile: proxy/Dockerfile
     steps:
       - uses: actions/checkout@v4
 
@@ -36,18 +29,18 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/mathom-${{ matrix.image.name }}
+          images: ghcr.io/${{ github.repository_owner }}/mathom
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha,format=long,enable={{is_default_branch}}
 
-      - name: Build ${{ matrix.image.name }}
+      - name: Build mathom image
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ${{ matrix.image.dockerfile }}
+          file: Dockerfile
           push: ${{ github.event_name == 'push' }}
-          tags: ${{ github.event_name == 'push' && steps.meta.outputs.tags || format('mathom-{0}:ci', matrix.image.name) }}
+          tags: ${{ github.event_name == 'push' && steps.meta.outputs.tags || 'mathom:ci' }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=${{ matrix.image.name }}
-          cache-to: type=gha,scope=${{ matrix.image.name }},mode=max
+          cache-from: type=gha,scope=mathom
+          cache-to: type=gha,scope=mathom,mode=max

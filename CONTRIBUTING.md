@@ -1,6 +1,6 @@
 # Contributing to Mathom
 
-Thanks for helping build the Mathom-house! This guide covers the practical
+Thanks for helping build the mathom! This guide covers the practical
 bits; [CLAUDE.md](CLAUDE.md) is the authoritative reference for architecture
 and standards.
 

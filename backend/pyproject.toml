@@ -1,7 +1,7 @@
 [project]
 name = "mathom-backend"
 version = "0.1.0"
-description = "Mathom — Your Local AI Memory House (backend)"
+description = "mathom (backend)"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115,<1",

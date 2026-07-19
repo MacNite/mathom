@@ -3,12 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mathom — Your Local AI Memory House</title>
+    <title>mathom</title>
     <meta
       name="description"
-      content="Mathom is a fully local, self-hosted AI memory house. Transcribe voice recordings with faster-whisper, summarize them with Ollama, and shelve every recording in a searchable archive that never leaves your own server."
+      content="Mathom is a fully local, self-hosted mathom. Transcribe voice recordings with faster-whisper, summarize them with Ollama, and shelve every recording in a searchable archive that never leaves your own server."
     />
-    <link rel="canonical" href="https://macnite.github.io/Mathom-House---Your-Local-AI-Memory-House/" />
+    <link rel="canonical" href="https://macnite.github.io/mathom/" />
 
     <!-- Icons -->
     <link rel="icon" type="image/png" href="./assets/favicon-192.png" />
@@ -17,7 +17,7 @@
 
     <!-- Open Graph / social -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Mathom — Your Local AI Memory House" />
+    <meta property="og:title" content="mathom" />
     <meta
       property="og:description"
       content="Transcribe, summarize, and rediscover your conversations — fully local, no cloud, no telemetry."
@@ -47,7 +47,7 @@
           <a class="btn btn-ghost" href="./demo.html">Try the demo</a>
           <a
             class="btn btn-primary"
-            href="https://github.com/MacNite/Mathom-House---Your-Local-AI-Memory-House"
+            href="https://github.com/MacNite/mathom"
           >
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path
@@ -66,7 +66,7 @@
       <div class="container hero-grid">
         <div>
           <span class="eyebrow">100% local · self-hosted · no cloud</span>
-          <h1>Your Local AI Memory House</h1>
+          <h1>mathom</h1>
           <p class="lede">
             Mathom listens, remembers, organizes, and helps you rediscover
             conversations, meetings, and ideas. It transcribes voice recordings
@@ -78,7 +78,7 @@
             <a class="btn btn-ghost" href="#quickstart">Get started</a>
             <a
               class="btn btn-ghost"
-              href="https://github.com/MacNite/Mathom-House---Your-Local-AI-Memory-House"
+              href="https://github.com/MacNite/mathom"
               >View on GitHub</a
             >
           </div>
@@ -103,7 +103,7 @@
         <p>
           In Tolkien's Shire, a <em>mathom</em> is anything you have no immediate
           use for but are unwilling to throw away — kept safe in the
-          Mathom-house. Yours go here: audio, transcript, summaries, tags, and
+          mathom. Yours go here: audio, transcript, summaries, tags, and
           follow-up chat, stored together as a single searchable keepsake.
         </p>
       </div>
@@ -166,7 +166,7 @@
             <h3>Exports</h3>
             <p>
               Take any Mathom with you as Markdown, plain text, or JSON. Your
-              memory house, your files.
+              mathom, your files.
             </p>
           </div>
           <div class="card reveal">
@@ -219,16 +219,14 @@
           <div class="flow-step">
             <div class="num">4</div>
             <h3>Shelve</h3>
-            <p>It joins your searchable Mathom-house, ready to rediscover.</p>
+            <p>It joins your searchable mathom, ready to rediscover.</p>
           </div>
         </div>
 
         <div class="pipeline reveal" aria-label="Architecture pipeline">
           <span class="node">Browser <strong>React UI</strong></span>
           <span class="sep">→</span>
-          <span class="node">proxy <strong>nginx</strong></span>
-          <span class="sep">→</span>
-          <span class="node">backend <strong>FastAPI</strong></span>
+          <span class="node">mathom <strong>nginx + FastAPI</strong></span>
           <span class="sep">→</span>
           <span class="node"><strong>Ollama</strong> (internal only)</span>
           <span class="sep">+</span>
@@ -274,8 +272,9 @@
             Local-first, by design
           </h2>
           <p style="color: var(--ink-700);">
-            Mathom ships with safe defaults. The proxy is the only exposed
-            service, and Ollama is never published beyond the internal network.
+            Mathom ships with safe defaults. The mathom container is the only
+            exposed service, and Ollama is never published beyond the internal
+            network.
           </p>
         </div>
         <ul class="checks reveal">
@@ -331,8 +330,8 @@
         </div>
         <div class="codeblock reveal">
 <code><span class="c"># Clone the repository</span>
-<span class="cmd">git</span> clone https://github.com/MacNite/Mathom-House---Your-Local-AI-Memory-House.git
-<span class="cmd">cd</span> Mathom-House---Your-Local-AI-Memory-House
+<span class="cmd">git</span> clone https://github.com/MacNite/mathom.git
+<span class="cmd">cd</span> mathom
 
 <span class="c"># Configure — defaults work out of the box</span>
 <span class="cmd">cp</span> .env.example .env
@@ -362,12 +361,12 @@
         <div class="cta-actions">
           <a
             class="btn btn-primary"
-            href="https://github.com/MacNite/Mathom-House---Your-Local-AI-Memory-House#documentation"
+            href="https://github.com/MacNite/mathom#documentation"
             >Browse documentation</a
           >
           <a
             class="btn btn-ghost"
-            href="https://github.com/MacNite/Mathom-House---Your-Local-AI-Memory-House/blob/main/docs/deployment.md"
+            href="https://github.com/MacNite/mathom/blob/main/docs/deployment.md"
             >Deployment guide</a
           >
         </div>
@@ -384,23 +383,23 @@
               <span>Mathom</span>
             </div>
             <p>
-              Your Local AI Memory House. Warm, calm, private — a trusted local
+              mathom. Warm, calm, private — a trusted local
               archive for your conversations and memories.
             </p>
           </div>
           <div class="footer-col">
             <h4>Project</h4>
-            <a href="https://github.com/MacNite/Mathom-House---Your-Local-AI-Memory-House">GitHub repository</a>
-            <a href="https://github.com/MacNite/Mathom-House---Your-Local-AI-Memory-House/blob/main/docs/architecture.md">Architecture</a>
-            <a href="https://github.com/MacNite/Mathom-House---Your-Local-AI-Memory-House/blob/main/docs/deployment.md">Deployment</a>
-            <a href="https://github.com/MacNite/Mathom-House---Your-Local-AI-Memory-House/blob/main/CHANGELOG.md">Changelog</a>
+            <a href="https://github.com/MacNite/mathom">GitHub repository</a>
+            <a href="https://github.com/MacNite/mathom/blob/main/docs/architecture.md">Architecture</a>
+            <a href="https://github.com/MacNite/mathom/blob/main/docs/deployment.md">Deployment</a>
+            <a href="https://github.com/MacNite/mathom/blob/main/CHANGELOG.md">Changelog</a>
           </div>
           <div class="footer-col">
             <h4>Learn more</h4>
-            <a href="https://github.com/MacNite/Mathom-House---Your-Local-AI-Memory-House/blob/main/docs/threat-model.md">Threat model</a>
-            <a href="https://github.com/MacNite/Mathom-House---Your-Local-AI-Memory-House/blob/main/docs/authentication.md">Authentication</a>
-            <a href="https://github.com/MacNite/Mathom-House---Your-Local-AI-Memory-House/blob/main/CONTRIBUTING.md">Contributing</a>
-            <a href="https://github.com/MacNite/Mathom-House---Your-Local-AI-Memory-House/blob/main/SECURITY.md">Security policy</a>
+            <a href="https://github.com/MacNite/mathom/blob/main/docs/threat-model.md">Threat model</a>
+            <a href="https://github.com/MacNite/mathom/blob/main/docs/authentication.md">Authentication</a>
+            <a href="https://github.com/MacNite/mathom/blob/main/CONTRIBUTING.md">Contributing</a>
+            <a href="https://github.com/MacNite/mathom/blob/main/SECURITY.md">Security policy</a>
           </div>
         </div>
         <div class="footer-bottom">

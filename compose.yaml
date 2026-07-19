@@ -1,39 +1,24 @@
-# Mathom — Your Local AI Memory House
+# mathom
 # CPU stack. For NVIDIA GPUs: docker compose -f compose.yaml -f compose.gpu.yaml up -d
+#
+# Two containers: the single mathom image (frontend + backend + nginx) and
+# Ollama. Only mathom publishes a port; Ollama stays on the internal network.
 
 name: mathom
 
 services:
-  proxy:
+  app:
     build:
       context: .
-      dockerfile: proxy/Dockerfile
-    image: mathom-proxy:latest
+      dockerfile: Dockerfile
+    image: mathom:latest
     restart: unless-stopped
     ports:
-      # Bind to loopback by default. With auth disabled (the default) Mathom has
+      # Bind to loopback by default. With auth disabled (the default) mathom has
       # no login, so it must not be reachable beyond the host out of the box.
       # Set MATHOM_BIND=0.0.0.0 for LAN access — only behind a VPN/authenticating
       # reverse proxy, or with Authentik SSO enabled. See docs/deployment.md.
       - "${MATHOM_BIND:-127.0.0.1}:${MATHOM_PORT:-8080}:8080"
-    depends_on:
-      backend:
-        condition: service_healthy
-    networks:
-      - mathom
-    healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-
-  backend:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
-    image: mathom-backend:latest
-    restart: unless-stopped
     environment:
       MATHOM_DATA_DIR: /data
       MATHOM_OLLAMA_BASE_URL: http://ollama:11434
@@ -61,11 +46,11 @@ services:
     networks:
       - mathom
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/api/health"]
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/api/health"]
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 30s
+      start_period: 40s
 
   ollama:
     # Pinned for reproducible, auditable deployments. Bump deliberately;

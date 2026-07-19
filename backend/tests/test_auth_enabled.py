@@ -1,10 +1,13 @@
-"""End-to-end auth flow with Authentik OIDC mocked (see conftest.auth_harness)."""
+"""End-to-end auth flow with Authentik OIDC mocked (see conftest.auth_harness).
+
+``auth_harness`` is an ``AuthHarness`` (defined in conftest) provided by fixture;
+it is intentionally left unannotated so the module needs no cross-package import
+(pytest is invoked as bare ``pytest`` in CI, where ``tests`` is not importable).
+"""
 
 import io
 
 from fastapi.testclient import TestClient
-
-from tests.conftest import AuthHarness
 
 OWNER = {"sub": "owner-sub", "email": "owner@example.com", "name": "Archive Owner"}
 ALICE = {"sub": "alice-sub", "email": "alice@example.com", "name": "Alice"}
@@ -21,7 +24,7 @@ def _upload(client: TestClient, title: str) -> int:
     return int(response.json()["id"])
 
 
-def test_status_and_unauthenticated_access(auth_harness: AuthHarness) -> None:
+def test_status_and_unauthenticated_access(auth_harness) -> None:
     client = auth_harness.client()
     status = client.get("/api/auth/status").json()
     assert status["auth_enabled"] is True
@@ -31,7 +34,7 @@ def test_status_and_unauthenticated_access(auth_harness: AuthHarness) -> None:
     assert client.get("/api/mathoms").status_code == 401
 
 
-def test_first_user_becomes_owner(auth_harness: AuthHarness) -> None:
+def test_first_user_becomes_owner(auth_harness) -> None:
     client = auth_harness.client()
     auth_harness.login(client, OWNER)
     me = client.get("/api/auth/status").json()
@@ -40,7 +43,7 @@ def test_first_user_becomes_owner(auth_harness: AuthHarness) -> None:
     assert me["user"]["email"] == "owner@example.com"
 
 
-def test_second_user_is_isolated(auth_harness: AuthHarness) -> None:
+def test_second_user_is_isolated(auth_harness) -> None:
     owner = auth_harness.client()
     auth_harness.login(owner, OWNER)
     owner_mathom = _upload(owner, "Owner's memory")
@@ -59,7 +62,7 @@ def test_second_user_is_isolated(auth_harness: AuthHarness) -> None:
     assert owner.get(f"/api/mathoms/{alice_mathom}").status_code == 404
 
 
-def test_rbac_user_management(auth_harness: AuthHarness) -> None:
+def test_rbac_user_management(auth_harness) -> None:
     owner = auth_harness.client()
     auth_harness.login(owner, OWNER)
     alice = auth_harness.client()
@@ -86,7 +89,7 @@ def test_rbac_user_management(auth_harness: AuthHarness) -> None:
     assert bob.get("/api/mathoms").status_code == 401
 
 
-def test_owner_cannot_be_demoted_into_lockout(auth_harness: AuthHarness) -> None:
+def test_owner_cannot_be_demoted_into_lockout(auth_harness) -> None:
     owner = auth_harness.client()
     auth_harness.login(owner, OWNER)
     me = owner.get("/api/auth/status").json()["user"]
@@ -94,7 +97,7 @@ def test_owner_cannot_be_demoted_into_lockout(auth_harness: AuthHarness) -> None
     assert resp.status_code == 409
 
 
-def test_logout_ends_the_session(auth_harness: AuthHarness) -> None:
+def test_logout_ends_the_session(auth_harness) -> None:
     client = auth_harness.client()
     auth_harness.login(client, OWNER)
     assert client.get("/api/mathoms").status_code == 200
@@ -102,7 +105,7 @@ def test_logout_ends_the_session(auth_harness: AuthHarness) -> None:
     assert client.get("/api/mathoms").status_code == 401
 
 
-def test_owner_claims_pre_auth_mathoms(auth_harness: AuthHarness) -> None:
+def test_owner_claims_pre_auth_mathoms(auth_harness) -> None:
     # Simulate a database that predates user management: an unowned Mathom.
     from app.db import get_session_factory
     from app.models import Mathom
@@ -117,7 +120,7 @@ def test_owner_claims_pre_auth_mathoms(auth_harness: AuthHarness) -> None:
     assert "Legacy memory" in titles
 
 
-def test_settings_update_masks_secret(auth_harness: AuthHarness) -> None:
+def test_settings_update_masks_secret(auth_harness) -> None:
     owner = auth_harness.client()
     auth_harness.login(owner, OWNER)
     current = owner.get("/api/settings/authentik").json()

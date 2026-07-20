@@ -28,9 +28,21 @@ export default function App() {
     );
   }
 
-  // When auth is enabled and nobody is signed in, the whole app is the login gate.
+  // When auth is enabled and nobody is signed in, the whole app is the login
+  // gate — except for the public invitation flow. An invitee following the link
+  // in their email is signed out by definition, so `/register` must render
+  // before the gate; otherwise they land on the login page (which they cannot
+  // use yet) instead of setting their password.
   if (status.auth_enabled && !status.authenticated) {
-    return status.onboarding_required ? <Onboarding /> : <Login />;
+    return (
+      <Routes>
+        <Route path="register" element={<Register />} />
+        <Route
+          path="*"
+          element={status.onboarding_required ? <Onboarding /> : <Login />}
+        />
+      </Routes>
+    );
   }
 
   const guard = (allowed: boolean, element: ReactElement): ReactElement =>

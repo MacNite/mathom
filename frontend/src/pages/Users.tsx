@@ -3,15 +3,18 @@ import { useCallback, useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { useI18n } from '../lib/i18n';
+import { useToast } from '../lib/toast';
 import type { Role, User } from '../lib/types';
 
 const ROLES: Role[] = ['admin', 'user'];
 
 export default function Users() {
   const { t } = useI18n();
+  const toast = useToast();
   const { user: me, isAdmin, refresh: refreshAuth } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,7 +27,8 @@ export default function Users() {
       api
         .listUsers()
         .then(setUsers)
-        .catch((err) => setError(err instanceof Error ? err.message : t('users.loadError'))),
+        .catch((err) => setError(err instanceof Error ? err.message : t('users.loadError')))
+        .finally(() => setLoading(false)),
     [t],
   );
 
@@ -69,6 +73,7 @@ export default function Users() {
       setConfirmation('');
       setMustChangePassword(true);
       await refresh();
+      toast.success(t('users.created'));
     } catch (err) {
       setError(err instanceof Error ? err.message : t('users.createError'));
     } finally {
@@ -82,6 +87,7 @@ export default function Users() {
     try {
       await api.deleteUser(target.id);
       await refresh();
+      toast.success(t('users.deleted'));
     } catch (err) {
       setError(err instanceof Error ? err.message : t('settings.saveFailed'));
     }
@@ -92,7 +98,12 @@ export default function Users() {
       <h2 className="font-display text-2xl text-ink-900">{t('users.title')}</h2>
       <p className="mt-1 text-sm text-ink-500">{t('users.subtitle')}</p>
 
-      {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
+      {error && (
+        <p className="mt-4 text-sm text-red-700" role="alert">
+          {error}
+        </p>
+      )}
+      {loading && <p className="mt-4 text-sm text-ink-500">{t('common.loading')}</p>}
 
       <form onSubmit={createUser} className="card mt-6 max-w-2xl space-y-4">
         <div>

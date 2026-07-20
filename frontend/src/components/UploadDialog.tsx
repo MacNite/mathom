@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 import { api } from '../lib/api';
 import { useI18n } from '../lib/i18n';
+import { useToast } from '../lib/toast';
 import type { PromptTemplate } from '../lib/types';
 
 interface Props {
@@ -15,6 +16,9 @@ interface Props {
   sharedTitle?: string;
 }
 
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 export default function UploadDialog({
   open,
   onClose,
@@ -23,12 +27,16 @@ export default function UploadDialog({
   sharedTitle = '',
 }: Props) {
   const { lang, t } = useI18n();
+  const toast = useToast();
   const [templates, setTemplates] = useState<PromptTemplate[]>([]);
   const [title, setTitle] = useState('');
   const [templateSlug, setTemplateSlug] = useState('general-summary');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLFormElement>(null);
+  const titleId = useId();
+  const descId = useId();
 
   useEffect(() => {
     if (open) {
@@ -37,6 +45,41 @@ export default function UploadDialog({
       setTitle(sharedTitle);
     }
   }, [lang, open, sharedTitle]);
+
+  // Accessible-dialog behaviour: trap focus, restore it on close, close on
+  // Escape, and move focus into the dialog when it opens.
+  useEffect(() => {
+    if (!open) return;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const node = dialogRef.current;
+    node?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab' || !node) return;
+      const focusable = Array.from(node.querySelectorAll<HTMLElement>(FOCUSABLE));
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      previouslyFocused?.focus?.();
+    };
+  }, [open, onClose]);
 
   if (!open) return null;
 
@@ -53,6 +96,7 @@ export default function UploadDialog({
       await api.uploadMathom(file, title, templateSlug, lang);
       setTitle('');
       if (fileRef.current) fileRef.current.value = '';
+      toast.success(t('upload.success'));
       onUploaded();
       onClose();
     } catch (err) {
@@ -63,10 +107,26 @@ export default function UploadDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-ink-900/40 p-4">
-      <form onSubmit={submit} className="card w-full max-w-md bg-parchment-50">
-        <h2 className="font-display text-xl text-ink-900">{t('upload.title')}</h2>
-        <p className="mt-1 text-sm text-ink-500">
+    <div
+      className="fixed inset-0 z-40 flex items-center justify-center bg-ink-900/40 p-4"
+      onMouseDown={(event) => {
+        // Close only when the backdrop itself is pressed, not the dialog.
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <form
+        ref={dialogRef}
+        onSubmit={submit}
+        className="card w-full max-w-md bg-parchment-50"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descId}
+      >
+        <h2 id={titleId} className="font-display text-xl text-ink-900">
+          {t('upload.title')}
+        </h2>
+        <p id={descId} className="mt-1 text-sm text-ink-500">
           {sharedFile ? t('upload.sharedSubtitle') : t('upload.subtitle')}
         </p>
         {sharedFile ? (
@@ -108,7 +168,11 @@ export default function UploadDialog({
             ))}
           </select>
         </label>
-        {error && <p className="mt-3 text-sm text-red-700">{error}</p>}
+        {error && (
+          <p className="mt-3 text-sm text-red-700" role="alert">
+            {error}
+          </p>
+        )}
         <div className="mt-5 flex justify-end gap-2">
           <button type="button" onClick={onClose} className="btn-ghost">
             {t('upload.cancel')}

@@ -1,8 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
+import { formatDuration } from '../lib/format';
+import { translate } from '../lib/i18n';
 import type { MathomListItem } from '../lib/types';
-import MathomCard, { formatDuration } from './MathomCard';
+import MathomCard from './MathomCard';
+
+const t = (key: string, vars?: Record<string, string | number>) => translate('en', key, vars);
 
 const mathom: MathomListItem = {
   id: 7,
@@ -18,9 +22,9 @@ const mathom: MathomListItem = {
 
 describe('formatDuration', () => {
   it('formats minutes and seconds', () => {
-    expect(formatDuration(95)).toBe('1 min 35 s');
-    expect(formatDuration(42)).toBe('42 s');
-    expect(formatDuration(null)).toBe('');
+    expect(formatDuration(95, t)).toBe('1 min 35 s');
+    expect(formatDuration(42, t)).toBe('42 s');
+    expect(formatDuration(null, t)).toBe('');
   });
 });
 

@@ -3,16 +3,30 @@ import { useEffect, useState } from 'react';
 import MathomCard from '../components/MathomCard';
 import { api } from '../lib/api';
 import { useI18n } from '../lib/i18n';
+import { useToast } from '../lib/toast';
 import type { Collection } from '../lib/types';
 
 export default function Collections() {
   const { t } = useI18n();
+  const toast = useToast();
   const [collections, setCollections] = useState<Collection[]>([]);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
-  const refresh = () => api.listCollections().then(setCollections);
+  const refresh = () => {
+    setLoading(true);
+    return api
+      .listCollections()
+      .then((list) => {
+        setCollections(list);
+        setLoadError(false);
+      })
+      .catch(() => setLoadError(true))
+      .finally(() => setLoading(false));
+  };
 
   useEffect(() => {
     void refresh();
@@ -27,6 +41,7 @@ export default function Collections() {
       setName('');
       setDescription('');
       await refresh();
+      toast.success(t('collections.created'));
     } catch (err) {
       setError(err instanceof Error ? err.message : t('collections.createError'));
     }
@@ -34,8 +49,13 @@ export default function Collections() {
 
   const remove = async (collection: Collection) => {
     if (!window.confirm(t('collections.confirmDelete', { name: collection.name }))) return;
-    await api.deleteCollection(collection.id);
-    await refresh();
+    try {
+      await api.deleteCollection(collection.id);
+      await refresh();
+      toast.success(t('collections.deleted'));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('settings.saveFailed'));
+    }
   };
 
   return (
@@ -66,6 +86,19 @@ export default function Collections() {
         </button>
         {error && <p className="w-full text-sm text-red-700">{error}</p>}
       </form>
+
+      {loading && <p className="mt-6 text-sm text-ink-500">{t('common.loading')}</p>}
+      {loadError && !loading && (
+        <div className="card mt-6 text-center">
+          <p className="text-sm text-red-700">{t('common.loadError')}</p>
+          <button onClick={() => void refresh()} className="btn-ghost mt-3">
+            {t('common.retry')}
+          </button>
+        </div>
+      )}
+      {!loading && !loadError && collections.length === 0 && (
+        <p className="card mt-6 text-sm text-ink-500">{t('collections.none')}</p>
+      )}
 
       <div className="mt-6 space-y-6">
         {collections.map((collection) => (

@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
-import { formatDuration } from '../components/MathomCard';
 import StatusBadge from '../components/StatusBadge';
 import { api } from '../lib/api';
+import { formatDateTime, formatDuration } from '../lib/format';
 import { useI18n } from '../lib/i18n';
-import type { Collection, Mathom, PromptTemplate } from '../lib/types';
+import { useToast } from '../lib/toast';
+import type { ChatMessage, Collection, Mathom, PromptTemplate } from '../lib/types';
 
 export default function MathomDetail() {
   const { lang, t } = useI18n();
+  const toast = useToast();
   const { id } = useParams();
   const mathomId = Number(id);
   const navigate = useNavigate();
@@ -21,6 +23,7 @@ export default function MathomDetail() {
   const [tagInput, setTagInput] = useState('');
   const [chatInput, setChatInput] = useState('');
   const [chatBusy, setChatBusy] = useState(false);
+  const [pendingChat, setPendingChat] = useState<string | null>(null);
   const [summaryBusy, setSummaryBusy] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -37,16 +40,19 @@ export default function MathomDetail() {
     api.listCollections().then(setCollections).catch(() => setCollections([]));
   }, [lang, refresh]);
 
-  // Poll while the pipeline is still working on this mathom.
+  // Poll while the pipeline is still working on this mathom — but skip ticks
+  // while the tab is hidden so a backgrounded PWA doesn't keep polling.
   useEffect(() => {
     if (!mathom || ['ready', 'error'].includes(mathom.status)) return;
-    const timer = setInterval(refresh, 2500);
+    const timer = setInterval(() => {
+      if (!document.hidden) refresh();
+    }, 2500);
     return () => clearInterval(timer);
   }, [mathom, refresh]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [mathom?.chat_messages.length]);
+  }, [mathom?.chat_messages.length, pendingChat]);
 
   if (notFound) {
     return (
@@ -61,25 +67,39 @@ export default function MathomDetail() {
   if (!mathom) return <p className="text-ink-500">{t('detail.fetching')}</p>;
 
   const patch = (changes: Parameters<typeof api.updateMathom>[1]) =>
-    api.updateMathom(mathom.id, changes).then(setMathom);
+    api
+      .updateMathom(mathom.id, changes)
+      .then(setMathom)
+      .catch((err) => toast.error(err instanceof Error ? err.message : t('settings.saveFailed')));
 
   const addTag = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!tagInput.trim()) return;
-    await api.addTag(mathom.id, tagInput.trim());
-    setTagInput('');
-    refresh();
+    try {
+      await api.addTag(mathom.id, tagInput.trim());
+      setTagInput('');
+      refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('settings.saveFailed'));
+    }
   };
 
   const sendChat = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!chatInput.trim() || chatBusy) return;
+    const message = chatInput.trim();
+    if (!message || chatBusy) return;
     setChatBusy(true);
+    // Echo the question immediately so the conversation feels responsive.
+    setPendingChat(message);
+    setChatInput('');
     try {
-      await api.sendChat(mathom.id, chatInput.trim());
-      setChatInput('');
+      await api.sendChat(mathom.id, message);
       refresh();
+    } catch (err) {
+      setChatInput(message);
+      toast.error(err instanceof Error ? err.message : t('detail.chatFailed'));
     } finally {
+      setPendingChat(null);
       setChatBusy(false);
     }
   };
@@ -89,6 +109,9 @@ export default function MathomDetail() {
     try {
       await api.createSummary(mathom.id, summarySlug, lang);
       refresh();
+      toast.success(t('detail.summaryCreated'));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('detail.summaryFailed'));
     } finally {
       setSummaryBusy(false);
     }
@@ -96,14 +119,23 @@ export default function MathomDetail() {
 
   const removeSummary = async (summaryId: number) => {
     if (!window.confirm(t('detail.confirmDeleteSummary'))) return;
-    await api.deleteSummary(mathom.id, summaryId);
-    refresh();
+    try {
+      await api.deleteSummary(mathom.id, summaryId);
+      refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('settings.saveFailed'));
+    }
   };
 
   const removeMathom = async () => {
     if (!window.confirm(t('detail.confirmDelete'))) return;
-    await api.deleteMathom(mathom.id);
-    navigate('/');
+    try {
+      await api.deleteMathom(mathom.id);
+      toast.success(t('detail.deleted'));
+      navigate('/');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('settings.saveFailed'));
+    }
   };
 
   return (
@@ -115,12 +147,16 @@ export default function MathomDetail() {
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
           <input
             defaultValue={mathom.title}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') event.currentTarget.blur();
+            }}
             onBlur={(event) => {
               const title = event.target.value.trim();
               if (title && title !== mathom.title) void patch({ title });
             }}
-            className="min-w-0 flex-1 border-b border-transparent bg-transparent font-display text-2xl text-ink-900 focus:border-hearth-500 focus:outline-none"
-            aria-label="Title"
+            className="min-w-0 flex-1 rounded-md border-b border-dashed border-parchment-300 bg-transparent px-1 font-display text-2xl text-ink-900 hover:border-hearth-400 focus:border-solid focus:border-hearth-500 focus:outline-none"
+            aria-label={t('detail.titleLabel')}
+            title={t('detail.titleLabel')}
           />
           <div className="flex items-center gap-2">
             <StatusBadge status={mathom.status} />
@@ -140,8 +176,8 @@ export default function MathomDetail() {
           </div>
         </div>
         <p className="mt-1 text-xs text-ink-500">
-          {new Date(mathom.created_at).toLocaleString()}
-          {mathom.duration_seconds != null && ` · ${formatDuration(mathom.duration_seconds)}`}
+          {formatDateTime(mathom.created_at, lang)}
+          {mathom.duration_seconds != null && ` · ${formatDuration(mathom.duration_seconds, t)}`}
           {mathom.language && ` · ${mathom.language}`}
           {mathom.original_filename && ` · ${mathom.original_filename}`}
         </p>
@@ -291,7 +327,7 @@ export default function MathomDetail() {
           )}
         </div>
         <div className="mt-3 max-h-96 space-y-3 overflow-y-auto">
-          {mathom.chat_messages.map((message) => (
+          {mathom.chat_messages.map((message: ChatMessage) => (
             <div
               key={message.id}
               className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm ${
@@ -303,6 +339,19 @@ export default function MathomDetail() {
               {message.content}
             </div>
           ))}
+          {pendingChat && (
+            <>
+              <div className="ml-auto max-w-[85%] rounded-2xl bg-hearth-100 px-4 py-2 text-sm text-ink-900 opacity-70">
+                {pendingChat}
+              </div>
+              <div
+                className="max-w-[85%] rounded-2xl bg-parchment-100 px-4 py-2 text-sm text-ink-400"
+                aria-live="polite"
+              >
+                {t('detail.thinking')}
+              </div>
+            </>
+          )}
           <div ref={chatEndRef} />
         </div>
         <form onSubmit={sendChat} className="mt-3 flex gap-2">

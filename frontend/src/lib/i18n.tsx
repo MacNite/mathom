@@ -193,6 +193,55 @@ const translations: Record<Lang, Record<string, string>> = {
     'settings.save': 'Save',
     'settings.saved': 'Saved.',
     'settings.saveFailed': 'Saving failed',
+
+    'common.loading': 'Fetching from the shelves…',
+    'common.loadError': 'Could not reach the archive. Check your connection and try again.',
+    'common.retry': 'Try again',
+
+    'duration.minSec': '{m} min {s} s',
+    'duration.sec': '{s} s',
+
+    'error.boundaryTitle': 'Something slipped off the shelf.',
+    'error.boundaryBody': 'An unexpected error interrupted the page. Nothing was lost.',
+    'error.boundaryRetry': 'Reload this view',
+
+    'library.searching': 'Searching…',
+    'library.searchError': 'Search is unavailable right now.',
+
+    'collections.created': 'Collection created.',
+    'collections.deleted': 'Collection deleted.',
+    'collections.none': 'No collections yet — create one above.',
+
+    'users.created': 'User created.',
+    'users.deleted': 'User removed.',
+
+    'upload.success': 'Recording added — transcription has begun.',
+
+    'detail.titleLabel': 'Title — click to rename',
+    'detail.chatFailed': 'Could not send your question.',
+    'detail.summaryCreated': 'Summary generated.',
+    'detail.summaryFailed': 'Could not generate a summary.',
+    'detail.deleted': 'Mathom removed.',
+
+    'login.title': 'Sign in',
+    'login.email': 'Email',
+    'login.password': 'Password',
+    'login.signIn': 'Sign in',
+    'login.signingIn': 'Signing in…',
+    'login.invalid': 'Invalid email or password.',
+    'login.authentik': 'Continue with Authentik',
+
+    'onboarding.title': 'Set up Mathom',
+    'onboarding.subtitle':
+      'Create the first administrator account. Passwords must be at least 12 characters.',
+    'onboarding.name': 'Display name',
+    'onboarding.email': 'Email',
+    'onboarding.password': 'Password',
+    'onboarding.confirmPassword': 'Confirm password',
+    'onboarding.passwordMismatch': 'Passwords do not match',
+    'onboarding.failed': 'Setup failed',
+    'onboarding.creating': 'Creating administrator…',
+    'onboarding.create': 'Create administrator',
   },
   de: {
     'app.tagline': 'mathom',
@@ -367,6 +416,55 @@ const translations: Record<Lang, Record<string, string>> = {
     'settings.save': 'Speichern',
     'settings.saved': 'Gespeichert.',
     'settings.saveFailed': 'Speichern fehlgeschlagen',
+
+    'common.loading': 'Wird aus den Regalen geholt…',
+    'common.loadError': 'Das Archiv ist nicht erreichbar. Prüfe die Verbindung und versuche es erneut.',
+    'common.retry': 'Erneut versuchen',
+
+    'duration.minSec': '{m} Min. {s} Sek.',
+    'duration.sec': '{s} Sek.',
+
+    'error.boundaryTitle': 'Etwas ist aus dem Regal gefallen.',
+    'error.boundaryBody': 'Ein unerwarteter Fehler hat die Seite unterbrochen. Es ging nichts verloren.',
+    'error.boundaryRetry': 'Ansicht neu laden',
+
+    'library.searching': 'Wird gesucht…',
+    'library.searchError': 'Die Suche ist gerade nicht verfügbar.',
+
+    'collections.created': 'Sammlung erstellt.',
+    'collections.deleted': 'Sammlung gelöscht.',
+    'collections.none': 'Noch keine Sammlungen – erstelle oben eine.',
+
+    'users.created': 'Benutzer erstellt.',
+    'users.deleted': 'Benutzer entfernt.',
+
+    'upload.success': 'Aufnahme hinzugefügt – die Transkription hat begonnen.',
+
+    'detail.titleLabel': 'Titel – zum Umbenennen klicken',
+    'detail.chatFailed': 'Deine Frage konnte nicht gesendet werden.',
+    'detail.summaryCreated': 'Zusammenfassung erstellt.',
+    'detail.summaryFailed': 'Zusammenfassung konnte nicht erstellt werden.',
+    'detail.deleted': 'Mathom entfernt.',
+
+    'login.title': 'Anmelden',
+    'login.email': 'E-Mail',
+    'login.password': 'Passwort',
+    'login.signIn': 'Anmelden',
+    'login.signingIn': 'Anmeldung läuft…',
+    'login.invalid': 'Ungültige E-Mail oder ungültiges Passwort.',
+    'login.authentik': 'Mit Authentik fortfahren',
+
+    'onboarding.title': 'Mathom einrichten',
+    'onboarding.subtitle':
+      'Erstelle das erste Administratorkonto. Passwörter müssen mindestens 12 Zeichen lang sein.',
+    'onboarding.name': 'Anzeigename',
+    'onboarding.email': 'E-Mail',
+    'onboarding.password': 'Passwort',
+    'onboarding.confirmPassword': 'Passwort bestätigen',
+    'onboarding.passwordMismatch': 'Passwörter stimmen nicht überein',
+    'onboarding.failed': 'Einrichtung fehlgeschlagen',
+    'onboarding.creating': 'Administrator wird erstellt…',
+    'onboarding.create': 'Administrator erstellen',
   },
   es: {
     'app.tagline': 'mathom',
@@ -540,6 +638,55 @@ const translations: Record<Lang, Record<string, string>> = {
     'settings.save': 'Guardar',
     'settings.saved': 'Guardado.',
     'settings.saveFailed': 'Error al guardar',
+
+    'common.loading': 'Buscando en los estantes…',
+    'common.loadError': 'No se pudo acceder al archivo. Revisa tu conexión e inténtalo de nuevo.',
+    'common.retry': 'Intentar de nuevo',
+
+    'duration.minSec': '{m} min {s} s',
+    'duration.sec': '{s} s',
+
+    'error.boundaryTitle': 'Algo se cayó del estante.',
+    'error.boundaryBody': 'Un error inesperado interrumpió la página. No se perdió nada.',
+    'error.boundaryRetry': 'Recargar esta vista',
+
+    'library.searching': 'Buscando…',
+    'library.searchError': 'La búsqueda no está disponible en este momento.',
+
+    'collections.created': 'Colección creada.',
+    'collections.deleted': 'Colección eliminada.',
+    'collections.none': 'Aún no hay colecciones: crea una arriba.',
+
+    'users.created': 'Usuario creado.',
+    'users.deleted': 'Usuario eliminado.',
+
+    'upload.success': 'Grabación añadida: la transcripción ha comenzado.',
+
+    'detail.titleLabel': 'Título: haz clic para renombrar',
+    'detail.chatFailed': 'No se pudo enviar tu pregunta.',
+    'detail.summaryCreated': 'Resumen generado.',
+    'detail.summaryFailed': 'No se pudo generar el resumen.',
+    'detail.deleted': 'Mathom eliminado.',
+
+    'login.title': 'Iniciar sesión',
+    'login.email': 'Correo electrónico',
+    'login.password': 'Contraseña',
+    'login.signIn': 'Iniciar sesión',
+    'login.signingIn': 'Iniciando sesión…',
+    'login.invalid': 'Correo o contraseña no válidos.',
+    'login.authentik': 'Continuar con Authentik',
+
+    'onboarding.title': 'Configurar Mathom',
+    'onboarding.subtitle':
+      'Crea la primera cuenta de administrador. Las contraseñas deben tener al menos 12 caracteres.',
+    'onboarding.name': 'Nombre visible',
+    'onboarding.email': 'Correo electrónico',
+    'onboarding.password': 'Contraseña',
+    'onboarding.confirmPassword': 'Confirmar contraseña',
+    'onboarding.passwordMismatch': 'Las contraseñas no coinciden',
+    'onboarding.failed': 'Error en la configuración',
+    'onboarding.creating': 'Creando administrador…',
+    'onboarding.create': 'Crear administrador',
   },
 };
 

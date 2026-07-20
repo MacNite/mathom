@@ -15,7 +15,9 @@ export default {
           900: '#2d2418',
           700: '#4a3d2c',
           500: '#6f5f48',
-          400: '#94836a',
+          // Darkened from #94836a to clear WCAG AA (4.5:1) on parchment/white
+          // for the secondary text and placeholders this token is used for.
+          400: '#7a6a4f',
         },
         hearth: {
           600: '#b45f21',

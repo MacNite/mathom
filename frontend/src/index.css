@@ -8,6 +8,13 @@
   }
 }
 
+@layer base {
+  /* A single, consistent keyboard focus ring across every interactive element. */
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    @apply outline-none ring-2 ring-hearth-500 ring-offset-2 ring-offset-parchment-50;
+  }
+}
+
 @layer components {
   .card {
     @apply rounded-doorway border border-parchment-200 bg-white/70 p-5 shadow-sm;

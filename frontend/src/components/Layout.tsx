@@ -1,8 +1,10 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { useState } from 'react';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../lib/auth';
 import { LANGUAGES, useI18n } from '../lib/i18n';
 import type { Lang } from '../lib/i18n';
+import UploadDialog from './UploadDialog';
 
 const links = [
   { to: '/', labelKey: 'nav.library', emoji: '📚' },
@@ -14,6 +16,8 @@ const links = [
 export default function Layout() {
   const { t, lang, setLang } = useI18n();
   const { status, user, isAdmin, isOwner, logout } = useAuth();
+  const navigate = useNavigate();
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   const adminLinks = [
     ...(isAdmin ? [{ to: '/admin/users', labelKey: 'nav.users', emoji: '👥' }] : []),
@@ -27,7 +31,16 @@ export default function Layout() {
           <h1 className="font-display text-3xl text-hearth-600">Mathom</h1>
           <p className="mt-1 text-xs text-ink-500">{t('app.tagline')}</p>
         </div>
-        <nav className="flex gap-2 md:flex-col">
+
+        {/* Primary action, reachable from every page. */}
+        <button
+          onClick={() => setUploadOpen(true)}
+          className="btn-primary mb-4 w-full justify-center"
+        >
+          {t('library.newMathom')}
+        </button>
+
+        <nav className="flex flex-wrap gap-2 md:flex-col md:flex-nowrap">
           {[...links, ...adminLinks].map((link) => (
             <NavLink
               key={link.to}
@@ -86,6 +99,12 @@ export default function Layout() {
       <main className="flex-1 p-4 md:p-8">
         <Outlet />
       </main>
+
+      <UploadDialog
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        onUploaded={() => navigate('/')}
+      />
     </div>
   );
 }

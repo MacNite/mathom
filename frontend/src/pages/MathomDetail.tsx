@@ -186,6 +186,11 @@ export default function MathomDetail() {
             {mathom.error_message ?? t('detail.errorFallback')}
           </p>
         )}
+        {mathom.queue_position != null && (
+          <p className="mt-2 text-sm text-ink-500">
+            Waiting in processing queue: #{mathom.queue_position}
+          </p>
+        )}
       </div>
 
       <audio controls src={api.audioUrl(mathom.id)} className="w-full" preload="metadata" />

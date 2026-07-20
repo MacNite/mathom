@@ -41,6 +41,7 @@ export interface Mathom extends MathomListItem {
   summaries: Summary[];
   chat_messages: ChatMessage[];
   collections: { id: number; name: string }[];
+  queue_position: number | null;
 }
 
 export interface PromptTemplate {

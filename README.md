@@ -109,10 +109,14 @@ All settings live in `.env` (see [`.env.example`](.env.example)):
 | ---------------------- | ---------- | -------------------------------------- |
 | `MATHOM_PORT`          | `8080`     | Host port for the web UI               |
 | `OLLAMA_MODEL`         | `llama3.2` | Model for summaries and chat           |
+| `OLLAMA_BASE_URL`      | `http://ollama:11434` | Ollama endpoint; can be another private stack |
+| `OLLAMA_TIMEOUT_SECONDS` | `300` | Deadline for each Ollama request       |
 | `WHISPER_MODEL`        | `small`    | faster-whisper model size              |
 | `WHISPER_DEVICE`       | `cpu`      | `cpu` or `cuda`                        |
 | `WHISPER_COMPUTE_TYPE` | `int8`     | `int8` (CPU) / `float16` (GPU)         |
 | `MAX_UPLOAD_MB`        | `200`      | Upload size limit per recording        |
+| `MAX_QUEUED_JOBS`      | `25`       | Maximum recordings waiting to process  |
+| `CHAT_CONCURRENCY`     | `1`        | Simultaneous interactive Ollama chats  |
 
 ## Documentation
 

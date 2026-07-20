@@ -76,6 +76,12 @@ async def upload_mathom(
     user: User | None = Depends(current_user),
 ) -> Mathom:
     settings = get_settings()
+    if jobs.queued_count(db) >= settings.max_queued_jobs:
+        raise HTTPException(
+            status_code=503,
+            detail="Processing queue is full. Please try again once a recording has finished.",
+            headers={"Retry-After": "60"},
+        )
     original_name = file.filename or "recording"
     extension = Path(original_name).suffix.lower()
     if extension not in settings.allowed_extensions:
@@ -129,7 +135,11 @@ def get_mathom(
     db: Session = Depends(get_db),
     user: User | None = Depends(current_user),
 ) -> Mathom:
-    return _get_mathom(mathom_id, db, user)
+    mathom = _get_mathom(mathom_id, db, user)
+    # Pydantic reads this transient attribute into MathomOut; it is not stored
+    # on the recording itself because queue order can change at any moment.
+    mathom.queue_position = jobs.queue_position(db, mathom.id)  # type: ignore[attr-defined]
+    return mathom
 
 
 @router.patch("/{mathom_id}", response_model=MathomOut)

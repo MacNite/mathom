@@ -54,6 +54,9 @@ class MathomOut(MathomListItem):
     summaries: list[SummaryOut] = []
     chat_messages: list[ChatMessageOut] = []
     collections: list[CollectionBrief] = []
+    # One-based place among queued processing jobs. It disappears once work
+    # starts, rather than presenting a misleading estimate during inference.
+    queue_position: int | None = None
 
 
 class MathomUpdate(BaseModel):

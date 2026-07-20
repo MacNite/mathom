@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { api } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import type { PromptTemplate } from '../lib/types';
 
 export default function Templates() {
-  const { t } = useI18n();
+  const { lang, t } = useI18n();
   const [templates, setTemplates] = useState<PromptTemplate[]>([]);
   const [selected, setSelected] = useState<PromptTemplate | null>(null);
   const [draft, setDraft] = useState({ name: '', description: '', prompt: '' });
@@ -13,15 +13,20 @@ export default function Templates() {
   const [newSlug, setNewSlug] = useState('');
   const [message, setMessage] = useState('');
 
-  const refresh = () =>
-    api.listTemplates().then((list) => {
-      setTemplates(list);
-      return list;
-    });
+  const refresh = useCallback(
+    () =>
+      api.listTemplates(lang).then((list) => {
+        setTemplates(list);
+        return list;
+      }),
+    [lang],
+  );
 
   useEffect(() => {
+    setSelected(null);
+    setCreating(false);
     void refresh();
-  }, []);
+  }, [refresh]);
 
   const select = (template: PromptTemplate) => {
     setSelected(template);

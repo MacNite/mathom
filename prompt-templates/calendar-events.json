@@ -2,5 +2,17 @@
   "slug": "calendar-events",
   "name": "Calendar Events",
   "description": "Every date, deadline, and meeting mentioned.",
-  "prompt": "Extract every date, deadline, appointment, and proposed meeting from the following transcript. For each, output: Title, Date/Time (as stated; note if relative like 'next Tuesday'), Participants, Notes. Output as a Markdown table. If none are mentioned, say so.\n\nTranscript:\n{transcript}"
+  "prompt": "Extract every date, deadline, appointment, and proposed meeting from the following transcript. For each, output: Title, Date/Time (as stated; note if relative like 'next Tuesday'), Participants, Notes. Output as a Markdown table. If none are mentioned, say so.\n\nTranscript:\n{transcript}",
+  "translations": {
+    "de": {
+      "name": "Kalenderereignisse",
+      "description": "Jedes erwähnte Datum, jede Frist und jedes Meeting.",
+      "prompt": "Extrahiere jedes Datum, jede Frist, jeden Termin und jedes vorgeschlagene Meeting aus dem folgenden Transkript. Gib für jeden Eintrag Folgendes aus: Titel, Datum/Uhrzeit (wie angegeben; kennzeichne relative Angaben wie „nächsten Dienstag“), Teilnehmende, Notizen. Gib die Ergebnisse als Markdown-Tabelle aus. Falls keine erwähnt werden, sage das.\n\nTranskript:\n{transcript}"
+    },
+    "es": {
+      "name": "Eventos de calendario",
+      "description": "Cada fecha, plazo y reunión mencionados.",
+      "prompt": "Extrae cada fecha, plazo, cita y reunión propuesta de la siguiente transcripción. Para cada uno, genera: título, fecha/hora (tal como se indica; aclara si es relativa, como «el próximo martes»), participantes y notas. Genera una tabla en Markdown. Si no se menciona ninguno, indícalo.\n\nTranscripción:\n{transcript}"
+    }
+  }
 }

@@ -65,6 +65,7 @@ class Mathom(Base):
     status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     language: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    template_language: Mapped[str] = mapped_column(String(10), default="en")
     transcript: Mapped[str | None] = mapped_column(Text, nullable=True)
     favorite: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     archived: Mapped[bool] = mapped_column(Boolean, default=False, index=True)

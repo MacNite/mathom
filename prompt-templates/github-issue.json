@@ -2,5 +2,17 @@
   "slug": "github-issue",
   "name": "GitHub Issue",
   "description": "A well-formed GitHub issue in Markdown.",
-  "prompt": "Create a GitHub issue from the following transcript. Use Markdown with: a concise title (as a level-1 heading), Description, Steps to Reproduce or Context (whichever fits), Expected Behavior, Acceptance Criteria as a checklist, and suggested labels.\n\nTranscript:\n{transcript}"
+  "prompt": "Create a GitHub issue from the following transcript. Use Markdown with: a concise title (as a level-1 heading), Description, Steps to Reproduce or Context (whichever fits), Expected Behavior, Acceptance Criteria as a checklist, and suggested labels.\n\nTranscript:\n{transcript}",
+  "translations": {
+    "de": {
+      "name": "GitHub-Issue",
+      "description": "Ein gut formuliertes GitHub-Issue in Markdown.",
+      "prompt": "Erstelle aus dem folgenden Transkript ein GitHub-Issue. Verwende Markdown mit: einem prägnanten Titel (als Überschrift der Ebene 1), Beschreibung, Schritten zur Reproduktion oder Kontext (je nachdem, was passt), erwartetem Verhalten, Akzeptanzkriterien als Checkliste und vorgeschlagenen Labels.\n\nTranskript:\n{transcript}"
+    },
+    "es": {
+      "name": "Incidencia de GitHub",
+      "description": "Una incidencia de GitHub bien formulada en Markdown.",
+      "prompt": "Crea una incidencia de GitHub a partir de la siguiente transcripción. Usa Markdown con: un título conciso (encabezado de nivel 1), descripción, pasos para reproducir o contexto (lo que corresponda), comportamiento esperado, criterios de aceptación como lista de verificación y etiquetas sugeridas.\n\nTranscripción:\n{transcript}"
+    }
+  }
 }

@@ -2,5 +2,17 @@
   "slug": "crm-entry",
   "name": "CRM Entry",
   "description": "A structured CRM activity log entry.",
-  "prompt": "Create a CRM activity entry from the following transcript. Provide: Contact / Account (if identifiable), Activity Type, Summary (2-3 sentences), Key Details, Deal Stage Signals, Next Activity with suggested date.\n\nTranscript:\n{transcript}"
+  "prompt": "Create a CRM activity entry from the following transcript. Provide: Contact / Account (if identifiable), Activity Type, Summary (2-3 sentences), Key Details, Deal Stage Signals, Next Activity with suggested date.\n\nTranscript:\n{transcript}",
+  "translations": {
+    "de": {
+      "name": "CRM-Eintrag",
+      "description": "Ein strukturierter CRM-Aktivitätsprotokolleintrag.",
+      "prompt": "Erstelle aus dem folgenden Transkript einen CRM-Aktivitätseintrag. Gib an: Kontakt / Konto (falls identifizierbar), Aktivitätstyp, Zusammenfassung (2–3 Sätze), wichtige Details, Signale zur Vertriebsphase und nächste Aktivität mit vorgeschlagenem Datum.\n\nTranskript:\n{transcript}"
+    },
+    "es": {
+      "name": "Entrada de CRM",
+      "description": "Un registro estructurado de actividad de CRM.",
+      "prompt": "Crea una entrada de actividad de CRM a partir de la siguiente transcripción. Incluye: contacto/cuenta (si se puede identificar), tipo de actividad, resumen (2-3 frases), detalles clave, señales de la etapa de venta y próxima actividad con fecha sugerida.\n\nTranscripción:\n{transcript}"
+    }
+  }
 }

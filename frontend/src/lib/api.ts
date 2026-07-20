@@ -68,11 +68,12 @@ export const api = {
     return request(`/mathoms/${id}`);
   },
 
-  uploadMathom(file: File, title: string, templateSlug: string): Promise<Mathom> {
+  uploadMathom(file: File, title: string, templateSlug: string, templateLanguage: string): Promise<Mathom> {
     const form = new FormData();
     form.append('file', file);
     form.append('title', title);
     form.append('template_slug', templateSlug);
+    form.append('template_language', templateLanguage);
     return request('/mathoms', { method: 'POST', body: form });
   },
 
@@ -87,8 +88,11 @@ export const api = {
     return request(`/mathoms/${id}`, { method: 'DELETE' });
   },
 
-  createSummary(id: number, templateSlug: string): Promise<Summary> {
-    return request(`/mathoms/${id}/summaries`, json('POST', { template_slug: templateSlug }));
+  createSummary(id: number, templateSlug: string, templateLanguage: string): Promise<Summary> {
+    return request(
+      `/mathoms/${id}/summaries`,
+      json('POST', { template_slug: templateSlug, template_language: templateLanguage }),
+    );
   },
 
   deleteSummary(mathomId: number, summaryId: number): Promise<void> {
@@ -123,8 +127,8 @@ export const api = {
     return request(`/mathoms/${id}/chat`, { method: 'DELETE' });
   },
 
-  listTemplates(): Promise<PromptTemplate[]> {
-    return request('/templates');
+  listTemplates(language = 'en'): Promise<PromptTemplate[]> {
+    return request(`/templates?language=${encodeURIComponent(language)}`);
   },
 
   createTemplate(data: {

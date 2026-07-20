@@ -22,7 +22,7 @@ export default function UploadDialog({
   sharedFile = null,
   sharedTitle = '',
 }: Props) {
-  const { t } = useI18n();
+  const { lang, t } = useI18n();
   const [templates, setTemplates] = useState<PromptTemplate[]>([]);
   const [title, setTitle] = useState('');
   const [templateSlug, setTemplateSlug] = useState('general-summary');
@@ -32,11 +32,11 @@ export default function UploadDialog({
 
   useEffect(() => {
     if (open) {
-      api.listTemplates().then(setTemplates).catch(() => setTemplates([]));
+      api.listTemplates(lang).then(setTemplates).catch(() => setTemplates([]));
       setError('');
       setTitle(sharedTitle);
     }
-  }, [open, sharedTitle]);
+  }, [lang, open, sharedTitle]);
 
   if (!open) return null;
 
@@ -50,7 +50,7 @@ export default function UploadDialog({
     setBusy(true);
     setError('');
     try {
-      await api.uploadMathom(file, title, templateSlug);
+      await api.uploadMathom(file, title, templateSlug, lang);
       setTitle('');
       if (fileRef.current) fileRef.current.value = '';
       onUploaded();

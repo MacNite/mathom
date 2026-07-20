@@ -1,5 +1,9 @@
 from fastapi.testclient import TestClient
 
+from app.db import get_session_factory
+from app.models import Mathom
+from app.services import ollama, pipeline
+
 EXPECTED_SEEDS = {
     "general-summary",
     "tldr",
@@ -60,3 +64,37 @@ def test_duplicate_slug_rejected(client: TestClient) -> None:
         json={"slug": "tldr", "name": "Dup", "prompt": "x {transcript}"},
     )
     assert response.status_code == 409
+
+
+def test_builtin_template_is_localized_for_selected_language(client: TestClient) -> None:
+    templates = client.get("/api/templates?language=de").json()
+    template = next(item for item in templates if item["slug"] == "general-summary")
+    assert template["name"] == "Allgemeine Zusammenfassung"
+    assert "Fasse das folgende Transkript" in template["prompt"]
+    assert "{transcript}" in template["prompt"]
+
+
+def test_unsupported_template_language_falls_back_to_english(client: TestClient) -> None:
+    templates = client.get("/api/templates?language=fr").json()
+    template = next(item for item in templates if item["slug"] == "general-summary")
+    assert template["prompt"].startswith("Summarize the following transcript")
+
+
+def test_summary_uses_the_selected_language_prompt(
+    client: TestClient, monkeypatch, uploaded_mathom: dict
+) -> None:
+    captured: dict[str, str] = {}
+
+    def capture_prompt(transcript: str, prompt: str, language: str | None = None) -> str:
+        captured["prompt"] = prompt
+        return "Zusammenfassung"
+
+    monkeypatch.setattr(ollama, "generate_summary", capture_prompt)
+    summary = pipeline.summarize_mathom(uploaded_mathom["id"], "tldr", "de")
+
+    assert summary is not None
+    assert captured["prompt"].startswith("Gib eine Kurzfassung")
+    assert captured["prompt"].endswith("Transkript:\n{transcript}")
+    with get_session_factory()() as session:
+        mathom = session.get(Mathom, uploaded_mathom["id"])
+        assert mathom is not None

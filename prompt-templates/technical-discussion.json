@@ -2,5 +2,17 @@
   "slug": "technical-discussion",
   "name": "Technical Discussion",
   "description": "Engineering notes: problems, options, decisions, trade-offs.",
-  "prompt": "Summarize the following technical discussion for an engineering audience. Include: Problem / Context, Options Discussed (with trade-offs), Decisions and Rationale, Risks, Follow-ups. Preserve exact technical terms, names, and version numbers.\n\nTranscript:\n{transcript}"
+  "prompt": "Summarize the following technical discussion for an engineering audience. Include: Problem / Context, Options Discussed (with trade-offs), Decisions and Rationale, Risks, Follow-ups. Preserve exact technical terms, names, and version numbers.\n\nTranscript:\n{transcript}",
+  "translations": {
+    "de": {
+      "name": "Technische Diskussion",
+      "description": "Engineering-Notizen: Probleme, Optionen, Entscheidungen, Abwägungen.",
+      "prompt": "Fasse die folgende technische Diskussion für ein Engineering-Publikum zusammen. Füge ein: Problem / Kontext, besprochene Optionen (mit Abwägungen), Entscheidungen und Begründung, Risiken, Nachverfolgungen. Bewahre exakte technische Begriffe, Namen und Versionsnummern.\n\nTranskript:\n{transcript}"
+    },
+    "es": {
+      "name": "Discusión técnica",
+      "description": "Notas de ingeniería: problemas, opciones, decisiones y concesiones.",
+      "prompt": "Resume la siguiente discusión técnica para un público de ingeniería. Incluye: problema/contexto, opciones analizadas (con sus concesiones), decisiones y justificación, riesgos y seguimientos. Conserva los términos técnicos, nombres y números de versión exactos.\n\nTranscripción:\n{transcript}"
+    }
+  }
 }

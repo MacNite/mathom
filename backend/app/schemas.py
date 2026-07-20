@@ -65,6 +65,7 @@ class MathomUpdate(BaseModel):
 
 class SummaryCreate(BaseModel):
     template_slug: str = "general-summary"
+    template_language: str = Field(default="en", pattern=r"^(en|de|es)$")
 
 
 class ChatRequest(BaseModel):

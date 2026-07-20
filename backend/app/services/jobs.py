@@ -10,7 +10,7 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from typing import Any, cast
 
-from sqlalchemy import CursorResult, select, update
+from sqlalchemy import CursorResult, func, select, update
 from sqlalchemy.orm import Session
 
 from app.db import get_session_factory
@@ -48,6 +48,32 @@ def has_active_job(session: Session, mathom_id: int) -> bool:
         ).first()
         is not None
     )
+
+
+def queued_count(session: Session) -> int:
+    """Return the number of recordings waiting to be claimed."""
+    statement = select(func.count()).select_from(Job).where(Job.status == "queued")
+    return int(session.scalar(statement) or 0)
+
+
+def queue_position(session: Session, mathom_id: int) -> int | None:
+    """Return a queued Mathom's one-based position, or None once it has started."""
+    job = session.execute(
+        select(Job)
+        .where(Job.mathom_id == mathom_id, Job.status == "queued")
+        .order_by(Job.available_at, Job.id)
+        .limit(1)
+    ).scalar_one_or_none()
+    if job is None:
+        return None
+    earlier = session.execute(
+        select(Job.id).where(
+            Job.status == "queued",
+            (Job.available_at < job.available_at)
+            | ((Job.available_at == job.available_at) & (Job.id < job.id)),
+        )
+    ).all()
+    return len(earlier) + 1
 
 
 def claim_next(session: Session) -> Job | None:

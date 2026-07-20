@@ -4,6 +4,7 @@ import io
 
 from fastapi.testclient import TestClient
 
+from app.config import Settings
 from app.db import get_session_factory
 from app.models import Job, Mathom
 from app.services import jobs
@@ -76,6 +77,17 @@ def test_recover_stuck_requeues_running_jobs(client: TestClient) -> None:
         assert session.get(Job, job_id).status == "queued"
 
 
+def test_queue_position_follows_runnable_order(client: TestClient) -> None:
+    first_id = _make_mathom()
+    second_id = _make_mathom()
+    with get_session_factory()() as session:
+        jobs.enqueue(session, first_id, "general-summary")
+        jobs.enqueue(session, second_id, "general-summary")
+        assert jobs.queued_count(session) == 2
+        assert jobs.queue_position(session, first_id) == 1
+        assert jobs.queue_position(session, second_id) == 2
+
+
 def test_upload_creates_and_finishes_a_job(client: TestClient, wait_for_status) -> None:  # type: ignore[no-untyped-def]
     response = client.post(
         "/api/mathoms",
@@ -90,3 +102,17 @@ def test_upload_creates_and_finishes_a_job(client: TestClient, wait_for_status) 
     with get_session_factory()() as session:
         job = session.query(Job).filter(Job.mathom_id == mathom_id).one()
         assert job.status == "done"
+
+
+def test_upload_is_rejected_when_queue_is_full(
+    client: TestClient, monkeypatch
+) -> None:  # type: ignore[no-untyped-def]
+    from app.routers import mathoms
+
+    monkeypatch.setattr(mathoms, "get_settings", lambda: Settings(max_queued_jobs=0))
+    response = client.post(
+        "/api/mathoms",
+        files={"file": ("hello.mp3", io.BytesIO(b"audio"), "audio/mpeg")},
+    )
+    assert response.status_code == 503
+    assert response.headers["retry-after"] == "60"

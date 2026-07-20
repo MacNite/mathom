@@ -27,6 +27,29 @@ make up-gpu        # compose.yaml + compose.gpu.yaml
 This gives both Ollama and faster-whisper GPU access and switches whisper to
 `cuda`/`float16` by default.
 
+### Ollama in a separate stack
+
+Mathom can use an Ollama service outside its bundled Compose project. Set the
+following values in Mathom's `.env` and ensure the app container can resolve
+and reach the hostname:
+
+```dotenv
+OLLAMA_BASE_URL=http://ollama-ai:11434
+OLLAMA_TIMEOUT_SECONDS=120
+```
+
+For two Compose projects on the same Docker host, attach both services to an
+explicitly named **external** Docker network and use the Ollama service name as
+the hostname. Remove or override Mathom's local `ollama` service and its
+`depends_on` entry in a Compose override. For an Ollama host on another
+machine, use a private LAN/VPN address and firewall port `11434` so only
+Mathom can reach it. Do not publish an unauthenticated Ollama API to the
+internet.
+
+`OLLAMA_TIMEOUT_SECONDS` bounds an individual summary or chat request. It does
+not cancel model inference on the remote server, so size the remote Ollama
+instance for the configured background worker and chat concurrency.
+
 ## Phone sharing (recommended PWA installation)
 
 For the quickest route from an annoying voice message to a useful note, install

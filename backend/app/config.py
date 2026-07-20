@@ -3,6 +3,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -14,6 +15,13 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://ollama:11434"
     ollama_model: str = "llama3.2"
     ollama_timeout_seconds: float = 300.0
+    # Bound the number of recordings waiting for the serial processing worker.
+    # This is admission control, not a per-client rate limit: it keeps a burst
+    # of large uploads from turning into an unbounded wait for everyone.
+    max_queued_jobs: int = Field(default=25, ge=0)
+    # Follow-up chat is interactive and intentionally remains synchronous, but
+    # only this many requests may occupy Ollama at once.
+    chat_concurrency: int = Field(default=1, ge=1)
     whisper_model: str = "small"
     whisper_device: str = "auto"
     whisper_compute_type: str = "auto"

@@ -45,12 +45,22 @@ FastAPI backend run side by side under supervisord.
    - `summarizing` — the chosen prompt template is rendered
      (`{transcript}` placeholder) and sent to Ollama.
    - `ready` — or `error`, with a safe, generic message stored on the row.
-3. On failure the job is retried with exponential backoff up to `max_attempts`;
+3. The queue has bounded admission (`MATHOM_MAX_QUEUED_JOBS`, 25 by default).
+   Once full, new uploads receive `503 Service Unavailable` with `Retry-After`
+   instead of creating an unbounded wait. The detail endpoint reports a queued
+   recording's current one-based queue position.
+4. On failure the job is retried with exponential backoff up to `max_attempts`;
    the Mathom is only marked `error` once retries are exhausted.
-4. **Restart recovery:** at startup any job left `running` is requeued, and any
+5. **Restart recovery:** at startup any job left `running` is requeued, and any
    Mathom in an in-flight status that no live job owns is flipped to a retryable
    `error`. Nothing is lost or stuck when the container restarts.
-5. The frontend polls while a Mathom is in flight and renders live status.
+6. The frontend polls while a Mathom is in flight and renders live status.
+
+The one-worker queue intentionally serializes Whisper and batch summaries. A
+follow-up chat stays synchronous for a responsive UI, but is protected by its
+own `MATHOM_CHAT_CONCURRENCY` semaphore (one request by default); excess chats
+receive `429 Too Many Requests` with `Retry-After`. Ollama's HTTP deadline is
+configured with `MATHOM_OLLAMA_TIMEOUT_SECONDS` (300 seconds by default).
 
 ## Data model
 

@@ -88,6 +88,7 @@ def init_db(engine: Engine | None = None) -> None:
             )
         )
         _migrate_user_ownership(conn)
+        _migrate_local_auth(conn)
 
 
 def refresh_fts(session: Session, mathom_id: int) -> None:
@@ -125,3 +126,21 @@ def get_db() -> Generator[Session, None, None]:
         yield session
     finally:
         session.close()
+
+
+def _migrate_local_auth(conn: object) -> None:
+    """Add local-auth fields without rebuilding SQLite tables; retain legacy subject."""
+    if "users" not in [
+        r[0]
+        for r in conn.execute(text("SELECT name FROM sqlite_master WHERE type='table'"))  # type: ignore[attr-defined]
+    ]:
+        return
+    for name, definition in (
+        ("password_hash", "VARCHAR(500)"),
+        ("must_change_password", "BOOLEAN NOT NULL DEFAULT 0"),
+        ("updated_at", "DATETIME"),
+    ):
+        if name not in _column_names(conn, "users"):
+            conn.execute(text(f"ALTER TABLE users ADD COLUMN {name} {definition}"))  # type: ignore[attr-defined]
+    # owner was a legacy role; SQLite has no enum constraint, so this is safe and idempotent.
+    conn.execute(text("UPDATE users SET role = 'admin' WHERE role = 'owner'"))  # type: ignore[attr-defined]

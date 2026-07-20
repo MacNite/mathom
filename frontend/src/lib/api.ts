@@ -18,6 +18,13 @@ import type {
 
 const BASE = '/api';
 
+export class ApiError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   // `same-origin` sends the session cookie; the frontend and API share an origin.
   const response = await fetch(`${BASE}${path}`, { credentials: 'same-origin', ...init });
@@ -29,7 +36,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     } catch {
       // non-JSON error body; keep statusText
     }
-    throw new Error(detail);
+    throw new ApiError(detail, response.status);
   }
   if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
@@ -176,6 +183,16 @@ export const api = {
 
   logout(): Promise<void> {
     return request('/auth/logout', { method: 'POST' });
+  },
+
+  localLogin(email: string, password: string): Promise<User> {
+    return request('/auth/login/local', json('POST', { email, password }));
+  },
+  onboarding(name: string, email: string, password: string, password_confirmation: string): Promise<User> {
+    return request('/auth/onboarding', json('POST', { name, email, password, password_confirmation }));
+  },
+  createUser(data: {name: string; email: string; password: string; role: Role; must_change_password: boolean}): Promise<User> {
+    return request('/users', json('POST', data));
   },
 
   listUsers(): Promise<User[]> {

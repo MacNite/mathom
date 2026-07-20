@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.deps import require_owner
+from app.deps import require_admin
 from app.models import User
 from app.schemas import AuthentikSettingsOut, AuthentikSettingsUpdate
 from app.services import oidc
@@ -34,7 +34,7 @@ def _to_out(config: AuthentikConfig) -> AuthentikSettingsOut:
 
 @router.get("/authentik", response_model=AuthentikSettingsOut)
 def get_authentik(
-    db: Session = Depends(get_db), _owner: User = Depends(require_owner)
+    db: Session = Depends(get_db), _admin: User = Depends(require_admin)
 ) -> AuthentikSettingsOut:
     return _to_out(get_authentik_config(db))
 
@@ -43,7 +43,7 @@ def get_authentik(
 def put_authentik(
     payload: AuthentikSettingsUpdate,
     db: Session = Depends(get_db),
-    _owner: User = Depends(require_owner),
+    _admin: User = Depends(require_admin),
 ) -> AuthentikSettingsOut:
     config = update_authentik_config(db, payload.model_dump(exclude_unset=True))
     # Discovery may now point at a different issuer; drop the cached document.

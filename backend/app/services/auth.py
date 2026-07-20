@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.models import (
-    ROLE_OWNER,
+    ROLE_ADMIN,
     ROLE_USER,
     AuthSession,
     Collection,
@@ -121,7 +121,7 @@ def _user_count(session: Session) -> int:
 
 
 def _owner_exists(session: Session) -> bool:
-    return session.execute(select(User.id).where(User.role == ROLE_OWNER)).first() is not None
+    return session.execute(select(User.id).where(User.role == ROLE_ADMIN)).first() is not None
 
 
 def _claim_orphans(session: Session, owner: User) -> None:
@@ -151,8 +151,8 @@ def upsert_user_from_claims(
         return None
 
     user = session.execute(select(User).where(User.subject == subject)).scalar_one_or_none()
-    if user is None and email:
-        # Match a pre-created account by email, then bind it to this subject.
+    if user is None and email and claims.get("email_verified") is True:
+        # Email linking is allowed only for verified email and unbound accounts.
         user = session.execute(select(User).where(User.email == email)).scalar_one_or_none()
         if user is not None and not user.subject:
             user.subject = subject
@@ -176,7 +176,7 @@ def upsert_user_from_claims(
         subject=subject,
         email=email or f"{subject}@authentik.local",
         name=name,
-        role=ROLE_OWNER if is_owner else ROLE_USER,
+        role=ROLE_ADMIN if is_owner else ROLE_USER,
     )
     session.add(user)
     session.commit()
@@ -184,4 +184,20 @@ def upsert_user_from_claims(
     if is_owner:
         _claim_orphans(session, user)
         session.commit()
+    return user
+
+
+def revoke_sessions(session: Session, user: User) -> None:
+    session.query(AuthSession).filter(AuthSession.user_id == user.id).delete()
+    session.commit()
+
+
+def local_login(session: Session, email: str, password: str) -> User | None:
+    from app.services.passwords import verify_password
+
+    user = session.execute(
+        select(User).where(User.email == email.strip().lower())
+    ).scalar_one_or_none()
+    if user is None or not user.is_active or not verify_password(password, user.password_hash):
+        return None
     return user

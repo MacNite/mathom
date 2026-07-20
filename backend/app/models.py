@@ -18,12 +18,10 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
-# Roles, most privileged first. "owner" is unique (the archive keeper),
-# "admin" manages users, "user" owns only their own Mathoms.
-ROLE_OWNER = "owner"
+# The only supported roles. Legacy owner values are migrated to admin.
 ROLE_ADMIN = "admin"
 ROLE_USER = "user"
-ROLES = (ROLE_OWNER, ROLE_ADMIN, ROLE_USER)
+ROLES = (ROLE_ADMIN, ROLE_USER)
 
 
 def utcnow() -> datetime:
@@ -199,18 +197,31 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    # OIDC subject claim — the stable identifier from Authentik.
-    subject: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    # Legacy Authentik subject; retained so existing installations can sign in.
+    subject: Mapped[str | None] = mapped_column(String(255), unique=True, index=True, nullable=True)
     email: Mapped[str] = mapped_column(String(320), unique=True, index=True)
     name: Mapped[str] = mapped_column(String(200), default="")
     role: Mapped[str] = mapped_column(String(20), default=ROLE_USER, index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    password_hash: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    must_change_password: Mapped[bool] = mapped_column(Boolean, default=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     sessions: Mapped[list[AuthSession]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
+
+    @property
+    def has_local_password(self) -> bool:
+        return bool(self.password_hash)
+
+    @property
+    def has_authentik_identity(self) -> bool:
+        return bool(self.subject)
 
 
 class AuthSession(Base):

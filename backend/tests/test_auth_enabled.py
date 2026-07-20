@@ -34,12 +34,12 @@ def test_status_and_unauthenticated_access(auth_harness) -> None:
     assert client.get("/api/mathoms").status_code == 401
 
 
-def test_first_user_becomes_owner(auth_harness) -> None:
+def test_first_user_becomes_admin(auth_harness) -> None:
     client = auth_harness.client()
     auth_harness.login(client, OWNER)
     me = client.get("/api/auth/status").json()
     assert me["authenticated"] is True
-    assert me["user"]["role"] == "owner"
+    assert me["user"]["role"] == "admin"
     assert me["user"]["email"] == "owner@example.com"
 
 
@@ -76,13 +76,13 @@ def test_rbac_user_management(auth_harness) -> None:
     assert owner.get("/api/users").status_code == 200
     alice_id = next(u["id"] for u in users if u["email"] == ALICE["email"])
 
-    # Owner promotes Alice to admin; she can now list users but not change roles.
+    # Admin promotes Alice to admin; admins can manage users.
     assert owner.patch(f"/api/users/{alice_id}", json={"role": "admin"}).status_code == 200
     assert alice.get("/api/users").status_code == 200
     bob = auth_harness.client()
     auth_harness.login(bob, BOB)
     bob_id = next(u["id"] for u in owner.get("/api/users").json() if u["email"] == BOB["email"])
-    assert alice.patch(f"/api/users/{bob_id}", json={"role": "admin"}).status_code == 403
+    assert alice.patch(f"/api/users/{bob_id}", json={"role": "admin"}).status_code == 200
     # But an admin may deactivate a plain user.
     assert alice.patch(f"/api/users/{bob_id}", json={"is_active": False}).status_code == 200
     # Deactivated Bob can no longer use his session.

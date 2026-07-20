@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.db import get_db
-from app.models import ROLE_ADMIN, ROLE_OWNER, User
+from app.models import ROLE_ADMIN, User
 from app.services import auth
 
 
@@ -71,8 +71,9 @@ def require_roles(*roles: str) -> Callable[[User], User]:
     return dependency
 
 
-require_admin = require_roles(ROLE_OWNER, ROLE_ADMIN)
-require_owner = require_roles(ROLE_OWNER)
+require_admin = require_roles(ROLE_ADMIN)
+# Compatibility alias: settings are now administered by admins.
+require_owner = require_admin
 
 
 def owned_filter(model: Any, user: User | None) -> ColumnElement[bool]:

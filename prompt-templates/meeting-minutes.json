@@ -2,5 +2,17 @@
   "slug": "meeting-minutes",
   "name": "Meeting Minutes",
   "description": "Formal minutes: attendees, agenda, decisions, actions.",
-  "prompt": "Turn the following transcript into formal meeting minutes with these sections: Participants (if identifiable), Agenda / Topics, Discussion, Decisions, Action Items (with owners and due dates if mentioned), Open Questions.\n\nTranscript:\n{transcript}"
+  "prompt": "Turn the following transcript into formal meeting minutes with these sections: Participants (if identifiable), Agenda / Topics, Discussion, Decisions, Action Items (with owners and due dates if mentioned), Open Questions.\n\nTranscript:\n{transcript}",
+  "translations": {
+    "de": {
+      "name": "Sitzungsprotokoll",
+      "description": "Formelles Protokoll: Teilnehmende, Agenda, Entscheidungen, Aufgaben.",
+      "prompt": "Wandle das folgende Transkript in ein formelles Sitzungsprotokoll mit diesen Abschnitten um: Teilnehmende (falls identifizierbar), Agenda / Themen, Diskussion, Entscheidungen, Aktionspunkte (mit Verantwortlichen und Fälligkeitsterminen, falls erwähnt), offene Fragen.\n\nTranskript:\n{transcript}"
+    },
+    "es": {
+      "name": "Acta de reunión",
+      "description": "Acta formal: asistentes, agenda, decisiones y acciones.",
+      "prompt": "Convierte la siguiente transcripción en un acta formal de reunión con estas secciones: participantes (si se pueden identificar), agenda/temas, discusión, decisiones, elementos de acción (con responsables y fechas límite si se mencionan) y preguntas abiertas.\n\nTranscripción:\n{transcript}"
+    }
+  }
 }

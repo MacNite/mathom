@@ -2,5 +2,17 @@
   "slug": "email-draft",
   "name": "Email Draft",
   "description": "A ready-to-send follow-up email.",
-  "prompt": "Draft a professional follow-up email based on the following transcript. Include a clear subject line, a brief recap of what was discussed, and any agreed next steps. Keep the tone friendly and concise, and write it in the language of the transcript.\n\nTranscript:\n{transcript}"
+  "prompt": "Draft a professional follow-up email based on the following transcript. Include a clear subject line, a brief recap of what was discussed, and any agreed next steps. Keep the tone friendly and concise, and write it in the language of the transcript.\n\nTranscript:\n{transcript}",
+  "translations": {
+    "de": {
+      "name": "E-Mail-Entwurf",
+      "description": "Eine versandfertige Follow-up-E-Mail.",
+      "prompt": "Entwirf anhand des folgenden Transkripts eine professionelle Follow-up-E-Mail. Füge eine klare Betreffzeile, eine kurze Zusammenfassung des Besprochenen und vereinbarte nächste Schritte ein. Halte den Ton freundlich und prägnant und schreibe in der Sprache des Transkripts.\n\nTranskript:\n{transcript}"
+    },
+    "es": {
+      "name": "Borrador de correo",
+      "description": "Un correo de seguimiento listo para enviar.",
+      "prompt": "Redacta un correo electrónico profesional de seguimiento basándote en la siguiente transcripción. Incluye un asunto claro, un breve resumen de lo tratado y los próximos pasos acordados. Mantén un tono cordial y conciso, y escríbelo en el idioma de la transcripción.\n\nTranscripción:\n{transcript}"
+    }
+  }
 }

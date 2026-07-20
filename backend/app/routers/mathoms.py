@@ -71,6 +71,7 @@ async def upload_mathom(
     file: UploadFile,
     title: str = Form(default=""),
     template_slug: str = Form(default="general-summary"),
+    template_language: str = Form(default="en", pattern=r"^(en|de|es)$"),
     db: Session = Depends(get_db),
     user: User | None = Depends(current_user),
 ) -> Mathom:
@@ -110,6 +111,7 @@ async def upload_mathom(
         original_filename=original_name[:500],
         audio_path=str(target),
         status="pending",
+        template_language=template_language,
         user_id=user.id if user else None,
     )
     db.add(mathom)
@@ -189,7 +191,7 @@ def create_summary(
     mathom = _get_mathom(mathom_id, db, user)
     if not mathom.transcript:
         raise HTTPException(status_code=409, detail="Mathom has no transcript yet")
-    summary = pipeline.summarize_mathom(mathom_id, payload.template_slug)
+    summary = pipeline.summarize_mathom(mathom_id, payload.template_slug, payload.template_language)
     if summary is None:
         raise HTTPException(status_code=404, detail="Prompt template not found")
     return SummaryOut.model_validate(summary)

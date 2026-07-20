@@ -10,6 +10,7 @@ from app.config import get_settings
 from app.db import get_session_factory, refresh_fts
 from app.models import Mathom, PromptTemplate, Summary
 from app.services import ollama, transcription
+from app.services.template_localization import localized_prompt
 
 logger = logging.getLogger("mathom.pipeline")
 
@@ -135,7 +136,9 @@ def process_mathom(mathom_id: int, template_slug: str = "general-summary") -> No
         mark_error(mathom_id, exc)
 
 
-def summarize_mathom(mathom_id: int, template_slug: str) -> Summary | None:
+def summarize_mathom(
+    mathom_id: int, template_slug: str, template_language: str | None = None
+) -> Summary | None:
     """Generate one summary for a Mathom with the given template. Returns it."""
     settings = get_settings()
     with get_session_factory()() as session:
@@ -152,7 +155,9 @@ def summarize_mathom(mathom_id: int, template_slug: str) -> Summary | None:
         if template is None:
             return None
         content = ollama.generate_summary(
-            mathom.transcript, template.prompt, language=mathom.language
+            mathom.transcript,
+            localized_prompt(template, template_language or mathom.template_language),
+            language=mathom.language,
         )
         summary = Summary(
             mathom_id=mathom_id,

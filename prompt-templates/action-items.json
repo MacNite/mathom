@@ -2,5 +2,17 @@
   "slug": "action-items",
   "name": "Action Items",
   "description": "Just the to-dos, as a checklist.",
-  "prompt": "Extract every action item, task, and commitment from the following transcript. Output a Markdown checklist. For each item include the owner and due date if mentioned. If there are no action items, say so.\n\nTranscript:\n{transcript}"
+  "prompt": "Extract every action item, task, and commitment from the following transcript. Output a Markdown checklist. For each item include the owner and due date if mentioned. If there are no action items, say so.\n\nTranscript:\n{transcript}",
+  "translations": {
+    "de": {
+      "name": "Aktionspunkte",
+      "description": "Nur die Aufgaben als Checkliste.",
+      "prompt": "Extrahiere jeden Aktionspunkt, jede Aufgabe und jede Zusage aus dem folgenden Transkript. Gib eine Markdown-Checkliste aus. Nenne bei jedem Punkt die verantwortliche Person und das Fälligkeitsdatum, falls erwähnt. Falls es keine Aktionspunkte gibt, sage das.\n\nTranskript:\n{transcript}"
+    },
+    "es": {
+      "name": "Elementos de acción",
+      "description": "Solo las tareas pendientes, como lista de verificación.",
+      "prompt": "Extrae cada elemento de acción, tarea y compromiso de la siguiente transcripción. Genera una lista de verificación en Markdown. Para cada elemento, incluye la persona responsable y la fecha límite si se mencionan. Si no hay elementos de acción, indícalo.\n\nTranscripción:\n{transcript}"
+    }
+  }
 }

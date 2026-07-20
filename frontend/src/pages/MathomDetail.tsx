@@ -8,7 +8,7 @@ import { useI18n } from '../lib/i18n';
 import type { Collection, Mathom, PromptTemplate } from '../lib/types';
 
 export default function MathomDetail() {
-  const { t } = useI18n();
+  const { lang, t } = useI18n();
   const { id } = useParams();
   const mathomId = Number(id);
   const navigate = useNavigate();
@@ -33,9 +33,9 @@ export default function MathomDetail() {
 
   useEffect(() => {
     refresh();
-    api.listTemplates().then(setTemplates).catch(() => setTemplates([]));
+    api.listTemplates(lang).then(setTemplates).catch(() => setTemplates([]));
     api.listCollections().then(setCollections).catch(() => setCollections([]));
-  }, [refresh]);
+  }, [lang, refresh]);
 
   // Poll while the pipeline is still working on this mathom.
   useEffect(() => {
@@ -87,7 +87,7 @@ export default function MathomDetail() {
   const makeSummary = async () => {
     setSummaryBusy(true);
     try {
-      await api.createSummary(mathom.id, summarySlug);
+      await api.createSummary(mathom.id, summarySlug, lang);
       refresh();
     } finally {
       setSummaryBusy(false);

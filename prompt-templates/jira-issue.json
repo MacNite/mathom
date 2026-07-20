@@ -2,5 +2,17 @@
   "slug": "jira-issue",
   "name": "Jira Issue",
   "description": "A Jira-style ticket with summary, description, and acceptance criteria.",
-  "prompt": "Create a Jira ticket from the following transcript. Provide: Summary (one line), Issue Type (Story, Task, or Bug), Description, Acceptance Criteria (bulleted), Priority suggestion, and Story Point estimate if the scope is clear.\n\nTranscript:\n{transcript}"
+  "prompt": "Create a Jira ticket from the following transcript. Provide: Summary (one line), Issue Type (Story, Task, or Bug), Description, Acceptance Criteria (bulleted), Priority suggestion, and Story Point estimate if the scope is clear.\n\nTranscript:\n{transcript}",
+  "translations": {
+    "de": {
+      "name": "Jira-Ticket",
+      "description": "Ein Jira-ähnliches Ticket mit Zusammenfassung, Beschreibung und Akzeptanzkriterien.",
+      "prompt": "Erstelle aus dem folgenden Transkript ein Jira-Ticket. Gib an: Zusammenfassung (eine Zeile), Vorgangstyp (Story, Aufgabe oder Fehler), Beschreibung, Akzeptanzkriterien (Stichpunkte), Prioritätsempfehlung und Story-Point-Schätzung, falls der Umfang klar ist.\n\nTranskript:\n{transcript}"
+    },
+    "es": {
+      "name": "Ticket de Jira",
+      "description": "Un ticket estilo Jira con resumen, descripción y criterios de aceptación.",
+      "prompt": "Crea un ticket de Jira a partir de la siguiente transcripción. Incluye: resumen (una línea), tipo de incidencia (historia, tarea o error), descripción, criterios de aceptación (viñetas), sugerencia de prioridad y estimación de puntos de historia si el alcance está claro.\n\nTranscripción:\n{transcript}"
+    }
+  }
 }

@@ -1,12 +1,13 @@
 """Prompt template CRUD. Templates live in SQLite and are edited in the UI."""
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models import PromptTemplate
 from app.schemas import TemplateCreate, TemplateOut, TemplateUpdate
+from app.services.template_localization import localized_template, normalize_template_language
 
 router = APIRouter(prefix="/templates", tags=["templates"])
 
@@ -19,8 +20,14 @@ def _get_template(template_id: int, db: Session) -> PromptTemplate:
 
 
 @router.get("", response_model=list[TemplateOut])
-def list_templates(db: Session = Depends(get_db)) -> list[PromptTemplate]:
-    return list(db.execute(select(PromptTemplate).order_by(PromptTemplate.name)).scalars())
+def list_templates(
+    language: str = Query(default="en"), db: Session = Depends(get_db)
+) -> list[TemplateOut]:
+    templates = db.execute(select(PromptTemplate).order_by(PromptTemplate.name)).scalars()
+    locale = normalize_template_language(language)
+    return [
+        TemplateOut.model_validate(localized_template(template, locale)) for template in templates
+    ]
 
 
 @router.post("", response_model=TemplateOut, status_code=201)

@@ -2,5 +2,17 @@
   "slug": "executive-brief",
   "name": "Executive Brief",
   "description": "One page for leadership: situation, implications, asks.",
-  "prompt": "Write an executive brief of the following transcript, at most one page. Sections: Situation (2-3 sentences), Key Points (max 5 bullets), Business Implications, Risks, Recommended Decisions / Asks. No filler.\n\nTranscript:\n{transcript}"
+  "prompt": "Write an executive brief of the following transcript, at most one page. Sections: Situation (2-3 sentences), Key Points (max 5 bullets), Business Implications, Risks, Recommended Decisions / Asks. No filler.\n\nTranscript:\n{transcript}",
+  "translations": {
+    "de": {
+      "name": "Management-Zusammenfassung",
+      "description": "Eine Seite für die Führungsebene: Situation, Auswirkungen, Entscheidungen.",
+      "prompt": "Verfasse eine Management-Zusammenfassung des folgenden Transkripts mit maximal einer Seite. Abschnitte: Situation (2–3 Sätze), Kernpunkte (max. 5 Stichpunkte), geschäftliche Auswirkungen, Risiken, empfohlene Entscheidungen / Anliegen. Kein Fülltext.\n\nTranskript:\n{transcript}"
+    },
+    "es": {
+      "name": "Informe ejecutivo",
+      "description": "Una página para liderazgo: situación, implicaciones y decisiones necesarias.",
+      "prompt": "Redacta un informe ejecutivo de la siguiente transcripción, de una página como máximo. Secciones: situación (2-3 frases), puntos clave (máx. 5 viñetas), implicaciones de negocio, riesgos y decisiones/solicitudes recomendadas. Sin relleno.\n\nTranscripción:\n{transcript}"
+    }
+  }
 }

@@ -88,6 +88,7 @@ def init_db(engine: Engine | None = None) -> None:
             )
         )
         _migrate_user_ownership(conn)
+        _migrate_template_language(conn)
         _migrate_local_auth(conn)
 
 
@@ -186,3 +187,14 @@ def _migrate_local_auth(conn: object) -> None:
         conn.execute(text("CREATE INDEX ix_users_role ON users(role)"))  # type: ignore[attr-defined]
     # owner was a legacy role; SQLite has no enum constraint, so this is safe and idempotent.
     conn.execute(text("UPDATE users SET role = 'admin' WHERE role = 'owner'"))  # type: ignore[attr-defined]
+
+
+def _migrate_template_language(conn: object) -> None:
+    """Store the UI language selected when a recording is submitted."""
+    if "template_language" not in _column_names(conn, "mathoms"):
+        conn.execute(  # type: ignore[attr-defined]
+            text(
+                "ALTER TABLE mathoms ADD COLUMN template_language "
+                "VARCHAR(10) NOT NULL DEFAULT 'en'"
+            )
+        )

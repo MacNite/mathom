@@ -2,5 +2,17 @@
   "slug": "customer-call",
   "name": "Customer Call",
   "description": "Call report: needs, objections, sentiment, next steps.",
-  "prompt": "Write a customer call report from the following transcript with these sections: Customer & Context, Needs and Pain Points, Objections and Concerns, Sentiment, Commitments Made, Next Steps.\n\nTranscript:\n{transcript}"
+  "prompt": "Write a customer call report from the following transcript with these sections: Customer & Context, Needs and Pain Points, Objections and Concerns, Sentiment, Commitments Made, Next Steps.\n\nTranscript:\n{transcript}",
+  "translations": {
+    "de": {
+      "name": "Kundengespräch",
+      "description": "Gesprächsbericht: Bedürfnisse, Einwände, Stimmung, nächste Schritte.",
+      "prompt": "Verfasse aus dem folgenden Transkript einen Bericht zum Kundengespräch mit diesen Abschnitten: Kunde & Kontext, Bedürfnisse und Schmerzpunkte, Einwände und Bedenken, Stimmung, eingegangene Zusagen, nächste Schritte.\n\nTranskript:\n{transcript}"
+    },
+    "es": {
+      "name": "Llamada con cliente",
+      "description": "Informe de llamada: necesidades, objeciones, sentimiento y próximos pasos.",
+      "prompt": "Redacta un informe de llamada con cliente a partir de la siguiente transcripción con estas secciones: cliente y contexto, necesidades y problemas, objeciones e inquietudes, sentimiento, compromisos adquiridos y próximos pasos.\n\nTranscripción:\n{transcript}"
+    }
+  }
 }

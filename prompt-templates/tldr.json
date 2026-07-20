@@ -2,5 +2,17 @@
   "slug": "tldr",
   "name": "TL;DR",
   "description": "Three sentences or fewer — just the essence.",
-  "prompt": "Give a TL;DR of the following transcript in at most three sentences. Be direct and concrete; no preamble.\n\nTranscript:\n{transcript}"
+  "prompt": "Give a TL;DR of the following transcript in at most three sentences. Be direct and concrete; no preamble.\n\nTranscript:\n{transcript}",
+  "translations": {
+    "de": {
+      "name": "Kurzfassung",
+      "description": "Drei Sätze oder weniger — nur das Wesentliche.",
+      "prompt": "Gib eine Kurzfassung des folgenden Transkripts in höchstens drei Sätzen. Sei direkt und konkret; keine Einleitung.\n\nTranskript:\n{transcript}"
+    },
+    "es": {
+      "name": "TL;DR",
+      "description": "Tres frases o menos: solo lo esencial.",
+      "prompt": "Da un TL;DR de la siguiente transcripción en un máximo de tres frases. Sé directo y concreto; sin introducción.\n\nTranscripción:\n{transcript}"
+    }
+  }
 }

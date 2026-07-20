@@ -2,5 +2,17 @@
   "slug": "general-summary",
   "name": "General Summary",
   "description": "A balanced, readable summary of the recording.",
-  "prompt": "Summarize the following transcript in clear, well-structured prose. Capture the main topics, key points, decisions, and any open questions. Keep the original language of the transcript.\n\nTranscript:\n{transcript}"
+  "prompt": "Summarize the following transcript in clear, well-structured prose. Capture the main topics, key points, decisions, and any open questions. Keep the original language of the transcript.\n\nTranscript:\n{transcript}",
+  "translations": {
+    "de": {
+      "name": "Allgemeine Zusammenfassung",
+      "description": "Eine ausgewogene, gut lesbare Zusammenfassung der Aufnahme.",
+      "prompt": "Fasse das folgende Transkript in klarer, gut strukturierter Prosa zusammen. Erfasse die Hauptthemen, wichtigsten Punkte, Entscheidungen und offenen Fragen. Behalte die ursprüngliche Sprache des Transkripts bei.\n\nTranskript:\n{transcript}"
+    },
+    "es": {
+      "name": "Resumen general",
+      "description": "Un resumen equilibrado y fácil de leer de la grabación.",
+      "prompt": "Resume la siguiente transcripción con una prosa clara y bien estructurada. Recoge los temas principales, los puntos clave, las decisiones y las preguntas abiertas. Conserva el idioma original de la transcripción.\n\nTranscripción:\n{transcript}"
+    }
+  }
 }

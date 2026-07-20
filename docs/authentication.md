@@ -13,3 +13,7 @@ There are only two roles: `admin` and `user`. Admins create users, reset passwor
 Configure issuer, client ID and secret in **Admin / Sign-in** or the environment. The login screen then offers “Continue with Authentik” alongside local login. Existing databases retain their legacy OIDC `subject`; `owner` roles are migrated to `admin`.
 
 OIDC identities are looked up by immutable subject. Email matching is permitted only when the provider marks the email verified and only for an unbound account; this prevents an unverified claim from taking over a privileged local account. For recovery when every administrator has lost access, use a server-side SQLite maintenance procedure to set a known account active/admin and reset its password; never add a default password to deployment configuration.
+
+## HTTP development or LAN access
+
+Session cookies are `Secure` by default. When accessing Mathom over plain HTTP (for example `http://192.168.x.x:31313`), set `SESSION_COOKIE_SECURE=false` in Compose (or `MATHOM_SESSION_COOKIE_SECURE=false` outside Compose), restart Mathom, and use HTTPS again as soon as possible. Otherwise the browser correctly refuses the sign-in cookie. If onboarding reports that it is complete, the initial account was already created; after correcting the cookie setting, reload and sign in with the email and password entered during setup rather than attempting onboarding again.

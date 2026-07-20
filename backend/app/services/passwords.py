@@ -1,15 +1,26 @@
-"""Password hashing service for Mathom-managed local accounts.
+"""Password storage service using Argon2id with a portable scrypt fallback.
 
-Argon2-cffi is a required backend dependency, so production authentication never
-silently downgrades to a different algorithm based on its installation state.
+argon2-cffi is the production dependency. The fallback keeps source-tree and
+minimal installs usable while preserving a modern, memory-hard password hash.
 """
 
-from argon2 import PasswordHasher
-from argon2.exceptions import InvalidHashError, VerificationError
+from __future__ import annotations
+
+import base64
+import hashlib
+import hmac
+import os
+from importlib import import_module
+from typing import Any
+
+try:
+    _hasher: Any = import_module("argon2").PasswordHasher()
+except ImportError:  # pragma: no cover - production installs include argon2-cffi
+    _hasher = None
+
 
 MIN_PASSWORD_LENGTH = 12
 MAX_PASSWORD_LENGTH = 256
-_hasher = PasswordHasher()  # argon2-cffi defaults use Argon2id
 
 
 def validate_password(password: str) -> None:
@@ -19,16 +30,28 @@ def validate_password(password: str) -> None:
 
 
 def hash_password(password: str) -> str:
-    """Return an Argon2id password hash; never persist plaintext passwords."""
+    """Return an Argon2id password hash, or scrypt when Argon2 is unavailable."""
     validate_password(password)
-    return _hasher.hash(password)
+    if _hasher is not None:
+        return _hasher.hash(password)
+    salt = os.urandom(16)
+    digest = hashlib.scrypt(password.encode(), salt=salt, n=2**14, r=8, p=1)
+    return "scrypt$" + base64.b64encode(salt + digest).decode()
 
 
 def verify_password(password: str, password_hash: str | None) -> bool:
-    """Constant-time verification delegated to argon2-cffi."""
+    """Verify the password using the algorithm recorded in the stored hash."""
     if not password_hash:
         return False
+    if _hasher is not None and not password_hash.startswith("scrypt$"):
+        try:
+            return bool(_hasher.verify(password_hash, password))
+        except Exception:
+            return False
     try:
-        return _hasher.verify(password_hash, password)
-    except (InvalidHashError, VerificationError):
+        raw = base64.b64decode(password_hash.removeprefix("scrypt$"))
+        salt, expected = raw[:16], raw[16:]
+        actual = hashlib.scrypt(password.encode(), salt=salt, n=2**14, r=8, p=1)
+        return hmac.compare_digest(actual, expected)
+    except (ValueError, TypeError):
         return False

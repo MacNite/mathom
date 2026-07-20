@@ -191,7 +191,7 @@ export const api = {
   onboarding(name: string, email: string, password: string, password_confirmation: string): Promise<User> {
     return request('/auth/onboarding', json('POST', { name, email, password, password_confirmation }));
   },
-  createUser(data: {name: string; email: string; password: string; role: Role; must_change_password: boolean}): Promise<User> {
+  createUser(data: {name: string; email: string; password: string; must_change_password: boolean}): Promise<User> {
     return request('/users', json('POST', data));
   },
 

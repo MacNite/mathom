@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.deps import authenticated_user, require_admin
-from app.models import ROLE_ADMIN, User
+from app.models import ROLE_ADMIN, ROLE_USER, User
 from app.schemas import PasswordChange, UserCreate, UserOut, UserUpdate
 from app.services import auth
 from app.services.passwords import hash_password, validate_password, verify_password
@@ -59,7 +59,9 @@ def create(
         u = User(
             email=normalize(payload.email),
             name=payload.name.strip(),
-            role=payload.role,
+            # Account creation is deliberately limited to standard users.
+            # Administrator privileges can only be granted through user management.
+            role=ROLE_USER,
             password_hash=hash_password(payload.password),
             must_change_password=payload.must_change_password,
         )

@@ -12,6 +12,12 @@ export default function Users() {
   const { user: me, isAdmin, refresh: refreshAuth } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState('');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmation, setConfirmation] = useState('');
+  const [mustChangePassword, setMustChangePassword] = useState(true);
+  const [creating, setCreating] = useState(false);
 
   const refresh = useCallback(
     () =>
@@ -41,6 +47,35 @@ export default function Users() {
   const changeRole = (target: User, role: Role) => applyChange(target, { role });
   const toggleActive = (target: User) => applyChange(target, { is_active: !target.is_active });
 
+  const createUser = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (password !== confirmation) {
+      setError(t('users.passwordMismatch'));
+      return;
+    }
+
+    setCreating(true);
+    setError('');
+    try {
+      await api.createUser({
+        name,
+        email,
+        password,
+        must_change_password: mustChangePassword,
+      });
+      setName('');
+      setEmail('');
+      setPassword('');
+      setConfirmation('');
+      setMustChangePassword(true);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('users.createError'));
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const remove = async (target: User) => {
     if (!window.confirm(t('users.confirmDelete', { email: target.email }))) return;
     setError('');
@@ -58,6 +93,72 @@ export default function Users() {
       <p className="mt-1 text-sm text-ink-500">{t('users.subtitle')}</p>
 
       {error && <p className="mt-4 text-sm text-red-700">{error}</p>}
+
+      <form onSubmit={createUser} className="card mt-6 max-w-2xl space-y-4">
+        <div>
+          <h3 className="font-display text-lg text-ink-900">{t('users.add')}</h3>
+          <p className="mt-1 text-sm text-ink-500">{t('users.addHint')}</p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block text-sm text-ink-700">
+            {t('users.name')}
+            <input
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              className="input mt-1"
+              autoComplete="name"
+            />
+          </label>
+          <label className="block text-sm text-ink-700">
+            {t('users.email')}
+            <input
+              required
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              className="input mt-1"
+              autoComplete="email"
+            />
+          </label>
+          <label className="block text-sm text-ink-700">
+            {t('users.password')}
+            <input
+              required
+              minLength={12}
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className="input mt-1"
+              autoComplete="new-password"
+            />
+          </label>
+          <label className="block text-sm text-ink-700">
+            {t('users.confirmPassword')}
+            <input
+              required
+              minLength={12}
+              type="password"
+              value={confirmation}
+              onChange={(event) => setConfirmation(event.target.value)}
+              className="input mt-1"
+              autoComplete="new-password"
+            />
+          </label>
+        </div>
+        <label className="flex items-center gap-2 text-sm text-ink-700">
+          <input
+            type="checkbox"
+            checked={mustChangePassword}
+            onChange={(event) => setMustChangePassword(event.target.checked)}
+          />
+          {t('users.mustChangePassword')}
+        </label>
+        <div>
+          <button disabled={creating} className="btn-primary disabled:opacity-60">
+            {creating ? t('users.creating') : t('users.create')}
+          </button>
+        </div>
+      </form>
 
       <div className="mt-6 space-y-3">
         {users.map((entry) => {

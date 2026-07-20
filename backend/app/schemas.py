@@ -183,7 +183,6 @@ class UserCreate(BaseModel):
     name: str = Field(default="", max_length=200)
     email: str = Field(min_length=3, max_length=320)
     password: str = Field(min_length=12, max_length=256)
-    role: str = Field(default="user", pattern=r"^(admin|user)$")
     must_change_password: bool = True
 
 

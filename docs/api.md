@@ -60,6 +60,7 @@ all other endpoints are open. See [authentication.md](authentication.md).
 | `GET /auth/login?next=`    | Redirect to Authentik to sign in                               |
 | `GET /auth/callback`       | OAuth redirect target; sets the session cookie                 |
 | `POST /auth/logout`        | End the current session                                        |
+| `POST /users`              | Create a standard user *(Admin; admin role cannot be created here)* |
 | `GET /users`               | List users *(Admin/Owner)*                                     |
 | `PATCH /users/{id}`        | Change `role` *(Owner)* or `is_active` *(Admin for users)*     |
 | `DELETE /users/{id}`       | Remove a user *(Owner)*                                        |

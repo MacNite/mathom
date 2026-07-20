@@ -89,6 +89,26 @@ def test_rbac_user_management(auth_harness) -> None:
     assert bob.get("/api/mathoms").status_code == 401
 
 
+def test_admin_can_create_standard_users_only(auth_harness) -> None:
+    admin = auth_harness.client()
+    auth_harness.login(admin, OWNER)
+
+    response = admin.post(
+        "/api/users",
+        json={
+            "name": "New User",
+            "email": "new.user@example.com",
+            "password": "a-secure-password",
+            "must_change_password": True,
+            # Extra fields must not permit privilege creation.
+            "role": "admin",
+        },
+    )
+
+    assert response.status_code == 201, response.text
+    assert response.json()["role"] == "user"
+
+
 def test_owner_cannot_be_demoted_into_lockout(auth_harness) -> None:
     owner = auth_harness.client()
     auth_harness.login(owner, OWNER)

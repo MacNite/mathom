@@ -28,6 +28,16 @@ def utcnow() -> datetime:
     return datetime.now(UTC)
 
 
+def as_aware(value: datetime) -> datetime:
+    """Coerce a possibly-naive stored datetime to aware UTC.
+
+    SQLite does not preserve tzinfo, so datetimes read back from the database
+    come back naive; comparing them against the aware ``utcnow()`` raises a
+    ``TypeError``. We always store UTC, so treat any naive value as UTC.
+    """
+    return value if value.tzinfo is not None else value.replace(tzinfo=UTC)
+
+
 class Base(DeclarativeBase):
     pass
 

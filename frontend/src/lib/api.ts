@@ -274,6 +274,9 @@ export const api = {
   revokeInvitation(id: number): Promise<Invitation> {
     return request(`/invitations/${id}/revoke`, { method: "POST" });
   },
+  deleteInvitation(id: number): Promise<void> {
+    return request(`/invitations/${id}`, { method: "DELETE" });
+  },
   acceptInvitation(token: string, password: string): Promise<User> {
     return request("/invitations/accept", json("POST", { token, password }));
   },

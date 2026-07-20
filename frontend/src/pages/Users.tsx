@@ -120,6 +120,17 @@ export default function Users() {
       );
     }
   };
+  const deleteInvite = async (id: number) => {
+    try {
+      await api.deleteInvitation(id);
+      await refresh();
+      toast.success("Invitation deleted.");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Invitation could not be deleted.",
+      );
+    }
+  };
 
   const remove = async (target: User) => {
     if (!window.confirm(t("users.confirmDelete", { email: target.email })))
@@ -254,32 +265,46 @@ export default function Users() {
         </button>
         {invitations.length > 0 && (
           <div className="space-y-2 border-t border-parchment-200 pt-3">
-            {invitations.map((entry) => (
-              <div
-                key={entry.id}
-                className="flex flex-wrap items-center justify-between gap-2 text-sm"
-              >
-                <span>
-                  {entry.email} —{" "}
-                  {entry.accepted_at
-                    ? "Accepted"
-                    : entry.revoked_at
-                      ? "Revoked"
-                      : new Date(entry.expires_at) < new Date()
-                        ? "Expired"
-                        : "Pending"}
-                </span>
-                {!entry.accepted_at && !entry.revoked_at && (
-                  <button
-                    type="button"
-                    onClick={() => revokeInvite(entry.id)}
-                    className="text-red-700"
-                  >
-                    Revoke
-                  </button>
-                )}
-              </div>
-            ))}
+            {invitations.map((entry) => {
+              const pending =
+                !entry.accepted_at &&
+                !entry.revoked_at &&
+                new Date(entry.expires_at) >= new Date();
+              return (
+                <div
+                  key={entry.id}
+                  className="flex flex-wrap items-center justify-between gap-2 text-sm"
+                >
+                  <span>
+                    {entry.email} —{" "}
+                    {entry.accepted_at
+                      ? "Accepted"
+                      : entry.revoked_at
+                        ? "Revoked"
+                        : new Date(entry.expires_at) < new Date()
+                          ? "Expired"
+                          : "Pending"}
+                  </span>
+                  {pending ? (
+                    <button
+                      type="button"
+                      onClick={() => revokeInvite(entry.id)}
+                      className="text-red-700"
+                    >
+                      Revoke
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => deleteInvite(entry.id)}
+                      className="text-ink-400 hover:text-red-700"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </form>

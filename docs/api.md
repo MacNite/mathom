@@ -67,6 +67,7 @@ all other endpoints are open. See [authentication.md](authentication.md).
 | `GET /invitations`          | List invitation status *(Admin)*                              |
 | `POST /invitations`         | Send a password-setup invitation *(Admin)*                    |
 | `POST /invitations/{id}/revoke` | Revoke a pending invitation *(Admin)*                    |
+| `DELETE /invitations/{id}`  | Delete a revoked, expired, or accepted invitation *(Admin)*    |
 | `POST /invitations/accept`  | Accept invitation and set local password *(public)*            |
 | `GET /settings/smtp`        | Read SMTP setup, password masked *(Admin)*                     |
 | `PUT /settings/smtp`        | Update SMTP setup *(Admin)*                                    |

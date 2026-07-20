@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.deps import require_admin
-from app.models import Invitation, User, utcnow
+from app.models import Invitation, User, as_aware, utcnow
 from app.schemas import InvitationAccept, InvitationCreate, InvitationOut, UserOut
 from app.services.invitations import new_token, send_invitation, token_hash
 from app.services.passwords import hash_password, validate_password
@@ -42,7 +42,7 @@ def create_invitation(
         existing
         and existing.accepted_at is None
         and existing.revoked_at is None
-        and existing.expires_at > utcnow()
+        and as_aware(existing.expires_at) > utcnow()
     ):
         raise HTTPException(409, "An active invitation already exists for this email address")
     if existing:
@@ -84,6 +84,25 @@ def revoke_invitation(
     return invite
 
 
+@router.delete("/{invite_id}", status_code=204)
+def delete_invitation(
+    invite_id: int, db: Session = Depends(get_db), _: User = Depends(require_admin)
+) -> None:
+    invite = db.get(Invitation, invite_id)
+    if not invite:
+        raise HTTPException(404, "Invitation not found")
+    # An active, pending invitation still has a live token in someone's inbox.
+    # Revoke it first so it cannot be accepted; only then may it be cleared.
+    if (
+        invite.accepted_at is None
+        and invite.revoked_at is None
+        and as_aware(invite.expires_at) > utcnow()
+    ):
+        raise HTTPException(409, "Revoke the invitation before deleting it")
+    db.delete(invite)
+    db.commit()
+
+
 @router.post("/accept", response_model=UserOut)
 def accept_invitation(payload: InvitationAccept, db: Session = Depends(get_db)) -> User:
     invite = db.scalar(select(Invitation).where(Invitation.token_hash == token_hash(payload.token)))
@@ -91,7 +110,7 @@ def accept_invitation(payload: InvitationAccept, db: Session = Depends(get_db)) 
         not invite
         or invite.revoked_at is not None
         or invite.accepted_at is not None
-        or invite.expires_at <= utcnow()
+        or as_aware(invite.expires_at) <= utcnow()
     ):
         raise HTTPException(400, "This invitation is invalid, expired, or revoked")
     try:

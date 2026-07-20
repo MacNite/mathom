@@ -93,3 +93,12 @@ def test_extra_summary_with_template(client: TestClient, uploaded_mathom: dict) 
     )
     assert response.status_code == 201
     assert response.json()["template_slug"] == "tldr"
+
+
+def test_delete_summary(client: TestClient, uploaded_mathom: dict) -> None:
+    mathom_id = uploaded_mathom["id"]
+    summary_id = uploaded_mathom["summaries"][0]["id"]
+
+    assert client.delete(f"/api/mathoms/{mathom_id}/summaries/{summary_id}").status_code == 204
+    assert client.get(f"/api/mathoms/{mathom_id}").json()["summaries"] == []
+    assert client.delete(f"/api/mathoms/{mathom_id}/summaries/{summary_id}").status_code == 404

@@ -94,6 +94,12 @@ export default function MathomDetail() {
     }
   };
 
+  const removeSummary = async (summaryId: number) => {
+    if (!window.confirm(t('detail.confirmDeleteSummary'))) return;
+    await api.deleteSummary(mathom.id, summaryId);
+    refresh();
+  };
+
   const removeMathom = async () => {
     if (!window.confirm(t('detail.confirmDelete'))) return;
     await api.deleteMathom(mathom.id);
@@ -241,7 +247,16 @@ export default function MathomDetail() {
         ) : (
           <div className="mt-3 space-y-4">
             {mathom.summaries.map((summary) => (
-              <div key={summary.id} className="rounded-xl bg-parchment-100 p-4">
+              <div key={summary.id} className="relative rounded-xl bg-parchment-100 p-4">
+                <button
+                  type="button"
+                  onClick={() => void removeSummary(summary.id)}
+                  className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full text-lg leading-none text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500"
+                  aria-label={t('detail.confirmDeleteSummary')}
+                  title={t('detail.delete')}
+                >
+                  ×
+                </button>
                 <p className="text-xs font-medium uppercase tracking-wide text-ink-500">
                   {summary.template_name} · {summary.model}
                 </p>

@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.db import get_db, refresh_fts
 from app.deps import current_user, owned_filter, owns
-from app.models import Mathom, Tag, User
+from app.models import Mathom, Summary, Tag, User
 from app.schemas import (
     MathomListItem,
     MathomOut,
@@ -193,6 +193,22 @@ def create_summary(
     if summary is None:
         raise HTTPException(status_code=404, detail="Prompt template not found")
     return SummaryOut.model_validate(summary)
+
+
+@router.delete("/{mathom_id}/summaries/{summary_id}", status_code=204)
+def delete_summary(
+    mathom_id: int,
+    summary_id: int,
+    db: Session = Depends(get_db),
+    user: User | None = Depends(current_user),
+) -> Response:
+    _get_mathom(mathom_id, db, user)
+    summary = db.get(Summary, summary_id)
+    if summary is None or summary.mathom_id != mathom_id:
+        raise HTTPException(status_code=404, detail="Summary not found")
+    db.delete(summary)
+    db.commit()
+    return Response(status_code=204)
 
 
 @router.post("/{mathom_id}/tags", response_model=list[TagOut])

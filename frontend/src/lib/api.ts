@@ -91,6 +91,10 @@ export const api = {
     return request(`/mathoms/${id}/summaries`, json('POST', { template_slug: templateSlug }));
   },
 
+  deleteSummary(mathomId: number, summaryId: number): Promise<void> {
+    return request(`/mathoms/${mathomId}/summaries/${summaryId}`, { method: 'DELETE' });
+  },
+
   addTag(id: number, name: string): Promise<Tag[]> {
     return request(`/mathoms/${id}/tags`, json('POST', { name }));
   },

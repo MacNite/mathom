@@ -8,7 +8,8 @@ const SHARE_CACHE = 'mathom-share-target-v1';
 const SHARED_FILE_KEY = '/__shared-audio';
 
 export interface SharedFile {
-  file: File;
+  /** The shared file, or null when only text/links were shared. */
+  file: File | null;
   title: string;
   text: string;
 }
@@ -41,8 +42,11 @@ export async function readSharedAudio(): Promise<SharedFile | null> {
     const title = decodeHeader(response.headers.get('X-Shared-Title'));
     const type = response.headers.get('Content-Type') || blob.type || 'application/octet-stream';
 
-    const text = decodeHeader(response.headers.get('X-Shared-Text')) || (response.headers.get('X-Shared-Text-Only') ? await blob.text() : '');
-    const file = response.headers.get('X-Shared-Text-Only') ? new File([], filename, { type }) : new File([blob], filename, { type });
+    const textOnly = response.headers.get('X-Shared-Text-Only') === '1';
+    const text = textOnly
+      ? decodeHeader(response.headers.get('X-Shared-Text')) || (await blob.text())
+      : decodeHeader(response.headers.get('X-Shared-Text'));
+    const file = textOnly ? null : new File([blob], filename, { type });
     return { file, title, text };
   } catch {
     return null;

@@ -79,9 +79,7 @@ def mark_visual_error(mathom_id: int, exc: Exception) -> None:
         if mathom is None:
             return
         mathom.vision_status = "error"
-        mathom.vision_error_message = (
-            "Visual analysis could not be completed. You can try again."
-        )
+        mathom.vision_error_message = "Visual analysis could not be completed. You can try again."
         session.commit()
 
 

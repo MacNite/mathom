@@ -6,8 +6,27 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Streaming summaries and chat render again.** Server-sent tokens are now
+  emitted as JSON (`json.dumps`) instead of Python `repr()`, which the browser's
+  `JSON.parse` rejected — the live typewriter view previously errored on the
+  first token and content only appeared after a reload.
+- **Deleting a summary now updates search.** The full-text index is refreshed on
+  summary deletion, so removed summaries no longer surface as stale search hits.
+
 ### Security
 
+- **Rate limiter can no longer be evaded with a spoofed `X-Forwarded-For`.** The
+  per-client key is derived from the proxy-set `X-Real-IP` (falling back to the
+  right-most forwarded hop), so a caller can no longer rotate the left-most,
+  client-supplied header to mint a fresh bucket and bypass login throttling.
+- **Prompt-template endpoints require authentication** when auth is enabled.
+  Listing, creating, editing, and deleting templates previously accepted
+  unauthenticated requests even though templates are global.
+- **`must_change_password` is now enforced.** Accounts flagged for a mandatory
+  password change (admin-created users and resets) are held at a change-password
+  screen until they set a new password; the flag is exposed on the user API.
 - **OIDC nonce binding.** The login is now bound to the ID token's `nonce`, so a
   replayed or injected token is rejected (`auth_error=invalid_nonce`).
 - **Shorter default session lifetime** — 14 days instead of 30

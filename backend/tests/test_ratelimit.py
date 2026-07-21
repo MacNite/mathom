@@ -52,6 +52,27 @@ def test_heavy_endpoint_is_throttled(limited_client: TestClient) -> None:
     assert "Retry-After" in blocked.headers
 
 
+def test_spoofed_forwarded_for_cannot_evade_limit(limited_client: TestClient) -> None:
+    # A client-supplied left-most X-Forwarded-For must not mint a fresh bucket:
+    # the limiter keys on X-Real-IP (set by the trusted proxy) instead.
+    headers = {"X-Real-IP": "203.0.113.7"}
+    for _ in range(3):
+        assert (
+            limited_client.get(
+                "/api/search",
+                params={"q": "x"},
+                headers={**headers, "X-Forwarded-For": f"{_}.{_}.{_}.{_}"},
+            ).status_code
+            == 200
+        )
+    blocked = limited_client.get(
+        "/api/search",
+        params={"q": "x"},
+        headers={**headers, "X-Forwarded-For": "9.9.9.9"},
+    )
+    assert blocked.status_code == 429
+
+
 def test_health_is_never_throttled(limited_client: TestClient) -> None:
     # The container healthcheck must always answer.
     for _ in range(10):

@@ -6,6 +6,7 @@ import { useAuth } from "./lib/auth";
 import { useI18n } from "./lib/i18n";
 import AuthentikSettings from "./pages/AuthentikSettings";
 import Collections from "./pages/Collections";
+import ForcePasswordChange from "./pages/ForcePasswordChange";
 import Library from "./pages/Library";
 import Login from "./pages/Login";
 import Onboarding from "./pages/Onboarding";
@@ -18,7 +19,7 @@ import Register from "./pages/Register";
 
 export default function App() {
   const { t } = useI18n();
-  const { loading, status, isAdmin } = useAuth();
+  const { loading, status, user, isAdmin } = useAuth();
 
   if (loading) {
     return (
@@ -43,6 +44,12 @@ export default function App() {
         />
       </Routes>
     );
+  }
+
+  // A signed-in account flagged for a mandatory password change is held at the
+  // change screen until it sets a new password — no other route renders.
+  if (status.auth_enabled && user?.must_change_password) {
+    return <ForcePasswordChange />;
   }
 
   const guard = (allowed: boolean, element: ReactElement): ReactElement =>

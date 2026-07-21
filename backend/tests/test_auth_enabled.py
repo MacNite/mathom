@@ -140,6 +140,34 @@ def test_owner_claims_pre_auth_mathoms(auth_harness) -> None:
     assert "Legacy memory" in titles
 
 
+def test_templates_require_authentication(auth_harness) -> None:
+    # With auth enabled, the template endpoints must not be reachable anonymously
+    # — they are global and drive every user's summaries.
+    anon = auth_harness.client()
+    assert anon.get("/api/templates").status_code == 401
+    assert (
+        anon.post(
+            "/api/templates",
+            json={
+                "slug": "sneaky",
+                "name": "Sneaky",
+                "description": "",
+                "prompt": "{transcript}",
+            },
+        ).status_code
+        == 401
+    )
+
+    owner = auth_harness.client()
+    auth_harness.login(owner, OWNER)
+    listing = owner.get("/api/templates")
+    assert listing.status_code == 200
+    template_id = listing.json()[0]["id"]
+    assert anon.delete(f"/api/templates/{template_id}").status_code == 401
+    # The template survived the anonymous delete attempt.
+    assert owner.get(f"/api/templates/{template_id}").status_code == 200
+
+
 def test_settings_update_masks_secret(auth_harness) -> None:
     owner = auth_harness.client()
     auth_harness.login(owner, OWNER)

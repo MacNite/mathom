@@ -160,6 +160,9 @@ class UserOut(ORMModel):
     is_active: bool
     created_at: datetime
     last_login_at: datetime | None
+    # Surfaced so the client can force a change before letting the account in;
+    # an admin sets this on created accounts and password resets.
+    must_change_password: bool = False
     has_local_password: bool = False
     has_authentik_identity: bool = False
 

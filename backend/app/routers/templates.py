@@ -5,7 +5,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models import PromptTemplate
+from app.deps import current_user
+from app.models import PromptTemplate, User
 from app.schemas import TemplateCreate, TemplateOut, TemplateUpdate
 from app.services.template_localization import localized_template, normalize_template_language
 
@@ -21,7 +22,9 @@ def _get_template(template_id: int, db: Session) -> PromptTemplate:
 
 @router.get("", response_model=list[TemplateOut])
 def list_templates(
-    language: str = Query(default="en"), db: Session = Depends(get_db)
+    language: str = Query(default="en"),
+    db: Session = Depends(get_db),
+    _user: User | None = Depends(current_user),
 ) -> list[TemplateOut]:
     templates = db.execute(select(PromptTemplate).order_by(PromptTemplate.name)).scalars()
     locale = normalize_template_language(language)
@@ -31,7 +34,11 @@ def list_templates(
 
 
 @router.post("", response_model=TemplateOut, status_code=201)
-def create_template(payload: TemplateCreate, db: Session = Depends(get_db)) -> PromptTemplate:
+def create_template(
+    payload: TemplateCreate,
+    db: Session = Depends(get_db),
+    _user: User | None = Depends(current_user),
+) -> PromptTemplate:
     if "{transcript}" not in payload.prompt:
         raise HTTPException(status_code=422, detail="Prompt must contain {transcript}")
     exists = db.execute(
@@ -53,13 +60,20 @@ def create_template(payload: TemplateCreate, db: Session = Depends(get_db)) -> P
 
 
 @router.get("/{template_id}", response_model=TemplateOut)
-def get_template(template_id: int, db: Session = Depends(get_db)) -> PromptTemplate:
+def get_template(
+    template_id: int,
+    db: Session = Depends(get_db),
+    _user: User | None = Depends(current_user),
+) -> PromptTemplate:
     return _get_template(template_id, db)
 
 
 @router.put("/{template_id}", response_model=TemplateOut)
 def update_template(
-    template_id: int, payload: TemplateUpdate, db: Session = Depends(get_db)
+    template_id: int,
+    payload: TemplateUpdate,
+    db: Session = Depends(get_db),
+    _user: User | None = Depends(current_user),
 ) -> PromptTemplate:
     template = _get_template(template_id, db)
     changes = payload.model_dump(exclude_unset=True)
@@ -73,7 +87,11 @@ def update_template(
 
 
 @router.delete("/{template_id}", status_code=204)
-def delete_template(template_id: int, db: Session = Depends(get_db)) -> Response:
+def delete_template(
+    template_id: int,
+    db: Session = Depends(get_db),
+    _user: User | None = Depends(current_user),
+) -> Response:
     template = _get_template(template_id, db)
     db.delete(template)
     db.commit()

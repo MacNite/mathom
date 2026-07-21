@@ -317,6 +317,16 @@ export const api = {
     return request("/users", json("POST", data));
   },
 
+  changeMyPassword(
+    currentPassword: string | null,
+    password: string,
+  ): Promise<User> {
+    return request(
+      "/users/me/password",
+      json("POST", { current_password: currentPassword, password }),
+    );
+  },
+
   listUsers(): Promise<User[]> {
     return request("/users");
   },

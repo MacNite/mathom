@@ -152,6 +152,47 @@ def test_streaming_summary_chunks_long_transcripts_and_persists_content(
     assert [summary["content"] for summary in detail["summaries"][-2:]] == ["combined", "combined"]
 
 
+def test_streaming_summary_emits_json_parsable_tokens(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch, uploaded_mathom: dict
+) -> None:
+    """Each SSE ``data:`` frame must be valid JSON so the browser can parse it.
+
+    Regression guard: the stream previously emitted Python ``repr()`` (single
+    quotes), which ``JSON.parse`` on the frontend rejects. Plain tokens are the
+    telling case — ``repr('Hello')`` is ``'Hello'`` (invalid JSON).
+    """
+    import json
+
+    from app.services import ollama
+
+    tokens = ["Hello", " there", " friend"]
+    monkeypatch.setattr(ollama, "stream_generate_summary", lambda *args, **kwargs: iter(tokens))
+
+    mathom_id = uploaded_mathom["id"]
+    response = client.post(f"/api/mathoms/{mathom_id}/summaries/stream", json={})
+    assert response.status_code == 200
+
+    decoded: list[str] = []
+    for block in response.text.split("\n\n"):
+        data = next((line[6:] for line in block.split("\n") if line.startswith("data: ")), None)
+        if data is None or data == "done":
+            continue
+        decoded.append(json.loads(data))  # must not raise
+    assert decoded == tokens
+
+
+def test_delete_summary_purges_search_index(client: TestClient, uploaded_mathom: dict) -> None:
+    """Deleting a summary must drop its text from the FTS index."""
+    mathom_id = uploaded_mathom["id"]
+    summary_id = uploaded_mathom["summaries"][0]["id"]
+    # "reply" appears only in the mocked summary ("Mocked AI reply."), not the
+    # transcript or title, so it is a clean probe for summary content.
+    assert any(hit["mathom"]["id"] == mathom_id for hit in client.get("/api/search?q=reply").json())
+
+    assert client.delete(f"/api/mathoms/{mathom_id}/summaries/{summary_id}").status_code == 204
+    assert client.get("/api/search?q=reply").json() == []
+
+
 def test_delete_summary(client: TestClient, uploaded_mathom: dict) -> None:
     mathom_id = uploaded_mathom["id"]
     summary_id = uploaded_mathom["summaries"][0]["id"]

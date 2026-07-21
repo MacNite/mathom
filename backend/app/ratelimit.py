@@ -11,8 +11,11 @@ Two budgets are enforced per client per minute:
 * a tight one for expensive work — uploads, chat, summaries, search, and any
   auth/login attempt (the brute-force surface).
 
-The client key prefers the proxy-supplied ``X-Forwarded-For`` / ``X-Real-IP``
-(the bundled proxy sets both) and falls back to the socket address.
+The client key prefers ``X-Real-IP`` (the bundled nginx proxy sets it to the
+real socket address, which a client cannot forge) and falls back to the
+right-most ``X-Forwarded-For`` entry — the hop nginx appended — never the
+client-supplied left-most value, which would let a caller mint a fresh bucket
+per request and sail past the limiter.
 """
 
 from __future__ import annotations
@@ -35,12 +38,19 @@ _HEAVY_PREFIXES = ("/api/auth/login", "/api/auth/callback", "/api/search")
 
 
 def _client_key(request: Request) -> str:
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
+    # X-Real-IP is set by our own nginx to the socket peer, so it cannot be
+    # spoofed by the client. Prefer it.
     real = request.headers.get("x-real-ip")
     if real:
         return real.strip()
+    # Otherwise use the right-most X-Forwarded-For hop — the one the nearest
+    # trusted proxy appended. The left-most entries are client-supplied and must
+    # never key the limiter, or a caller could rotate them to evade throttling.
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        hops = [hop.strip() for hop in forwarded.split(",") if hop.strip()]
+        if hops:
+            return hops[-1]
     return request.client.host if request.client else "unknown"
 
 

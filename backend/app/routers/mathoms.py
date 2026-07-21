@@ -1,5 +1,6 @@
 """Mathom CRUD, upload, audio streaming, summaries, tags, and exports."""
 
+import json
 import uuid
 from collections.abc import Iterator
 from pathlib import Path
@@ -244,7 +245,7 @@ def stream_summary(
             mathom.language,
         ):
             content += token
-            yield f"data: {token!r}\n\n"
+            yield f"data: {json.dumps(token)}\n\n"
         summary = (
             db.get(Summary, payload.replace_summary_id) if payload.replace_summary_id else None
         )
@@ -302,6 +303,10 @@ def delete_summary(
     if summary is None or summary.mathom_id != mathom_id:
         raise HTTPException(status_code=404, detail="Summary not found")
     db.delete(summary)
+    db.commit()
+    # Drop the removed summary's text from the search index so it stops
+    # surfacing in results and snippets.
+    refresh_fts(db, mathom_id)
     db.commit()
     return Response(status_code=204)
 

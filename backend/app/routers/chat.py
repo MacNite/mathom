@@ -1,5 +1,6 @@
 """Follow-up AI chat, grounded in a Mathom's transcript."""
 
+import json
 import threading
 from collections.abc import Iterator
 
@@ -108,7 +109,7 @@ def stream_message(
                 mathom.transcript or "", history, payload.message, mathom.language
             ):
                 content += token
-                yield f"data: {token!r}\n\n"
+                yield f"data: {json.dumps(token)}\n\n"
             db.add(ChatMessage(mathom_id=mathom.id, role="user", content=payload.message))
             db.add(ChatMessage(mathom_id=mathom.id, role="assistant", content=content))
             db.commit()

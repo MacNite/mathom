@@ -243,6 +243,15 @@ const translations: Record<Lang, Record<string, string>> = {
     'onboarding.failed': 'Setup failed',
     'onboarding.creating': 'Creating administrator…',
     'onboarding.create': 'Create administrator',
+    'forcePassword.title': 'Choose a new password',
+    'forcePassword.subtitle':
+      'Your account must set a new password before you can continue.',
+    'forcePassword.current': 'Current password',
+    'forcePassword.new': 'New password',
+    'forcePassword.confirm': 'Confirm new password',
+    'forcePassword.saving': 'Saving…',
+    'forcePassword.submit': 'Update password',
+    'forcePassword.failed': 'Could not update your password',
   },
   de: {
     'app.tagline': 'mathom',
@@ -467,6 +476,15 @@ const translations: Record<Lang, Record<string, string>> = {
     'onboarding.failed': 'Einrichtung fehlgeschlagen',
     'onboarding.creating': 'Administrator wird erstellt…',
     'onboarding.create': 'Administrator erstellen',
+    'forcePassword.title': 'Neues Passwort wählen',
+    'forcePassword.subtitle':
+      'Dein Konto muss ein neues Passwort festlegen, bevor es weitergeht.',
+    'forcePassword.current': 'Aktuelles Passwort',
+    'forcePassword.new': 'Neues Passwort',
+    'forcePassword.confirm': 'Neues Passwort bestätigen',
+    'forcePassword.saving': 'Wird gespeichert…',
+    'forcePassword.submit': 'Passwort aktualisieren',
+    'forcePassword.failed': 'Passwort konnte nicht aktualisiert werden',
   },
   es: {
     'app.tagline': 'mathom',
@@ -690,6 +708,15 @@ const translations: Record<Lang, Record<string, string>> = {
     'onboarding.failed': 'Error en la configuración',
     'onboarding.creating': 'Creando administrador…',
     'onboarding.create': 'Crear administrador',
+    'forcePassword.title': 'Elige una nueva contraseña',
+    'forcePassword.subtitle':
+      'Tu cuenta debe establecer una nueva contraseña antes de continuar.',
+    'forcePassword.current': 'Contraseña actual',
+    'forcePassword.new': 'Nueva contraseña',
+    'forcePassword.confirm': 'Confirmar nueva contraseña',
+    'forcePassword.saving': 'Guardando…',
+    'forcePassword.submit': 'Actualizar contraseña',
+    'forcePassword.failed': 'No se pudo actualizar la contraseña',
   },
 };
 

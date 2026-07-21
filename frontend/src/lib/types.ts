@@ -94,6 +94,7 @@ export interface User {
   is_active: boolean;
   created_at: string;
   last_login_at: string | null;
+  must_change_password?: boolean;
   has_local_password?: boolean;
   has_authentik_identity?: boolean;
 }

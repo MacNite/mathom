@@ -17,15 +17,15 @@ Mathom server and nowhere else. No cloud services are involved.
 
 - **`frontend/public/manifest.webmanifest`** declares the app (name, icons,
   theme) and a [`share_target`](https://developer.mozilla.org/en-US/docs/Web/Manifest/share_target)
-  that accepts audio files via an HTTP `POST` to `/share-target`.
+  that accepts supported audio/video files and text via an HTTP `POST` to `/share-target`.
 - **`frontend/public/sw.js`** is a service worker whose only jobs are to make
   the app installable and to receive the share. A web page cannot read a
   `POST`ed file directly, so the worker intercepts the request, stashes the
   file in Cache Storage, and redirects (`303`) to the `/share-target` route.
 - **`frontend/src/pages/ShareTarget.tsx`** reads the stashed file back from
   Cache Storage and opens the normal upload dialog pre-filled with it. From
-  there the file is uploaded to the existing `POST /api/mathoms` endpoint — the
-  transcription and summarization pipeline is unchanged.
+  there the user confirms the source. Text-only shares become text Mathoms;
+  file-plus-text shares keep text as a suggested title and never merge it into a transcript.
 
 ## Why PWA instead of a Play Store app
 

@@ -10,6 +10,7 @@ const SHARED_FILE_KEY = '/__shared-audio';
 export interface SharedAudio {
   file: File;
   title: string;
+  text: string;
 }
 
 /** Register the service worker. Safe to call on every load; it is idempotent. */
@@ -40,8 +41,9 @@ export async function readSharedAudio(): Promise<SharedAudio | null> {
     const title = decodeHeader(response.headers.get('X-Shared-Title'));
     const type = response.headers.get('Content-Type') || blob.type || 'application/octet-stream';
 
-    const file = new File([blob], filename, { type });
-    return { file, title };
+    const text = decodeHeader(response.headers.get('X-Shared-Text')) || (response.headers.get('X-Shared-Text-Only') ? await blob.text() : '');
+    const file = response.headers.get('X-Shared-Text-Only') ? new File([], filename, { type }) : new File([blob], filename, { type });
+    return { file, title, text };
   } catch {
     return null;
   }

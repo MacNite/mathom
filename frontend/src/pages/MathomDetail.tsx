@@ -273,7 +273,7 @@ export default function MathomDetail() {
         )}
       </div>
 
-      <audio
+      {['audio', 'video_audio'].includes(mathom.source_type ?? 'audio') && <audio
         ref={audioRef}
         controls
         src={api.audioUrl(mathom.id)}
@@ -282,7 +282,7 @@ export default function MathomDetail() {
         onTimeUpdate={(event) =>
           setCurrentTime(event.currentTarget.currentTime)
         }
-      />
+      />}
 
       <section className="card">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -290,7 +290,7 @@ export default function MathomDetail() {
             {t("detail.tagsCollections")}
           </h3>
           <div className="flex gap-2 text-sm">
-            {(["md", "txt", "json", "srt", "vtt"] as const).map((format) => (
+            {(['md', 'txt', 'json', ...(['audio', 'video_audio'].includes(mathom.source_type ?? 'audio') ? ['srt', 'vtt'] : [])] as Array<'md' | 'txt' | 'json' | 'srt' | 'vtt'>).map((format) => (
               <a
                 key={format}
                 href={api.exportUrl(mathom.id, format)}

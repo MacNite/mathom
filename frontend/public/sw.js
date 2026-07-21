@@ -35,7 +35,8 @@ async function handleShareTarget(request) {
   try {
     const formData = await request.formData();
     const file = formData.get('audio');
-    const title = (formData.get('title') || formData.get('text') || '').toString();
+    const title = (formData.get('title') || '').toString();
+    const sharedText = (formData.get('text') || '').toString();
 
     if (file && typeof file === 'object' && file.size > 0) {
       const cache = await caches.open(SHARE_CACHE);
@@ -43,9 +44,16 @@ async function handleShareTarget(request) {
       headers.set('Content-Type', file.type || 'application/octet-stream');
       headers.set('X-Shared-Filename', encodeURIComponent(file.name || 'shared-recording'));
       headers.set('X-Shared-Title', encodeURIComponent(title));
+      headers.set('X-Shared-Text', encodeURIComponent(sharedText));
       headers.set('X-Shared-At', String(Date.now()));
       await cache.put(SHARED_FILE_KEY, new Response(file, { headers }));
       // 303 forces the follow-up request to be a GET of the React route.
+      return Response.redirect('/share-target?shared=1', 303);
+    }
+
+    if (sharedText.trim()) {
+      const cache = await caches.open(SHARE_CACHE);
+      await cache.put(SHARED_FILE_KEY, new Response(sharedText, { headers: { 'X-Shared-Text-Only': '1', 'X-Shared-Title': encodeURIComponent(title) } }));
       return Response.redirect('/share-target?shared=1', 303);
     }
 

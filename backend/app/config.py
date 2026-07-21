@@ -35,6 +35,8 @@ class Settings(BaseSettings):
     # pathological upload cannot occupy a worker indefinitely.
     ffmpeg_timeout_seconds: float = 600.0
     max_upload_mb: int = 200
+    max_document_mb: int = Field(default=50, ge=1)
+    max_text_chars: int = Field(default=500000, ge=1)
     allowed_audio_extensions: str = ".mp3,.m4a,.wav,.ogg,.opus,.flac,.webm,.mp4,.aac"
 
     # --- Rate limiting ---------------------------------------------------------
@@ -92,6 +94,10 @@ class Settings(BaseSettings):
     @property
     def audio_dir(self) -> Path:
         return self.data_dir / "audio"
+
+    @property
+    def source_dir(self) -> Path:
+        return self.data_dir / "sources"
 
     @property
     def allowed_extensions(self) -> set[str]:

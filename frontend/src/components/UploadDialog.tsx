@@ -14,6 +14,7 @@ interface Props {
   // programmatically for security reasons).
   sharedFile?: File | null;
   sharedTitle?: string;
+  sharedText?: string;
 }
 
 const FOCUSABLE =
@@ -25,6 +26,7 @@ export default function UploadDialog({
   onUploaded,
   sharedFile = null,
   sharedTitle = '',
+  sharedText = '',
 }: Props) {
   const { lang, t } = useI18n();
   const toast = useToast();
@@ -33,6 +35,8 @@ export default function UploadDialog({
   const [templateSlug, setTemplateSlug] = useState('general-summary');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [source, setSource] = useState<'media' | 'text' | 'document'>('media');
+  const [text, setText] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLFormElement>(null);
   const titleId = useId();
@@ -43,8 +47,9 @@ export default function UploadDialog({
       api.listTemplates(lang).then(setTemplates).catch(() => setTemplates([]));
       setError('');
       setTitle(sharedTitle);
+      if (sharedText) { setSource('text'); setText(sharedText); }
     }
-  }, [lang, open, sharedTitle]);
+  }, [lang, open, sharedText, sharedTitle]);
 
   // Accessible-dialog behaviour: trap focus, restore it on close, close on
   // Escape, and move focus into the dialog when it opens.
@@ -86,14 +91,16 @@ export default function UploadDialog({
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     const file = sharedFile ?? fileRef.current?.files?.[0];
-    if (!file) {
+    if (source !== 'text' && !file) {
       setError(t('upload.chooseFileFirst'));
       return;
     }
     setBusy(true);
     setError('');
     try {
-      await api.uploadMathom(file, title, templateSlug, lang);
+      if (source === 'text') await api.createTextMathom(text, title, templateSlug, lang);
+      else if (source === 'document' && file) await api.uploadDocument(file, title, templateSlug, lang);
+      else if (file) await api.uploadMathom(file, title, templateSlug, lang);
       setTitle('');
       if (fileRef.current) fileRef.current.value = '';
       toast.success(t('upload.success'));
@@ -129,22 +136,23 @@ export default function UploadDialog({
         <p id={descId} className="mt-1 text-sm text-ink-500">
           {sharedFile ? t('upload.sharedSubtitle') : t('upload.subtitle')}
         </p>
+        {!sharedFile && <fieldset className="mt-3 flex gap-3 text-sm text-ink-700"><legend>{t('upload.source')}</legend>{(['media', 'text', 'document'] as const).map((kind) => <label key={kind}><input type="radio" checked={source === kind} onChange={() => setSource(kind)} /> {t(`upload.source.${kind}`)}</label>)}</fieldset>}
         {sharedFile ? (
           <div className="mt-4 flex items-center gap-2 rounded-xl border border-moss-200 bg-moss-200/40 px-3 py-2 text-sm text-ink-700">
             <span aria-hidden>🎧</span>
             <span className="truncate">{sharedFile.name}</span>
           </div>
-        ) : (
+        ) : source !== 'text' ? (
           <label className="mt-4 block text-sm text-ink-700">
-            {t('upload.audioFile')}
+              {source === 'document' ? t('upload.documentFile') : t('upload.audioFile')}
             <input
               ref={fileRef}
               type="file"
-              accept="audio/*,video/mp4,.m4a,.opus"
+              accept={source === 'document' ? '.txt,.md,.pdf,.docx' : 'audio/*,video/mp4,.m4a,.opus,.oga'}
               className="input mt-1"
             />
           </label>
-        )}
+        ) : <label className="mt-4 block text-sm text-ink-700">{t('upload.text')}<textarea value={text} onChange={(event) => setText(event.target.value)} className="input mt-1 min-h-40" maxLength={500000} /></label>}
         <label className="mt-3 block text-sm text-ink-700">
           {t('upload.titleLabel')} <span className="text-ink-400">{t('upload.optional')}</span>
           <input

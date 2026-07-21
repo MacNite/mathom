@@ -25,6 +25,7 @@ export type MathomStatus =
   | "summarizing"
   | "ready"
   | "error";
+export type SourceType = "audio" | "video_audio" | "text" | "document";
 
 export interface MathomListItem {
   id: number;
@@ -32,6 +33,7 @@ export interface MathomListItem {
   status: MathomStatus;
   duration_seconds: number | null;
   language: string | null;
+  source_type?: SourceType;
   favorite: boolean;
   archived: boolean;
   created_at: string;

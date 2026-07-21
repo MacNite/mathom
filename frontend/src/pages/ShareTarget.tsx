@@ -7,7 +7,7 @@ import { clearSharedAudio, readSharedAudio } from '../lib/pwa';
 
 type State =
   | { kind: 'loading' }
-  | { kind: 'ready'; file: File; title: string }
+  | { kind: 'ready'; file: File; title: string; text: string }
   | { kind: 'empty' };
 
 // Landing page for the Android Share Sheet. The service worker has already
@@ -23,7 +23,7 @@ export default function ShareTarget() {
     readSharedAudio().then((shared) => {
       if (cancelled) return;
       if (shared) {
-        setState({ kind: 'ready', file: shared.file, title: shared.title });
+        setState({ kind: 'ready', file: shared.file, title: shared.title, text: shared.text });
       } else {
         setState({ kind: 'empty' });
       }
@@ -61,8 +61,9 @@ export default function ShareTarget() {
   return (
     <UploadDialog
       open
-      sharedFile={state.file}
+      sharedFile={state.text ? null : state.file}
       sharedTitle={state.title}
+      sharedText={state.text}
       onClose={finish}
       onUploaded={finish}
     />

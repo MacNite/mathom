@@ -15,8 +15,9 @@ here.*
 
 ## Features
 
-- 🎙️ **Voice-message transcription** — bring in WhatsApp, Telegram, recorder, or
-  web-meeting audio; faster-whisper and FFmpeg handle common formats
+- 🎙️ **Audio and video-with-audio transcription** — upload recordings or MP4
+  video with an audio track; Mathom transcribes audio only, never video images
+- 📄 **Text and documents** — paste text or import local TXT, Markdown, PDF, and DOCX
 - ✨ **Useful summaries** — 12 editable prompt templates: TL;DR, Meeting Minutes,
   Action Items, Email Draft, GitHub/Jira Issue, CRM Entry, Calendar Events,
   Executive Brief, and more
@@ -115,6 +116,8 @@ All settings live in `.env` (see [`.env.example`](.env.example)):
 | `WHISPER_DEVICE`       | `cpu`      | `cpu` or `cuda`                        |
 | `WHISPER_COMPUTE_TYPE` | `int8`     | `int8` (CPU) / `float16` (GPU)         |
 | `MAX_UPLOAD_MB`        | `200`      | Upload size limit per recording        |
+| `MATHOM_MAX_DOCUMENT_MB` | `50` | Upload size limit per document |
+| `MATHOM_MAX_TEXT_CHARS` | `500000` | Maximum pasted or extracted text characters |
 | `MAX_QUEUED_JOBS`      | `25`       | Maximum recordings waiting to process  |
 | `CHAT_CONCURRENCY`     | `1`        | Simultaneous interactive Ollama chats  |
 | `MATHOM_DIARIZATION_ENABLED` | `false` | Enable optional local speaker labels |

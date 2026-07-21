@@ -72,6 +72,11 @@ class Mathom(Base):
     title: Mapped[str] = mapped_column(String(300), default="Untitled Mathom")
     original_filename: Mapped[str] = mapped_column(String(500), default="")
     audio_path: Mapped[str] = mapped_column(String(1000), default="")
+    # `audio_path` is retained for compatibility. Source files for documents
+    # use source_path; text has neither. Future source kinds can be added
+    # without changing the processing model again.
+    source_type: Mapped[str] = mapped_column(String(30), default="audio", index=True)
+    source_path: Mapped[str] = mapped_column(String(1000), default="")
     duration_seconds: Mapped[float | None] = mapped_column(Float, nullable=True)
     status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)

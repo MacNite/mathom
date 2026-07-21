@@ -1,5 +1,13 @@
 # Threat Model
 
+## Sampled video frames
+
+When explicitly enabled, frame files exist only in a server-created private temporary directory and
+are deleted after processing. Only base64-encoded local frames are sent to the configured Ollama
+base URL; no URLs from frames or model output are followed. Visible text is treated as untrusted
+data, and structured responses are validated before storage. Raw frames, base64 data, internal
+paths, and raw Ollama failures are not exposed to users.
+
 This document describes what Mathom does and does not defend against, so
 operators can deploy it safely. Mathom is a **local-first, self-hosted**
 archive; its security posture assumes a trusted host and a small number of

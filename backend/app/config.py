@@ -15,6 +15,18 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://ollama:11434"
     ollama_model: str = "llama3.2"
     ollama_timeout_seconds: float = 300.0
+    # Optional, per-upload video frame analysis. It is deliberately off unless
+    # an administrator opts in: vision inference can be substantially slower.
+    vision_enabled: bool = False
+    vision_model: str = "gemma3:4b"
+    vision_max_frames: int = Field(default=24, ge=1, le=120)
+    vision_batch_size: int = Field(default=4, ge=1, le=12)
+    vision_sample_interval_seconds: float = Field(default=30, ge=1, le=3600)
+    vision_scene_threshold: float = Field(default=0.35, ge=0.0, le=1.0)
+    vision_frame_max_width: int = Field(default=1024, ge=128, le=4096)
+    vision_jpeg_quality: int = Field(default=85, ge=30, le=95)
+    vision_timeout_seconds: float = Field(default=300, ge=5, le=1800)
+    vision_max_observation_chars: int = Field(default=50000, ge=1000, le=500000)
     # Bound the number of recordings waiting for the serial processing worker.
     # This is admission control, not a per-client rate limit: it keeps a burst
     # of large uploads from turning into an unbounded wait for everyone.

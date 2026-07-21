@@ -21,6 +21,14 @@ def to_markdown(mathom: Mathom) -> str:
             lines += [f"## {summary.template_name}", "", summary.content, ""]
     if mathom.transcript:
         lines += ["## Transcript", "", mathom.transcript, ""]
+    if mathom.visual_summary:
+        lines += ["## Visual Summary (sampled frames; AI-generated)", "", mathom.visual_summary, ""]
+    if mathom.visual_observations:
+        lines += ["## Visual Observations", ""]
+        lines += [
+            f"- {float(str(item.get('timestamp_seconds', 0))):.1f}s: {item.get('description', '')}"
+            for item in mathom.visual_observations
+        ]
     if mathom.chat_messages:
         lines += ["## Follow-up conversation", ""]
         for message in mathom.chat_messages:
@@ -35,6 +43,13 @@ def to_text(mathom: Mathom) -> str:
         parts += [summary.template_name, "-" * len(summary.template_name), summary.content, ""]
     if mathom.transcript:
         parts += ["Transcript", "----------", mathom.transcript]
+    if mathom.visual_summary:
+        parts += [
+            "",
+            "Visual Summary (sampled frames; AI-generated)",
+            "---------------------------------------------",
+            mathom.visual_summary,
+        ]
     return "\n".join(parts)
 
 
@@ -49,6 +64,14 @@ def to_json(mathom: Mathom) -> str:
         "archived": mathom.archived,
         "tags": [tag.name for tag in mathom.tags],
         "transcript": mathom.transcript,
+        "vision": {
+            "requested": mathom.vision_requested,
+            "status": mathom.vision_status,
+            "model": mathom.vision_model,
+            "summary": mathom.visual_summary,
+            "observations": mathom.visual_observations,
+            "error": mathom.vision_error_message,
+        },
         "summaries": [
             {
                 "template": summary.template_slug,

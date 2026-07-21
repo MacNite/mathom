@@ -12,7 +12,7 @@ from app.db import get_db
 from app.deps import current_user, owns
 from app.models import ChatMessage, Mathom, User
 from app.schemas import ChatMessageOut, ChatRequest
-from app.services import ollama
+from app.services import ollama, pipeline
 
 # Interactive requests must not pile up behind a slow remote Ollama. The
 # semaphore is deliberately separate from the background recording worker so
@@ -59,7 +59,8 @@ def send_message(
     user: User | None = Depends(current_user),
 ) -> list[ChatMessage]:
     mathom = _get_mathom(mathom_id, db, user)
-    if not mathom.transcript:
+    context = pipeline.build_context(mathom)
+    if not context:
         raise HTTPException(status_code=409, detail="Mathom has no transcript yet")
     if not _try_acquire_chat_slot():
         raise HTTPException(
@@ -70,9 +71,7 @@ def send_message(
 
     try:
         history = [{"role": m.role, "content": m.content} for m in mathom.chat_messages]
-        reply = ollama.followup_chat(
-            mathom.transcript, history, payload.message, language=mathom.language
-        )
+        reply = ollama.followup_chat(context, history, payload.message, language=mathom.language)
     finally:
         # The request may time out or Ollama may be unavailable; always free a
         # slot so a transient upstream error cannot block all future chats.
@@ -94,7 +93,8 @@ def stream_message(
     user: User | None = Depends(current_user),
 ) -> StreamingResponse:
     mathom = _get_mathom(mathom_id, db, user)
-    if not mathom.transcript:
+    context = pipeline.build_context(mathom)
+    if not context:
         raise HTTPException(status_code=409, detail="Mathom has no transcript yet")
     if not _try_acquire_chat_slot():
         raise HTTPException(
@@ -106,7 +106,7 @@ def stream_message(
         content = ""
         try:
             for token in ollama.stream_followup_chat(
-                mathom.transcript or "", history, payload.message, mathom.language
+                context, history, payload.message, mathom.language
             ):
                 content += token
                 yield f"data: {json.dumps(token)}\n\n"

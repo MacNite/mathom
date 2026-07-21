@@ -77,6 +77,17 @@ class Mathom(Base):
     # without changing the processing model again.
     source_type: Mapped[str] = mapped_column(String(30), default="audio", index=True)
     source_path: Mapped[str] = mapped_column(String(1000), default="")
+    has_audio_stream: Mapped[bool] = mapped_column(Boolean, default=True)
+    has_video_stream: Mapped[bool] = mapped_column(Boolean, default=False)
+    vision_requested: Mapped[bool] = mapped_column(Boolean, default=False)
+    vision_status: Mapped[str] = mapped_column(String(30), default="not_requested", index=True)
+    vision_model: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    visual_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    visual_observations: Mapped[list[dict[str, object]]] = mapped_column(JSON, default=list)
+    vision_error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    vision_processed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     duration_seconds: Mapped[float | None] = mapped_column(Float, nullable=True)
     status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)

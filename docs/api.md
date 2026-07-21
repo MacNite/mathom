@@ -19,6 +19,7 @@ All routes are prefixed with `/api`.
 | `DELETE /mathoms/{id}`               | Delete row + audio file                    |
 | `GET /mathoms/{id}/audio`            | Stream the original audio                  |
 | `GET /mathoms/{id}/source`           | Download the original media or document source |
+| `POST /mathoms/{id}/visual-analysis` | Queue local visual analysis for a retained video |
 | `POST /mathoms/{id}/summaries`       | Generate another summary (`template_slug`) |
 | `POST /mathoms/{id}/tags`            | Add tag by name                            |
 | `DELETE /mathoms/{id}/tags/{tagId}`  | Remove tag                                 |
@@ -81,6 +82,12 @@ When auth is enabled, all Mathom/chat/collection/search endpoints require a
 session cookie (`401` otherwise) and return only the caller's own rows.
 
 ## Status lifecycle
+
+Media upload accepts `analyze_visuals=false` as a multipart boolean. The response includes stream
+capabilities and vision fields (`vision_status`, `vision_model`, `visual_summary`, timestamped
+`visual_observations`, and a safe error message). A video-only upload requires this option and
+global visual analysis to be enabled. `POST /mathoms/{id}/visual-analysis` is authenticated,
+ownership-scoped, durable, and refuses duplicate processing; it preserves existing summaries.
 
 `pending → transcribing → summarizing → ready`, or `error` (with
 `error_message` set). Poll `GET /mathoms/{id}` while in flight.

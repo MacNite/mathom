@@ -92,6 +92,7 @@ def init_db(engine: Engine | None = None) -> None:
         _migrate_segments(conn)
         _migrate_template_language(conn)
         _migrate_source_fields(conn)
+        _migrate_vision_fields(conn)
         _migrate_local_auth(conn)
 
 
@@ -99,7 +100,8 @@ def refresh_fts(session: Session, mathom_id: int) -> None:
     """Rebuild the FTS row for one Mathom (rowid mirrors mathoms.id)."""
     row = session.execute(
         text(
-            "SELECT m.title, COALESCE(m.transcript, ''), "
+            "SELECT m.title, COALESCE(m.transcript, '') || ' ' || "
+            "COALESCE(m.visual_summary, '') || ' ' || COALESCE(m.visual_observations, ''), "
             "COALESCE((SELECT group_concat(s.content, ' ') FROM summaries s "
             "WHERE s.mathom_id = m.id), '') "
             "FROM mathoms m WHERE m.id = :id"
@@ -141,6 +143,27 @@ def _migrate_source_fields(conn: object) -> None:
         if name not in _column_names(conn, "mathoms"):
             conn.execute(text(f"ALTER TABLE mathoms ADD COLUMN {name} {definition}"))  # type: ignore[attr-defined]
     conn.execute(text("CREATE INDEX IF NOT EXISTS ix_mathoms_source_type ON mathoms(source_type)"))  # type: ignore[attr-defined]
+
+
+def _migrate_vision_fields(conn: object) -> None:
+    """Add optional media/vision metadata without rewriting existing archives."""
+    fields = (
+        ("has_audio_stream", "BOOLEAN NOT NULL DEFAULT 1"),
+        ("has_video_stream", "BOOLEAN NOT NULL DEFAULT 0"),
+        ("vision_requested", "BOOLEAN NOT NULL DEFAULT 0"),
+        ("vision_status", "VARCHAR(30) NOT NULL DEFAULT 'not_requested'"),
+        ("vision_model", "VARCHAR(200)"),
+        ("visual_summary", "TEXT"),
+        ("visual_observations", "JSON"),
+        ("vision_error_message", "TEXT"),
+        ("vision_processed_at", "DATETIME"),
+    )
+    for name, definition in fields:
+        if name not in _column_names(conn, "mathoms"):
+            conn.execute(text(f"ALTER TABLE mathoms ADD COLUMN {name} {definition}"))  # type: ignore[attr-defined]
+    conn.execute(  # type: ignore[attr-defined]
+        text("CREATE INDEX IF NOT EXISTS ix_mathoms_vision_status ON mathoms(vision_status)")
+    )
 
 
 def _migrate_local_auth(conn: object) -> None:

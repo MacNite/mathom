@@ -32,8 +32,9 @@ from app.schemas import (
     TagCreate,
     TagOut,
     TextMathomCreate,
+    VisualAnalysisRequest,
 )
-from app.services import export, jobs, pipeline, transcription
+from app.services import export, jobs, pipeline, transcription, vision
 from app.services.worker import worker
 
 router = APIRouter(prefix="/mathoms", tags=["mathoms"])
@@ -77,6 +78,7 @@ async def upload_mathom(
     title: str = Form(default=""),
     template_slug: str = Form(default="general-summary"),
     template_language: str = Form(default="en", pattern=r"^(en|de|es)$"),
+    analyze_visuals: bool = Form(default=False),
     db: Session = Depends(get_db),
     user: User | None = Depends(current_user),
 ) -> Mathom:
@@ -118,17 +120,49 @@ async def upload_mathom(
         raise HTTPException(status_code=400, detail="Uploaded file is empty")
 
     try:
-        # Validate before a row/job exists; failed bytes leave no residue.
-        await asyncio.to_thread(transcription.validate_audio, target)
-    except transcription.AudioValidationError as exc:
+        # Ordinary audio retains the established validation path. Potential
+        # videos (and every visual-analysis request) are stream-classified by
+        # ffprobe before a row/job exists.
+        if extension not in {".mp4", ".webm"} and not analyze_visuals:
+            await asyncio.to_thread(transcription.validate_audio, target)
+            has_audio, has_video, duration = True, False, None
+        else:
+            has_audio, has_video, duration = await asyncio.to_thread(vision.media_streams, target)
+        if not has_audio and not has_video:
+            raise vision.VisionError("No usable media streams")
+        if analyze_visuals and not has_video:
+            raise HTTPException(
+                status_code=422, detail="Visual analysis is only available for videos"
+            )
+        if analyze_visuals and not settings.vision_enabled:
+            raise HTTPException(
+                status_code=409, detail="Visual analysis is disabled by this server"
+            )
+        if has_video and not has_audio and not analyze_visuals:
+            raise HTTPException(
+                status_code=422, detail="A video without audio requires visual analysis"
+            )
+    except (vision.VisionError, transcription.AudioValidationError) as exc:
         target.unlink(missing_ok=True)
-        raise HTTPException(status_code=422, detail="File has no decodable audio stream") from exc
-    source_type = "video_audio" if extension == ".mp4" else "audio"
+        raise HTTPException(
+            status_code=422, detail="File has no usable audio or video stream"
+        ) from exc
+    except HTTPException:
+        target.unlink(missing_ok=True)
+        raise
+    source_type = "video" if has_video else "audio"
     mathom = Mathom(
         title=title.strip() or Path(original_name).stem or "Untitled Mathom",
         original_filename=original_name[:500],
         audio_path=str(target),
+        source_path=str(target) if has_video else "",
         source_type=source_type,
+        duration_seconds=duration,
+        has_audio_stream=has_audio,
+        has_video_stream=has_video,
+        vision_requested=analyze_visuals,
+        vision_status="pending" if analyze_visuals else "not_requested",
+        vision_model=settings.vision_model if analyze_visuals else None,
         status="pending",
         template_language=template_language,
         user_id=user.id if user else None,
@@ -288,12 +322,40 @@ def get_audio(
     user: User | None = Depends(current_user),
 ) -> FileResponse:
     mathom = _get_mathom(mathom_id, db, user)
-    if mathom.source_type not in {"audio", "video_audio"}:
+    if not mathom.has_audio_stream:
         raise HTTPException(status_code=409, detail="This Mathom has no audio source")
     path = Path(mathom.audio_path)
     if not path.is_file():
         raise HTTPException(status_code=404, detail="Audio file not found")
     return FileResponse(path, filename=mathom.original_filename or path.name)
+
+
+@router.post("/{mathom_id}/visual-analysis", response_model=MathomOut, status_code=202)
+def rerun_visual_analysis(
+    mathom_id: int,
+    payload: VisualAnalysisRequest,
+    db: Session = Depends(get_db),
+    user: User | None = Depends(current_user),
+) -> Mathom:
+    mathom = _get_mathom(mathom_id, db, user)
+    settings = get_settings()
+    if not settings.vision_enabled:
+        raise HTTPException(status_code=409, detail="Visual analysis is disabled by this server")
+    if not mathom.has_video_stream or not mathom.source_path:
+        raise HTTPException(
+            status_code=422, detail="Visual analysis is only available for retained videos"
+        )
+    if jobs.has_active_job(db, mathom.id):
+        raise HTTPException(status_code=409, detail="This Mathom is already being processed")
+    mathom.vision_requested = True
+    mathom.vision_status = "pending"
+    mathom.vision_error_message = None
+    mathom.vision_model = settings.vision_model
+    db.commit()
+    jobs.enqueue(db, mathom.id, "general-summary", kind="visual_analysis")
+    worker.notify()
+    db.refresh(mathom)
+    return mathom
 
 
 @router.get("/{mathom_id}/source")
@@ -315,8 +377,8 @@ def create_summary(
     user: User | None = Depends(current_user),
 ) -> SummaryOut:
     mathom = _get_mathom(mathom_id, db, user)
-    if not mathom.transcript:
-        raise HTTPException(status_code=409, detail="Mathom has no transcript yet")
+    if not pipeline.build_context(mathom):
+        raise HTTPException(status_code=409, detail="Mathom has no processable content yet")
     summary = pipeline.summarize_mathom(mathom_id, payload.template_slug, payload.template_language)
     if summary is None:
         raise HTTPException(status_code=404, detail="Prompt template not found")

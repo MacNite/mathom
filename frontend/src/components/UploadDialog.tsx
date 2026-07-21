@@ -37,6 +37,8 @@ export default function UploadDialog({
   const [error, setError] = useState('');
   const [source, setSource] = useState<'media' | 'text' | 'document'>('media');
   const [text, setText] = useState('');
+  const [analyzeVisuals, setAnalyzeVisuals] = useState(false);
+  const [videoSelected, setVideoSelected] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLFormElement>(null);
   const titleId = useId();
@@ -100,7 +102,7 @@ export default function UploadDialog({
     try {
       if (source === 'text') await api.createTextMathom(text, title, templateSlug, lang);
       else if (source === 'document' && file) await api.uploadDocument(file, title, templateSlug, lang);
-      else if (file) await api.uploadMathom(file, title, templateSlug, lang);
+      else if (file) await api.uploadMathom(file, title, templateSlug, lang, analyzeVisuals);
       setTitle('');
       if (fileRef.current) fileRef.current.value = '';
       toast.success(t('upload.success'));
@@ -149,10 +151,11 @@ export default function UploadDialog({
               ref={fileRef}
               type="file"
               accept={source === 'document' ? '.txt,.md,.pdf,.docx' : 'audio/*,video/mp4,.m4a,.opus,.oga'}
-              className="input mt-1"
+              className="input mt-1" onChange={(event) => setVideoSelected(Boolean(event.currentTarget.files?.[0]?.type.startsWith('video/')))}
             />
           </label>
         ) : <label className="mt-4 block text-sm text-ink-700">{t('upload.text')}<textarea value={text} onChange={(event) => setText(event.target.value)} className="input mt-1 min-h-40" maxLength={500000} /></label>}
+        {source === 'media' && (videoSelected || sharedFile?.type.startsWith('video/')) && <label className="mt-3 block rounded-xl bg-parchment-100 p-3 text-sm text-ink-700"><input type="checkbox" checked={analyzeVisuals} onChange={(event) => setAnalyzeVisuals(event.target.checked)} /> {t('upload.analyzeVisuals')}<span className="mt-1 block text-xs text-ink-500">{t('upload.analyzeVisualsHelp')}</span></label>}
         <label className="mt-3 block text-sm text-ink-700">
           {t('upload.titleLabel')} <span className="text-ink-400">{t('upload.optional')}</span>
           <input

@@ -1,5 +1,13 @@
 # Deployment
 
+## Optional local video visual analysis
+
+Visual analysis is disabled by default. To enable it, set `MATHOM_VISION_ENABLED=true` and install
+a vision-capable model in the existing private Ollama instance, for example `gemma3:4b` or
+`qwen3-vl:4b`; set `MATHOM_VISION_MODEL` accordingly. Mathom checks `/api/show` and does not pull
+models or contact registries. Tune bounded frame, batch, dimension, quality, timeout, and response
+limits through the documented `MATHOM_VISION_*` variables in `.env.example`.
+
 ## Any Docker host
 
 ```bash

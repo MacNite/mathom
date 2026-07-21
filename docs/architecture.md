@@ -45,6 +45,17 @@ weights or sends audio to an external service.
 
 ## The Mathom lifecycle
 
+### Optional sampled-frame video analysis
+
+When enabled globally and requested per video, ffprobe classifies actual streams before a row is
+created. Videos without audio are accepted only in this mode. The durable worker transcribes an
+audio stream when present, extracts bounded representative JPEG frames in a private temporary
+directory, checks Ollama `/api/show` for the configured model's `vision` capability, and sends
+small ordered frame batches to local `/api/chat` with structured JSON output. Observations receive
+server-assigned timestamps and are retained separately from transcripts. Temporary frames are
+removed on every exit path. Audio-backed videos fall back to audio-only summaries if vision fails;
+visual-only videos fail safely because they have no other processable content.
+
 1. `POST /api/mathoms` stores the audio under a server-generated name, creates
    a row with status `pending`, and **enqueues a durable job** (`jobs` table).
 2. The worker thread (`backend/app/services/worker.py`) claims the job and runs

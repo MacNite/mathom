@@ -40,6 +40,7 @@ export default function MathomDetail() {
   const [transcriptDraft, setTranscriptDraft] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [currentTime, setCurrentTime] = useState(0);
 
   const refresh = useCallback(() => {
@@ -213,6 +214,7 @@ export default function MathomDetail() {
       );
     }
   };
+  const seekObservation = (seconds: number) => { const player = videoRef.current ?? audioRef.current; if (player) { player.currentTime = seconds; void player.play(); } };
 
   return (
     <div className="space-y-6">
@@ -273,7 +275,11 @@ export default function MathomDetail() {
         )}
       </div>
 
-      {['audio', 'video_audio'].includes(mathom.source_type ?? 'audio') && <audio
+      {mathom.has_video_stream ? <video
+        ref={videoRef}
+        controls src={api.audioUrl(mathom.id)} className="w-full" preload="metadata"
+        onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
+      /> : mathom.has_audio_stream && <audio
         ref={audioRef}
         controls
         src={api.audioUrl(mathom.id)}
@@ -283,6 +289,8 @@ export default function MathomDetail() {
           setCurrentTime(event.currentTarget.currentTime)
         }
       />}
+
+      {mathom.has_video_stream && <section className="card"><div className="flex items-center justify-between gap-3"><h3 className="font-display text-lg">Visual analysis</h3><button className="btn-ghost" onClick={() => api.rerunVisualAnalysis(mathom.id).then(setMathom).catch((err) => toast.error(err instanceof Error ? err.message : 'Could not start visual analysis'))}>Run again</button></div><p className="text-sm text-ink-500">{mathom.vision_status}{mathom.vision_model ? ` · ${mathom.vision_model}` : ''}</p>{mathom.vision_error_message && <p className="mt-2 text-sm text-amber-800">{mathom.vision_error_message}</p>}{mathom.visual_summary && <><h4 className="mt-3 font-medium">Visual summary <span className="text-xs text-ink-500">AI-generated from sampled frames</span></h4><p className="mt-1 whitespace-pre-wrap">{mathom.visual_summary}</p></>}<ul className="mt-3 space-y-2">{(mathom.visual_observations ?? []).map((observation) => <li key={observation.frame_index}><button className="text-hearth-600 underline" onClick={() => seekObservation(observation.timestamp_seconds)}>{observation.timestamp_seconds.toFixed(1)}s</button> · {observation.description}</li>)}</ul></section>}
 
       <section className="card">
         <div className="flex flex-wrap items-center justify-between gap-2">

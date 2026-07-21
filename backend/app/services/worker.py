@@ -66,16 +66,20 @@ class Worker:
             job = jobs.claim_next(session)
             if job is None:
                 return False
-            job_id, mathom_id, template_slug, attempts, max_attempts = (
+            job_id, mathom_id, template_slug, kind, attempts, max_attempts = (
                 job.id,
                 job.mathom_id,
                 job.template_slug,
+                job.kind,
                 job.attempts,
                 job.max_attempts,
             )
 
         try:
-            pipeline.run(mathom_id, template_slug)
+            if kind == "visual_analysis":
+                pipeline.run_visual_analysis(mathom_id)
+            else:
+                pipeline.run(mathom_id, template_slug)
         except Exception as exc:  # noqa: BLE001 — decide retry vs. give up
             logger.exception("Job %s failed (attempt %s/%s)", job_id, attempts, max_attempts)
             safe = pipeline._safe_error(exc)

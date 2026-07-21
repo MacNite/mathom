@@ -104,6 +104,17 @@ Before exposing Mathom beyond your own machine, read the
 
 ## Configuration
 
+### Optional local video visual analysis
+
+Set `MATHOM_VISION_ENABLED=true` to offer an opt-in **Analyze visual content** upload option.
+Mathom samples still frames (not every frame), sends only those frames to the configured local
+Ollama `/api/chat` endpoint, and stores timestamped AI-generated observations separately from
+the spoken transcript. `gemma3:4b` is the compact default; `qwen3-vl:4b` or another installed
+vision-capable local model may be selected with `MATHOM_VISION_MODEL`. More frames increase
+processing time, memory, and context use. Descriptions are approximate and may miss events
+between samples; this is not face recognition, tracking, surveillance, or forensic analysis.
+No cloud service is contacted and Mathom never pulls models automatically.
+
 All settings live in `.env` (see [`.env.example`](.env.example)):
 
 | Variable               | Default    | Purpose                                |

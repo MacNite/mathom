@@ -84,12 +84,14 @@ export const api = {
     title: string,
     templateSlug: string,
     templateLanguage: string,
+    analyzeVisuals = false,
   ): Promise<Mathom> {
     const form = new FormData();
     form.append("file", file);
     form.append("title", title);
     form.append("template_slug", templateSlug);
     form.append("template_language", templateLanguage);
+    form.append("analyze_visuals", String(analyzeVisuals));
     return request("/mathoms", { method: "POST", body: form });
   },
 
@@ -217,6 +219,10 @@ export const api = {
 
   audioUrl(id: number): string {
     return `${BASE}/mathoms/${id}/audio`;
+  },
+
+  rerunVisualAnalysis(id: number): Promise<Mathom> {
+    return request(`/mathoms/${id}/visual-analysis`, json("POST", { regenerate_summary: false }));
   },
 
   listChat(id: number): Promise<ChatMessage[]> {

@@ -42,6 +42,10 @@ class MathomListItem(ORMModel):
     duration_seconds: float | None
     language: str | None
     source_type: str
+    has_audio_stream: bool = True
+    has_video_stream: bool = False
+    vision_requested: bool = False
+    vision_status: str = "not_requested"
     favorite: bool
     archived: bool
     created_at: datetime
@@ -63,6 +67,11 @@ class MathomOut(MathomListItem):
     summaries: list[SummaryOut] = []
     chat_messages: list[ChatMessageOut] = []
     collections: list[CollectionBrief] = []
+    vision_model: str | None = None
+    visual_summary: str | None = None
+    visual_observations: list[dict[str, object]] = []
+    vision_error_message: str | None = None
+    vision_processed_at: datetime | None = None
     # One-based place among queued processing jobs. It disappears once work
     # starts, rather than presenting a misleading estimate during inference.
     queue_position: int | None = None
@@ -90,6 +99,10 @@ class SummaryCreate(BaseModel):
     template_slug: str = "general-summary"
     template_language: str = Field(default="en", pattern=r"^(en|de|es)$")
     replace_summary_id: int | None = Field(default=None, gt=0)
+
+
+class VisualAnalysisRequest(BaseModel):
+    regenerate_summary: bool = False
 
 
 class ChatRequest(BaseModel):
@@ -155,6 +168,10 @@ class HealthOut(BaseModel):
     status: str
     version: str
     ollama_reachable: bool
+    vision_enabled: bool = False
+    vision_model: str = ""
+    vision_model_installed: bool | None = None
+    vision_model_has_vision: bool | None = None
 
 
 # --- Auth / users / settings ------------------------------------------------

@@ -1,6 +1,7 @@
 """Background processing pipeline: pending → transcribing → summarizing → ready."""
 
 import logging
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
 
@@ -9,7 +10,7 @@ from sqlalchemy import CursorResult, select, update
 from app.config import get_settings
 from app.db import get_session_factory, refresh_fts
 from app.models import Mathom, PromptTemplate, Summary
-from app.services import documents, ollama, transcription
+from app.services import documents, ollama, transcription, vision
 from app.services.diarization import label_segments
 from app.services.template_localization import localized_prompt
 
@@ -20,7 +21,7 @@ COMBINE_SUMMARIES_PROMPT = "Combine these partial summaries into one coherent re
 # Statuses a Mathom can hold while work is outstanding. After a restart these
 # are only legitimate if a queued/running job still owns the Mathom; otherwise
 # the Mathom was orphaned and is flipped to error.
-_IN_FLIGHT_STATUSES = ("pending", "transcribing", "summarizing")
+_IN_FLIGHT_STATUSES = ("pending", "transcribing", "analyzing_visuals", "summarizing")
 
 INTERRUPTED_MESSAGE = (
     "Processing was interrupted before it finished (the server restarted). "
@@ -106,7 +107,7 @@ def run(mathom_id: int, template_slug: str = "general-summary") -> None:
         audio_path = Path(mathom.audio_path)
         source_path = Path(mathom.source_path)
 
-    if source_type in {"audio", "video_audio"}:
+    if source_type in {"audio", "video"} and mathom.has_audio_stream:
         transcription.validate_audio(audio_path)
         with factory() as session:
             mathom = session.get(Mathom, mathom_id)
@@ -126,6 +127,8 @@ def run(mathom_id: int, template_slug: str = "general-summary") -> None:
                 return
             text = mathom.transcript
         language, segments = None, []
+    elif source_type == "video":
+        text, language, segments = "", None, []
     else:
         raise ValueError("unknown source type")
 
@@ -136,16 +139,43 @@ def run(mathom_id: int, template_slug: str = "general-summary") -> None:
         mathom.transcript = text
         mathom.language = language
         mathom.segments = segments
-        mathom.status = "summarizing"
+        mathom.status = "analyzing_visuals" if mathom.vision_requested else "summarizing"
         session.commit()
         refresh_fts(session, mathom_id)
         session.commit()
 
+    if source_type == "video" and mathom.vision_requested:
+        try:
+            observations, visual_summary, vision_status = vision.analyze(
+                source_path or audio_path, mathom.duration_seconds
+            )
+            with factory() as session:
+                current = session.get(Mathom, mathom_id)
+                if current is not None:
+                    current.visual_observations = observations
+                    current.visual_summary = visual_summary
+                    current.vision_status = vision_status
+                    current.vision_processed_at = datetime.now(UTC)
+                    current.status = "summarizing"
+                    refresh_fts(session, mathom_id)
+                    session.commit()
+        except Exception:
+            logger.exception("Visual analysis failed for mathom %s", mathom_id)
+            with factory() as session:
+                current = session.get(Mathom, mathom_id)
+                if current is not None:
+                    current.vision_status = "error"
+                    current.vision_error_message = (
+                        "Visual analysis could not be completed. You can try again."
+                    )
+                    session.commit()
+            if not text:
+                raise
     # A title is independent from the summary and intentionally cheap.
     with factory() as session:
         mathom = session.get(Mathom, mathom_id)
         if mathom is not None and mathom.title == "Untitled Mathom":
-            mathom.title = ollama.generate_title(text, language) or mathom.title
+            mathom.title = ollama.generate_title(build_context(mathom), language) or mathom.title
             session.commit()
             refresh_fts(session, mathom_id)
             session.commit()
@@ -163,6 +193,31 @@ def process_mathom(mathom_id: int, template_slug: str = "general-summary") -> No
         mark_error(mathom_id, exc)
 
 
+def run_visual_analysis(mathom_id: int) -> None:
+    """Refresh visual evidence only; never retranscribe or replace summaries."""
+    factory = get_session_factory()
+    with factory() as session:
+        mathom = session.get(Mathom, mathom_id)
+        if mathom is None or not mathom.has_video_stream:
+            raise ValueError("visual analysis requires a video")
+        source = Path(mathom.source_path or mathom.audio_path)
+        duration = mathom.duration_seconds
+        mathom.vision_status = "processing"
+        session.commit()
+    observations, visual_summary, status = vision.analyze(source, duration)
+    with factory() as session:
+        mathom = session.get(Mathom, mathom_id)
+        if mathom is None:
+            return
+        mathom.visual_observations = observations
+        mathom.visual_summary = visual_summary
+        mathom.vision_status = status
+        mathom.vision_error_message = None
+        mathom.vision_processed_at = datetime.now(UTC)
+        refresh_fts(session, mathom_id)
+        session.commit()
+
+
 def summarize_mathom(
     mathom_id: int, template_slug: str, template_language: str | None = None
 ) -> Summary | None:
@@ -170,7 +225,7 @@ def summarize_mathom(
     settings = get_settings()
     with get_session_factory()() as session:
         mathom = session.get(Mathom, mathom_id)
-        if mathom is None or not mathom.transcript:
+        if mathom is None or not build_context(mathom):
             return None
         template = session.execute(
             select(PromptTemplate).where(PromptTemplate.slug == template_slug)
@@ -183,7 +238,7 @@ def summarize_mathom(
             return None
         prompt = localized_prompt(template, template_language or mathom.template_language)
         summary_input, summary_prompt = prepare_summary_input(
-            mathom.transcript, prompt, mathom.language, settings.summary_chunk_chars
+            build_context(mathom), prompt, mathom.language, settings.summary_chunk_chars
         )
         content = ollama.generate_summary(summary_input, summary_prompt, language=mathom.language)
         summary = Summary(
@@ -199,6 +254,25 @@ def summarize_mathom(
         session.commit()
         session.refresh(summary)
         return summary
+
+
+def build_context(mathom: Mathom) -> str:
+    """One explicit model/search/export context; never changes spoken transcript."""
+    if not mathom.visual_summary and not mathom.visual_observations:
+        return mathom.transcript or ""
+    parts: list[str] = []
+    if mathom.transcript:
+        parts.append("--- Spoken transcript ---\n" + mathom.transcript)
+    if mathom.visual_summary:
+        parts.append(
+            "--- Visual summary (sampled frames; AI-generated) ---\n" + mathom.visual_summary
+        )
+    if mathom.visual_observations:
+        parts.append(
+            "--- Visual observations (sampled frames; AI-generated) ---\n"
+            + str(mathom.visual_observations)
+        )
+    return "\n\n".join(parts)
 
 
 def prepare_summary_input(

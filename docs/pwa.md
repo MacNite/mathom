@@ -46,6 +46,10 @@ the recommended mobile installation method.
 
 ## Requirements & limitations
 
+For a video selected in the upload dialog, the optional visual-analysis switch explains that only
+sampled still frames go to the configured local Ollama vision model. The backend remains
+authoritative because it classifies streams with ffprobe.
+
 - **HTTPS or `localhost`.** Service workers (and therefore the Share Target)
   require a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts).
   A plain `http://<lan-ip>:8080` origin will install neither the worker nor the

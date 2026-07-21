@@ -108,6 +108,8 @@ const translations: Record<Lang, Record<string, string>> = {
     'upload.subtitle':
       'It will be transcribed and summarized, then shelved in your mathom.',
     'upload.audioFile': 'Audio file',
+    'upload.analyzeVisuals': 'Analyze visual content',
+    'upload.analyzeVisualsHelp': 'Mathom samples selected frames and asks a local Ollama vision model. It is not frame-by-frame and takes longer; everything remains local.',
     'upload.documentFile': 'Document file',
     'upload.source': 'Source',
     'upload.source.media': 'Recording or video',
@@ -349,6 +351,8 @@ const translations: Record<Lang, Record<string, string>> = {
     'upload.subtitle':
       'Sie wird transkribiert und zusammengefasst, dann in deinem mathom einsortiert.',
     'upload.audioFile': 'Audiodatei',
+    'upload.analyzeVisuals': 'Visuellen Inhalt analysieren',
+    'upload.analyzeVisualsHelp': 'Mathom nimmt ausgewählte Einzelbilder und nutzt ein lokales Ollama-Vision-Modell. Nicht Bild für Bild, dauert länger und bleibt vollständig lokal.',
     'upload.documentFile': 'Dokumentdatei',
     'upload.source': 'Quelle',
     'upload.source.media': 'Aufnahme oder Video',
@@ -587,6 +591,8 @@ const translations: Record<Lang, Record<string, string>> = {
     'upload.subtitle':
       'Se transcribirá y resumirá, y luego se guardará en tu mathom.',
     'upload.audioFile': 'Archivo de audio',
+    'upload.analyzeVisuals': 'Analizar contenido visual',
+    'upload.analyzeVisualsHelp': 'Mathom toma fotogramas seleccionados y usa un modelo de visión Ollama local. No revisa cada fotograma, tarda más y todo permanece local.',
     'upload.documentFile': 'Archivo de documento',
     'upload.source': 'Fuente',
     'upload.source.media': 'Grabación o vídeo',

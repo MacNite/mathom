@@ -22,10 +22,11 @@ export interface ChatMessage {
 export type MathomStatus =
   | "pending"
   | "transcribing"
+  | "analyzing_visuals"
   | "summarizing"
   | "ready"
   | "error";
-export type SourceType = "audio" | "video_audio" | "text" | "document";
+export type SourceType = "audio" | "video" | "text" | "document";
 
 export interface MathomListItem {
   id: number;
@@ -34,6 +35,10 @@ export interface MathomListItem {
   duration_seconds: number | null;
   language: string | null;
   source_type?: SourceType;
+  has_audio_stream?: boolean;
+  has_video_stream?: boolean;
+  vision_requested?: boolean;
+  vision_status?: string;
   favorite: boolean;
   archived: boolean;
   created_at: string;
@@ -56,6 +61,11 @@ export interface Mathom extends MathomListItem {
   chat_messages: ChatMessage[];
   collections: { id: number; name: string }[];
   queue_position: number | null;
+  vision_model?: string | null;
+  visual_summary?: string | null;
+  visual_observations?: Array<{ frame_index: number; timestamp_seconds: number; description: string; objects: string[]; actions: string[]; setting: string; visible_text: string | null; uncertainty: string }>;
+  vision_error_message?: string | null;
+  vision_processed_at?: string | null;
 }
 
 export interface PromptTemplate {

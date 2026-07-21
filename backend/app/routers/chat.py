@@ -1,8 +1,10 @@
 """Follow-up AI chat, grounded in a Mathom's transcript."""
 
 import threading
+from collections.abc import Iterator
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.db import get_db
@@ -81,6 +83,41 @@ def send_message(
     db.commit()
     db.refresh(mathom)
     return mathom.chat_messages
+
+
+@router.post("/stream")
+def stream_message(
+    mathom_id: int,
+    payload: ChatRequest,
+    db: Session = Depends(get_db),
+    user: User | None = Depends(current_user),
+) -> StreamingResponse:
+    mathom = _get_mathom(mathom_id, db, user)
+    if not mathom.transcript:
+        raise HTTPException(status_code=409, detail="Mathom has no transcript yet")
+    if not _try_acquire_chat_slot():
+        raise HTTPException(
+            status_code=429, detail="The local AI is busy. Please try again shortly."
+        )
+    history = [{"role": m.role, "content": m.content} for m in mathom.chat_messages]
+
+    def events() -> Iterator[str]:
+        content = ""
+        try:
+            for token in ollama.stream_followup_chat(
+                mathom.transcript or "", history, payload.message, mathom.language
+            ):
+                content += token
+                yield f"data: {token!r}\n\n"
+            db.add(ChatMessage(mathom_id=mathom.id, role="user", content=payload.message))
+            db.add(ChatMessage(mathom_id=mathom.id, role="assistant", content=content))
+            db.commit()
+            yield "event: done\ndata: done\n\n"
+        finally:
+            assert _chat_slots is not None
+            _chat_slots.release()
+
+    return StreamingResponse(events(), media_type="text/event-stream")
 
 
 @router.delete("", status_code=204)

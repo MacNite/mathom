@@ -120,6 +120,68 @@ export const api = {
     );
   },
 
+  updateSummary(
+    mathomId: number,
+    summaryId: number,
+    content: string,
+  ): Promise<Summary> {
+    return request(
+      `/mathoms/${mathomId}/summaries/${summaryId}`,
+      json("PATCH", { content }),
+    );
+  },
+
+  async streamSse(
+    path: string,
+    body: unknown,
+    onToken: (token: string) => void,
+  ): Promise<void> {
+    const response = await fetch(`${BASE}${path}`, {
+      ...json("POST", body),
+      credentials: "same-origin",
+    });
+    if (!response.ok || !response.body)
+      throw new ApiError(response.statusText, response.status);
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const events = buffer.split("\n\n");
+      buffer = events.pop() ?? "";
+      for (const event of events) {
+        const data = event
+          .split("\n")
+          .find((line) => line.startsWith("data: "));
+        if (data && data.slice(6) !== "done")
+          onToken(JSON.parse(data.slice(6)) as string);
+      }
+    }
+  },
+
+  streamSummary(
+    id: number,
+    templateSlug: string,
+    templateLanguage: string,
+    onToken: (token: string) => void,
+  ): Promise<void> {
+    return this.streamSse(
+      `/mathoms/${id}/summaries/stream`,
+      { template_slug: templateSlug, template_language: templateLanguage },
+      onToken,
+    );
+  },
+
+  streamChat(
+    id: number,
+    message: string,
+    onToken: (token: string) => void,
+  ): Promise<void> {
+    return this.streamSse(`/mathoms/${id}/chat/stream`, { message }, onToken);
+  },
+
   deleteSummary(mathomId: number, summaryId: number): Promise<void> {
     return request(`/mathoms/${mathomId}/summaries/${summaryId}`, {
       method: "DELETE",
@@ -134,7 +196,7 @@ export const api = {
     return request(`/mathoms/${id}/tags/${tagId}`, { method: "DELETE" });
   },
 
-  exportUrl(id: number, format: "md" | "txt" | "json"): string {
+  exportUrl(id: number, format: "md" | "txt" | "json" | "srt" | "vtt"): string {
     return `${BASE}/mathoms/${id}/export?format=${format}`;
   },
 

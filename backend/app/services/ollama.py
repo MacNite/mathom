@@ -1,5 +1,7 @@
 """All communication with the local Ollama instance lives here."""
 
+import json
+from collections.abc import Iterator
 from typing import Any
 
 import httpx
@@ -123,3 +125,61 @@ def followup_chat(
         {"role": "user", "content": message},
     ]
     return chat(messages, language=language)
+
+
+def stream_chat(messages: list[dict[str, str]], language: str | None = None) -> Iterator[str]:
+    """Yield chat tokens from Ollama's newline-delimited streaming API."""
+    settings = get_settings()
+    system = SYSTEM_PROMPT
+    directive = language_directive(language)
+    if directive:
+        system = f"{SYSTEM_PROMPT}\n\n{directive}"
+    payload: dict[str, Any] = {
+        "model": settings.ollama_model,
+        "messages": [{"role": "system", "content": system}, *messages],
+        "stream": True,
+    }
+    with _client() as client, client.stream("POST", "/api/chat", json=payload) as response:
+        response.raise_for_status()
+        for line in response.iter_lines():
+            if not line:
+                continue
+            data = json.loads(line)
+            token = str(data.get("message", {}).get("content", ""))
+            if token:
+                yield token
+
+
+def stream_generate_summary(
+    transcript: str, prompt_template: str, language: str | None = None
+) -> Iterator[str]:
+    """Yield a rendered summary as Ollama produces it."""
+    prompt = prompt_template.replace("{transcript}", transcript)
+    yield from stream_chat([{"role": "user", "content": prompt}], language=language)
+
+
+def stream_followup_chat(
+    transcript: str,
+    history: list[dict[str, str]],
+    message: str,
+    language: str | None = None,
+) -> Iterator[str]:
+    """Yield a transcript-grounded follow-up reply."""
+    context = (
+        "Here is the transcript of the recording this conversation is about:\n\n"
+        f"---\n{transcript}\n---\n\nAnswer the user's questions about this recording."
+    )
+    yield from stream_chat(
+        [{"role": "user", "content": context}, *history, {"role": "user", "content": message}],
+        language=language,
+    )
+
+
+def generate_title(transcript: str, language: str | None = None) -> str:
+    """Create a short archival title without delaying summary generation."""
+    title = generate_summary(
+        transcript,
+        "Give this recording a short, specific title (six words or fewer). Return only the title.",
+        language,
+    )
+    return " ".join(title.split())[:300]

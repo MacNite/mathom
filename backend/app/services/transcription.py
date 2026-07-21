@@ -127,13 +127,22 @@ def _get_model() -> Any:
     return _model
 
 
-def transcribe(audio_path: Path) -> tuple[str, str | None]:
-    """Transcribe an audio file. Returns (transcript_text, detected_language)."""
+def transcribe(audio_path: Path) -> tuple[str, str | None, list[dict[str, object]]]:
+    """Transcribe an audio file and preserve timestamped segment data."""
     with tempfile.TemporaryDirectory() as tmp:
         wav_path = Path(tmp) / "audio.wav"
         _to_wav(audio_path, wav_path)
         model = _get_model()
-        segments, info = model.transcribe(str(wav_path), vad_filter=True)
-        text = " ".join(segment.text.strip() for segment in segments).strip()
+        segments, info = model.transcribe(
+            str(wav_path),
+            vad_filter=True,
+            initial_prompt=get_settings().whisper_initial_prompt or None,
+        )
+        segment_data = [
+            {"start": float(segment.start), "end": float(segment.end), "text": segment.text.strip()}
+            for segment in segments
+            if segment.text.strip()
+        ]
+        text = " ".join(str(segment["text"]) for segment in segment_data).strip()
     language = getattr(info, "language", None)
-    return text, language
+    return text, language, segment_data

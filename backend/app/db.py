@@ -88,6 +88,7 @@ def init_db(engine: Engine | None = None) -> None:
             )
         )
         _migrate_user_ownership(conn)
+        _migrate_segments(conn)
         _migrate_template_language(conn)
         _migrate_local_auth(conn)
 
@@ -197,3 +198,9 @@ def _migrate_template_language(conn: object) -> None:
                 "ALTER TABLE mathoms ADD COLUMN template_language VARCHAR(10) NOT NULL DEFAULT 'en'"
             )
         )
+
+
+def _migrate_segments(conn: object) -> None:
+    """Add JSON timestamp segments for installations created before this feature."""
+    if "segments" not in _column_names(conn, "mathoms"):
+        conn.execute(text("ALTER TABLE mathoms ADD COLUMN segments JSON"))  # type: ignore[attr-defined]

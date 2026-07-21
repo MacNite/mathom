@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     Column,
     DateTime,
@@ -77,6 +78,7 @@ class Mathom(Base):
     language: Mapped[str | None] = mapped_column(String(20), nullable=True)
     template_language: Mapped[str] = mapped_column(String(10), default="en")
     transcript: Mapped[str | None] = mapped_column(Text, nullable=True)
+    segments: Mapped[list[dict[str, object]]] = mapped_column(JSON, default=list)
     favorite: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     archived: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

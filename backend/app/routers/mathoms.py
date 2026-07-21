@@ -1,6 +1,7 @@
 """Mathom CRUD, upload, audio streaming, summaries, tags, and exports."""
 
 import uuid
+from collections.abc import Iterator
 from pathlib import Path
 
 from fastapi import (
@@ -11,20 +12,21 @@ from fastapi import (
     Response,
     UploadFile,
 )
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.db import get_db, refresh_fts
 from app.deps import current_user, owned_filter, owns
-from app.models import Mathom, Summary, Tag, User
+from app.models import Mathom, PromptTemplate, Summary, Tag, User
 from app.schemas import (
     MathomListItem,
     MathomOut,
     MathomUpdate,
     SummaryCreate,
     SummaryOut,
+    SummaryUpdate,
     TagCreate,
     TagOut,
 )
@@ -207,6 +209,69 @@ def create_summary(
     return SummaryOut.model_validate(summary)
 
 
+@router.post("/{mathom_id}/summaries/stream")
+def stream_summary(
+    mathom_id: int,
+    payload: SummaryCreate,
+    db: Session = Depends(get_db),
+    user: User | None = Depends(current_user),
+) -> StreamingResponse:
+    mathom = _get_mathom(mathom_id, db, user)
+    if not mathom.transcript:
+        raise HTTPException(status_code=409, detail="Mathom has no transcript yet")
+    from app.services.template_localization import localized_prompt
+
+    template = db.execute(
+        select(PromptTemplate).where(PromptTemplate.slug == payload.template_slug)
+    ).scalar_one_or_none()
+    if template is None:
+        raise HTTPException(status_code=404, detail="Prompt template not found")
+
+    def events() -> Iterator[str]:
+        content = ""
+        for token in pipeline.ollama.stream_generate_summary(
+            mathom.transcript or "",
+            localized_prompt(template, payload.template_language),
+            mathom.language,
+        ):
+            content += token
+            yield f"data: {token!r}\n\n"
+        summary = Summary(
+            mathom_id=mathom.id,
+            template_slug=template.slug,
+            template_name=template.name,
+            content=content,
+            model=get_settings().ollama_model,
+        )
+        db.add(summary)
+        db.commit()
+        refresh_fts(db, mathom.id)
+        db.commit()
+        yield "event: done\ndata: done\n\n"
+
+    return StreamingResponse(events(), media_type="text/event-stream")
+
+
+@router.patch("/{mathom_id}/summaries/{summary_id}", response_model=SummaryOut)
+def update_summary(
+    mathom_id: int,
+    summary_id: int,
+    payload: SummaryUpdate,
+    db: Session = Depends(get_db),
+    user: User | None = Depends(current_user),
+) -> Summary:
+    _get_mathom(mathom_id, db, user)
+    summary = db.get(Summary, summary_id)
+    if summary is None or summary.mathom_id != mathom_id:
+        raise HTTPException(status_code=404, detail="Summary not found")
+    summary.content = payload.content
+    db.commit()
+    refresh_fts(db, mathom_id)
+    db.commit()
+    db.refresh(summary)
+    return summary
+
+
 @router.delete("/{mathom_id}/summaries/{summary_id}", status_code=204)
 def delete_summary(
     mathom_id: int,
@@ -273,8 +338,12 @@ def export_mathom(
         body, media_type, ext = export.to_text(mathom), "text/plain", "txt"
     elif format == "json":
         body, media_type, ext = export.to_json(mathom), "application/json", "json"
+    elif format == "srt":
+        body, media_type, ext = export.to_srt(mathom), "text/plain", "srt"
+    elif format == "vtt":
+        body, media_type, ext = export.to_vtt(mathom), "text/vtt", "vtt"
     else:
-        raise HTTPException(status_code=400, detail="format must be md, txt, or json")
+        raise HTTPException(status_code=400, detail="format must be md, txt, json, srt, or vtt")
     safe_title = "".join(c if c.isalnum() or c in "-_ " else "" for c in mathom.title)[:60]
     filename = f"mathom-{mathom.id}-{safe_title.strip() or 'export'}.{ext}"
     return Response(

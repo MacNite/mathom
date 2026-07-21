@@ -20,7 +20,11 @@ export interface ChatMessage {
 }
 
 export type MathomStatus =
-  "pending" | "transcribing" | "summarizing" | "ready" | "error";
+  | "pending"
+  | "transcribing"
+  | "summarizing"
+  | "ready"
+  | "error";
 
 export interface MathomListItem {
   id: number;
@@ -34,10 +38,18 @@ export interface MathomListItem {
   tags: Tag[];
 }
 
+export interface TranscriptSegment {
+  start: number;
+  end: number;
+  text: string;
+  speaker: string | null;
+}
+
 export interface Mathom extends MathomListItem {
   original_filename: string;
   error_message: string | null;
   transcript: string | null;
+  segments: TranscriptSegment[];
   summaries: Summary[];
   chat_messages: ChatMessage[];
   collections: { id: number; name: string }[];

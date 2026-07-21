@@ -10,6 +10,7 @@ from app.config import get_settings
 from app.db import get_session_factory, refresh_fts
 from app.models import Mathom, PromptTemplate, Summary
 from app.services import ollama, transcription
+from app.services.diarization import label_segments
 from app.services.template_localization import localized_prompt
 
 logger = logging.getLogger("mathom.pipeline")
@@ -110,7 +111,7 @@ def run(mathom_id: int, template_slug: str = "general-summary") -> None:
         mathom.duration_seconds = transcription.probe_duration_seconds(audio_path)
         session.commit()
 
-    text, language = transcription.transcribe(audio_path)
+    text, language, segments = transcription.transcribe(audio_path)
 
     with factory() as session:
         mathom = session.get(Mathom, mathom_id)
@@ -118,10 +119,20 @@ def run(mathom_id: int, template_slug: str = "general-summary") -> None:
             return
         mathom.transcript = text
         mathom.language = language
+        mathom.segments = label_segments(segments)
         mathom.status = "summarizing"
         session.commit()
         refresh_fts(session, mathom_id)
         session.commit()
+
+    # A title is independent from the summary and intentionally cheap.
+    with factory() as session:
+        mathom = session.get(Mathom, mathom_id)
+        if mathom is not None and mathom.title == "Untitled Mathom":
+            mathom.title = ollama.generate_title(text, language) or mathom.title
+            session.commit()
+            refresh_fts(session, mathom_id)
+            session.commit()
 
     summarize_mathom(mathom_id, template_slug)
     _set_status(mathom_id, "ready")
@@ -154,11 +165,22 @@ def summarize_mathom(
             ).scalar_one_or_none()
         if template is None:
             return None
-        content = ollama.generate_summary(
-            mathom.transcript,
-            localized_prompt(template, template_language or mathom.template_language),
-            language=mathom.language,
-        )
+        prompt = localized_prompt(template, template_language or mathom.template_language)
+        if len(mathom.transcript) > settings.summary_chunk_chars:
+            chunks = [
+                mathom.transcript[index : index + settings.summary_chunk_chars]
+                for index in range(0, len(mathom.transcript), settings.summary_chunk_chars)
+            ]
+            partials = [
+                ollama.generate_summary(chunk, prompt, language=mathom.language) for chunk in chunks
+            ]
+            content = ollama.generate_summary(
+                "\n\n".join(partials),
+                "Combine these partial summaries into one coherent result:\n{transcript}",
+                language=mathom.language,
+            )
+        else:
+            content = ollama.generate_summary(mathom.transcript, prompt, language=mathom.language)
         summary = Summary(
             mathom_id=mathom_id,
             template_slug=template.slug,

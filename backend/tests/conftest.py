@@ -69,7 +69,13 @@ def client(monkeypatch: pytest.MonkeyPatch) -> Generator[TestClient, None, None]
         monkeypatch.setattr(ollama, "chat", lambda messages, language=None: "Mocked AI reply.")
         monkeypatch.setattr(ollama, "is_reachable", lambda: False)
         monkeypatch.setattr(
-            transcription, "transcribe", lambda path: ("This is a mocked transcript.", "en")
+            transcription,
+            "transcribe",
+            lambda path: (
+                "This is a mocked transcript.",
+                "en",
+                [{"start": 0.0, "end": 1.0, "text": "This is a mocked transcript."}],
+            ),
         )
         monkeypatch.setattr(transcription, "probe_duration_seconds", lambda path: 12.5)
         monkeypatch.setattr(transcription, "validate_audio", lambda path: None)
@@ -138,7 +144,13 @@ def auth_harness(monkeypatch: pytest.MonkeyPatch) -> Generator[AuthHarness, None
         monkeypatch.setattr(ollama, "chat", lambda messages, language=None: "Mocked AI reply.")
         monkeypatch.setattr(ollama, "is_reachable", lambda: False)
         monkeypatch.setattr(
-            transcription, "transcribe", lambda path: ("This is a mocked transcript.", "en")
+            transcription,
+            "transcribe",
+            lambda path: (
+                "This is a mocked transcript.",
+                "en",
+                [{"start": 0.0, "end": 1.0, "text": "This is a mocked transcript."}],
+            ),
         )
         monkeypatch.setattr(transcription, "probe_duration_seconds", lambda path: 12.5)
         monkeypatch.setattr(transcription, "validate_audio", lambda path: None)

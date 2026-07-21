@@ -81,3 +81,13 @@ session cookie (`401` otherwise) and return only the caller's own rows.
 
 `pending → transcribing → summarizing → ready`, or `error` (with
 `error_message` set). Poll `GET /mathoms/{id}` while in flight.
+
+### Timestamped transcripts and subtitles
+
+Mathom detail responses include `segments`, each with `start`, `end`, `text`, and an optional
+`speaker`. Use `GET /api/mathoms/{id}/export?format=srt` or `format=vtt` for local subtitle
+exports. `PATCH /api/mathoms/{id}` accepts `transcript`, and `PATCH
+/api/mathoms/{id}/summaries/{summary_id}` accepts a hand-corrected `content`.
+
+`POST /api/mathoms/{id}/summaries/stream` and `POST /api/mathoms/{id}/chat/stream` return
+server-sent events (`data` token events followed by `done`) while persisting the completed result.

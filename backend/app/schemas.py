@@ -47,10 +47,18 @@ class MathomListItem(ORMModel):
     tags: list[TagOut] = []
 
 
+class TranscriptSegment(BaseModel):
+    start: float
+    end: float
+    text: str
+    speaker: str | None = None
+
+
 class MathomOut(MathomListItem):
     original_filename: str
     error_message: str | None
     transcript: str | None
+    segments: list[TranscriptSegment] = []
     summaries: list[SummaryOut] = []
     chat_messages: list[ChatMessageOut] = []
     collections: list[CollectionBrief] = []
@@ -64,6 +72,10 @@ class MathomUpdate(BaseModel):
     favorite: bool | None = None
     archived: bool | None = None
     transcript: str | None = None
+
+
+class SummaryUpdate(BaseModel):
+    content: str = Field(min_length=1)
 
 
 class SummaryCreate(BaseModel):

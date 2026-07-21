@@ -8,6 +8,9 @@ def test_upload_runs_pipeline(uploaded_mathom: dict) -> None:
     assert uploaded_mathom["transcript"] == "This is a mocked transcript."
     assert uploaded_mathom["language"] == "en"
     assert uploaded_mathom["duration_seconds"] == 12.5
+    assert uploaded_mathom["segments"] == [
+        {"start": 0.0, "end": 1.0, "text": "This is a mocked transcript.", "speaker": None}
+    ]
     assert len(uploaded_mathom["summaries"]) == 1
     assert uploaded_mathom["summaries"][0]["content"] == "Mocked AI reply."
 
@@ -102,3 +105,18 @@ def test_delete_summary(client: TestClient, uploaded_mathom: dict) -> None:
     assert client.delete(f"/api/mathoms/{mathom_id}/summaries/{summary_id}").status_code == 204
     assert client.get(f"/api/mathoms/{mathom_id}").json()["summaries"] == []
     assert client.delete(f"/api/mathoms/{mathom_id}/summaries/{summary_id}").status_code == 404
+
+
+def test_edit_transcript_summary_and_subtitles(client: TestClient, uploaded_mathom: dict) -> None:
+    mathom_id = uploaded_mathom["id"]
+    edited = client.patch(f"/api/mathoms/{mathom_id}", json={"transcript": "Corrected text"})
+    assert edited.status_code == 200
+    summary = uploaded_mathom["summaries"][0]
+    changed = client.patch(
+        f"/api/mathoms/{mathom_id}/summaries/{summary['id']}", json={"content": "Edited summary"}
+    )
+    assert changed.status_code == 200
+    srt = client.get(f"/api/mathoms/{mathom_id}/export", params={"format": "srt"})
+    vtt = client.get(f"/api/mathoms/{mathom_id}/export", params={"format": "vtt"})
+    assert "00:00:00,000 --> 00:00:01,000" in srt.text
+    assert vtt.text.startswith("WEBVTT")

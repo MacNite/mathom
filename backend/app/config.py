@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     whisper_model: str = "small"
     whisper_device: str = "auto"
     whisper_compute_type: str = "auto"
+    whisper_initial_prompt: str = ""
+    summary_chunk_chars: int = Field(default=24000, ge=1000)
+    diarization_enabled: bool = False
     # Hard wall-clock ceiling for a single FFmpeg normalization run, so a
     # pathological upload cannot occupy a worker indefinitely.
     ffmpeg_timeout_seconds: float = 600.0

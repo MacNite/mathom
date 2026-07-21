@@ -69,7 +69,7 @@ def _docx(path: Path) -> str:
     try:
         from docx import Document
 
-        document = Document(path)
+        document = Document(str(path))
         parts = [paragraph.text for paragraph in document.paragraphs if paragraph.text.strip()]
         for table in document.tables:
             parts.extend("\t".join(cell.text.strip() for cell in row.cells) for row in table.rows)

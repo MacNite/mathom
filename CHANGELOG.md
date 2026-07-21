@@ -8,6 +8,14 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Android shares no longer land on "Nothing was shared."** The share-target
+  service worker handed the shared file off with a relative
+  `Response.redirect('/share-target?…')`, which throws a `TypeError` because
+  `Response.redirect` requires an absolute URL — breaking the whole hand-off.
+  Redirects are now built against the app's own origin. The worker also reads
+  the `url` field (so shared links come through, not just plain text) and falls
+  back to the first file-shaped form entry if a share sheet uses an unexpected
+  field name, and a real shared file always wins over any accompanying text.
 - **Mathom appears in the Android Share Sheet for every supported format.** The
   `share_target` manifest matched by MIME type but was missing `video/webm`
   (so `.webm` recordings never offered Mathom), `application/ogg` (the MIME many

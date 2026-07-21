@@ -35,9 +35,26 @@ describe('readSharedAudio', () => {
 
     expect(shared).not.toBeNull();
     expect(shared?.file).toBeInstanceOf(File);
-    expect(shared?.file.name).toBe('voice note.ogg');
-    expect(shared?.file.type).toBe('audio/ogg');
+    expect(shared?.file?.name).toBe('voice note.ogg');
+    expect(shared?.file?.type).toBe('audio/ogg');
     expect(shared?.title).toBe('Grandma’s recipe');
+  });
+
+  it('returns a null file for text-only shares and keeps the shared text', async () => {
+    const response = new Response('https://example.com/article', {
+      headers: {
+        'X-Shared-Text-Only': '1',
+        'X-Shared-Title': encodeURIComponent('A link worth keeping'),
+      },
+    });
+    installCaches(response);
+
+    const shared = await readSharedAudio();
+
+    expect(shared).not.toBeNull();
+    expect(shared?.file).toBeNull();
+    expect(shared?.text).toBe('https://example.com/article');
+    expect(shared?.title).toBe('A link worth keeping');
   });
 
   it('returns null when nothing was shared', async () => {

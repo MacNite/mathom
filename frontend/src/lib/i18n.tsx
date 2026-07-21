@@ -50,6 +50,8 @@ const translations: Record<Lang, Record<string, string>> = {
     'detail.toggleFavorite': 'Toggle favorite',
     'detail.unarchive': 'Unarchive',
     'detail.archive': 'Archive',
+    'detail.share': 'Share',
+    'detail.shareFailed': 'Could not open the share sheet.',
     'detail.delete': 'Delete',
     'detail.confirmDelete': 'Remove this Mathom and its audio for good?',
     'detail.errorFallback': 'Something went wrong while processing this recording.',
@@ -131,6 +133,8 @@ const translations: Record<Lang, Record<string, string>> = {
     'share.receiving': 'Receiving your recording…',
     'share.emptyTitle': 'Nothing was shared.',
     'share.emptyBody': 'Share an audio message to Mathom to bring it home.',
+    'share.emptyHint':
+      'On iPhone and iPad, sharing into an app isn’t supported yet — tap “+ New Mathom” to pick the file from Files or Photos instead.',
     'share.backToLibrary': 'Back to the Library',
 
     'status.pending': 'Waiting',
@@ -291,6 +295,8 @@ const translations: Record<Lang, Record<string, string>> = {
     'detail.toggleFavorite': 'Favorit umschalten',
     'detail.unarchive': 'Aus Archiv holen',
     'detail.archive': 'Archivieren',
+    'detail.share': 'Teilen',
+    'detail.shareFailed': 'Das Teilen-Menü konnte nicht geöffnet werden.',
     'detail.delete': 'Löschen',
     'detail.confirmDelete': 'Dieses Mathom und seine Audiodatei endgültig entfernen?',
     'detail.errorFallback': 'Beim Verarbeiten dieser Aufnahme ist etwas schiefgelaufen.',
@@ -374,6 +380,8 @@ const translations: Record<Lang, Record<string, string>> = {
     'share.receiving': 'Deine Aufnahme wird empfangen…',
     'share.emptyTitle': 'Es wurde nichts geteilt.',
     'share.emptyBody': 'Teile eine Audionachricht an Mathom, um sie nach Hause zu bringen.',
+    'share.emptyHint':
+      'Auf iPhone und iPad ist das Teilen in eine App noch nicht möglich — tippe auf „+ Neues Mathom“, um die Datei aus Dateien oder Fotos auszuwählen.',
     'share.backToLibrary': 'Zurück zur Bibliothek',
 
     'status.pending': 'Wartet',
@@ -532,6 +540,8 @@ const translations: Record<Lang, Record<string, string>> = {
     'detail.toggleFavorite': 'Alternar favorito',
     'detail.unarchive': 'Desarchivar',
     'detail.archive': 'Archivar',
+    'detail.share': 'Compartir',
+    'detail.shareFailed': 'No se pudo abrir el menú de compartir.',
     'detail.delete': 'Eliminar',
     'detail.confirmDelete': '¿Eliminar este Mathom y su audio para siempre?',
     'detail.errorFallback': 'Algo salió mal al procesar esta grabación.',
@@ -614,6 +624,8 @@ const translations: Record<Lang, Record<string, string>> = {
     'share.receiving': 'Recibiendo tu grabación…',
     'share.emptyTitle': 'No se compartió nada.',
     'share.emptyBody': 'Comparte un mensaje de audio con Mathom para traerlo a casa.',
+    'share.emptyHint':
+      'En iPhone y iPad todavía no se puede compartir dentro de una app — toca «+ Nuevo Mathom» para elegir el archivo desde Archivos o Fotos.',
     'share.backToLibrary': 'Volver a la Biblioteca',
 
     'status.pending': 'En espera',

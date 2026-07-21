@@ -51,6 +51,7 @@ export default function ShareTarget() {
       <div className="mx-auto max-w-md p-6 text-center">
         <p className="font-display text-lg text-ink-700">{t('share.emptyTitle')}</p>
         <p className="mt-1 text-sm text-ink-500">{t('share.emptyBody')}</p>
+        <p className="mt-3 text-sm text-ink-400">{t('share.emptyHint')}</p>
         <button onClick={() => navigate('/', { replace: true })} className="btn-primary mt-4">
           {t('share.backToLibrary')}
         </button>

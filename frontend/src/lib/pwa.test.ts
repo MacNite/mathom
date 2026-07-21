@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { clearSharedAudio, readSharedAudio } from './pwa';
+import { canShareText, clearSharedAudio, readSharedAudio, shareText } from './pwa';
 
 // Minimal in-memory stand-in for the Cache Storage API used by the helpers.
 function installCaches(entry: Response | null) {
@@ -65,6 +65,56 @@ describe('readSharedAudio', () => {
   it('returns null when Cache Storage is unavailable', async () => {
     vi.stubGlobal('caches', undefined);
     expect(await readSharedAudio()).toBeNull();
+  });
+});
+
+describe('canShareText', () => {
+  it('is true when the browser exposes navigator.share', () => {
+    vi.stubGlobal('navigator', { share: vi.fn() });
+    expect(canShareText()).toBe(true);
+  });
+
+  it('is false when navigator.share is missing (e.g. most desktop browsers)', () => {
+    vi.stubGlobal('navigator', {});
+    expect(canShareText()).toBe(false);
+  });
+});
+
+describe('shareText', () => {
+  it('hands the title and text to the native share sheet', async () => {
+    const share = vi.fn(async () => undefined);
+    vi.stubGlobal('navigator', { share });
+
+    const shared = await shareText({ title: 'Roof call', text: 'Roof call\n\nWe agreed on slate.' });
+
+    expect(shared).toBe(true);
+    expect(share).toHaveBeenCalledWith({
+      title: 'Roof call',
+      text: 'Roof call\n\nWe agreed on slate.',
+    });
+  });
+
+  it('returns false without sharing when the API is unavailable', async () => {
+    vi.stubGlobal('navigator', {});
+    expect(await shareText({ text: 'anything' })).toBe(false);
+  });
+
+  it('treats a user-cancelled share (AbortError) as a quiet no-op', async () => {
+    const share = vi.fn(async () => {
+      throw new DOMException('The user cancelled the share.', 'AbortError');
+    });
+    vi.stubGlobal('navigator', { share });
+
+    expect(await shareText({ text: 'anything' })).toBe(false);
+  });
+
+  it('re-throws unexpected share failures so the caller can report them', async () => {
+    const share = vi.fn(async () => {
+      throw new DOMException('Permission denied', 'NotAllowedError');
+    });
+    vi.stubGlobal('navigator', { share });
+
+    await expect(shareText({ text: 'anything' })).rejects.toThrow('Permission denied');
   });
 });
 

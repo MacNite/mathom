@@ -27,8 +27,8 @@ export default function Layout() {
   ];
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-6xl flex-col md:flex-row">
-      <aside className="border-b-2 border-gild-300/40 bg-moss-900 p-4 text-gild-200 md:min-h-screen md:w-60 md:border-b-0 md:border-r-2 md:p-6">
+    <div className="mx-auto flex min-h-screen min-h-[100dvh] max-w-6xl flex-col md:flex-row">
+      <aside className="pad-safe-top pad-safe-x border-b-2 border-gild-300/40 bg-moss-900 p-4 text-gild-200 md:pad-safe-top md:min-h-screen md:w-60 md:border-b-0 md:border-r-2 md:p-6">
         <div className="mb-6">
           <h1 className="font-display text-3xl tracking-wide text-gild-300">Mathom</h1>
           <p className="mt-2 text-[10px] uppercase tracking-[0.22em] text-moss-200">
@@ -102,7 +102,7 @@ export default function Layout() {
           </div>
         )}
       </aside>
-      <main className="flex-1 p-4 md:p-8">
+      <main className="pad-safe-bottom pad-safe-x flex-1 p-4 md:pad-safe-bottom md:p-8">
         <Outlet />
       </main>
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import json
+import logging
 import shutil
 import subprocess
 import tempfile
@@ -14,6 +15,8 @@ import httpx
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from app.config import get_settings
+
+logger = logging.getLogger("mathom.vision")
 
 
 class VisionError(RuntimeError):
@@ -49,7 +52,6 @@ def media_streams(path: Path) -> tuple[bool, bool, float | None]:
         result = subprocess.run(
             [
                 "ffprobe",
-                "-nostdin",
                 "-v",
                 "error",
                 "-show_entries",
@@ -68,7 +70,13 @@ def media_streams(path: Path) -> tuple[bool, bool, float | None]:
         duration_value = data.get("format", {}).get("duration")
         duration = float(duration_value) if duration_value else None
         streams = data.get("streams", [])
-    except (OSError, subprocess.SubprocessError, ValueError, json.JSONDecodeError):
+    except (OSError, subprocess.SubprocessError, ValueError, json.JSONDecodeError) as exc:
+        if isinstance(exc, subprocess.SubprocessError):
+            stderr = getattr(exc, "stderr", None)
+            logger.warning(
+                "ffprobe failed while inspecting uploaded media: %s",
+                stderr.strip() if isinstance(stderr, str) else exc,
+            )
         raise VisionError("The uploaded media could not be inspected.") from None
     return (
         any(s.get("codec_type") == "audio" for s in streams),

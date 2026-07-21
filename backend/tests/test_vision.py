@@ -6,6 +6,7 @@ router/health guards that gate the feature.
 """
 
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -46,19 +47,45 @@ def test_timestamps_downsamples_to_max_frames(
     assert stamps == sorted(stamps)
 
 
-def test_media_streams_parses_ffprobe(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize(
+    ("streams", "expected"),
+    [
+        ([{"codec_type": "audio"}, {"codec_type": "video"}], (True, True)),
+        ([{"codec_type": "audio"}], (True, False)),
+        ([{"codec_type": "video"}], (False, True)),
+    ],
+)
+def test_media_streams_parses_ffprobe(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+    streams: list[dict[str, str]],
+    expected: tuple[bool, bool],
+) -> None:
     payload = {
-        "streams": [{"codec_type": "audio"}, {"codec_type": "video"}],
+        "streams": streams,
         "format": {"duration": "12.5"},
     }
 
     class FakeResult:
         stdout = json.dumps(payload)
 
-    monkeypatch.setattr(vision.subprocess, "run", lambda *a, **k: FakeResult())
+    called: dict[str, object] = {}
+
+    def fake_run(args: list[str], **kwargs: object) -> FakeResult:
+        called["args"] = args
+        called["kwargs"] = kwargs
+        return FakeResult()
+
+    monkeypatch.setattr(vision.subprocess, "run", fake_run)
     has_audio, has_video, duration = vision.media_streams(Path("clip.mp4"))
-    assert has_audio is True
-    assert has_video is True
+    args = called["args"]
+    assert isinstance(args, list)
+    assert args[0] == "ffprobe"
+    assert "-nostdin" not in args
+    kwargs = called["kwargs"]
+    assert isinstance(kwargs, dict)
+    assert kwargs["stdin"] is subprocess.DEVNULL
+    assert (has_audio, has_video) == expected
     assert duration == pytest.approx(12.5)
 
 
@@ -69,6 +96,17 @@ def test_media_streams_raises_on_failure(
         raise vision.subprocess.SubprocessError("ffprobe failed")
 
     monkeypatch.setattr(vision.subprocess, "run", boom)
+    with pytest.raises(vision.VisionError):
+        vision.media_streams(Path("clip.mp4"))
+
+
+def test_media_streams_raises_on_invalid_json(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class FakeResult:
+        stdout = "not json"
+
+    monkeypatch.setattr(vision.subprocess, "run", lambda *a, **k: FakeResult())
     with pytest.raises(vision.VisionError):
         vision.media_streams(Path("clip.mp4"))
 
@@ -108,6 +146,23 @@ def test_upload_rejects_visuals_when_disabled(client: TestClient) -> None:
     )
     # ffprobe classifies the fake bytes as having no video stream first.
     assert response.status_code == 422
+
+
+def test_upload_accepts_valid_mp4_streams(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(vision, "media_streams", lambda path: (True, True, 12.5))
+
+    response = client.post(
+        "/api/mathoms",
+        files={"file": ("whatsapp.mp4", __import__("io").BytesIO(b"fake"), "video/mp4")},
+    )
+
+    assert response.status_code == 201, response.text
+    body = response.json()
+    assert body["source_type"] == "video"
+    assert body["has_audio_stream"] is True
+    assert body["has_video_stream"] is True
 
 
 def test_health_reports_vision_state(client: TestClient) -> None:

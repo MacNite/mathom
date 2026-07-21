@@ -15,9 +15,9 @@ from app.config import get_settings
 _model: Any = None
 
 # FFmpeg/ffprobe run on untrusted uploads, so every invocation is bounded:
-# fixed argument lists (no shell), a hard wall-clock timeout, `-nostdin` so a
-# malformed file can never make the process wait for input, and a thread cap so
-# one recording cannot saturate every core.
+# fixed argument lists (no shell), a hard wall-clock timeout, disabled standard
+# input so a malformed file can never make the process wait for input, and a
+# thread cap so one recording cannot saturate every core.
 _PROBE_TIMEOUT = 60
 _FFMPEG_THREADS = "1"
 

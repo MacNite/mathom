@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.deps import current_user
+from app.deps import current_user, require_admin_when_auth_enabled
 from app.models import PromptTemplate, User
 from app.schemas import TemplateCreate, TemplateOut, TemplateUpdate
 from app.services.template_localization import localized_template, normalize_template_language
@@ -37,7 +37,7 @@ def list_templates(
 def create_template(
     payload: TemplateCreate,
     db: Session = Depends(get_db),
-    _user: User | None = Depends(current_user),
+    _user: User | None = Depends(require_admin_when_auth_enabled),
 ) -> PromptTemplate:
     if "{transcript}" not in payload.prompt:
         raise HTTPException(status_code=422, detail="Prompt must contain {transcript}")
@@ -73,7 +73,7 @@ def update_template(
     template_id: int,
     payload: TemplateUpdate,
     db: Session = Depends(get_db),
-    _user: User | None = Depends(current_user),
+    _user: User | None = Depends(require_admin_when_auth_enabled),
 ) -> PromptTemplate:
     template = _get_template(template_id, db)
     changes = payload.model_dump(exclude_unset=True)
@@ -90,7 +90,7 @@ def update_template(
 def delete_template(
     template_id: int,
     db: Session = Depends(get_db),
-    _user: User | None = Depends(current_user),
+    _user: User | None = Depends(require_admin_when_auth_enabled),
 ) -> Response:
     template = _get_template(template_id, db)
     db.delete(template)

@@ -10,7 +10,6 @@ const links = [
   { to: '/', labelKey: 'nav.library', emoji: '📚' },
   { to: '/collections', labelKey: 'nav.collections', emoji: '🗂️' },
   { to: '/timeline', labelKey: 'nav.timeline', emoji: '🗓️' },
-  { to: '/templates', labelKey: 'nav.templates', emoji: '✒️' },
 ];
 
 export default function Layout() {
@@ -20,6 +19,9 @@ export default function Layout() {
   const [uploadOpen, setUploadOpen] = useState(false);
 
   const adminLinks = [
+    ...(!status.auth_enabled || isAdmin
+      ? [{ to: '/templates', labelKey: 'nav.templates', emoji: '✒️' }]
+      : []),
     ...(isAdmin ? [{ to: '/admin/users', labelKey: 'nav.users', emoji: '👥' }] : []),
     ...(isOwner ? [{ to: '/admin/settings', labelKey: 'nav.settings', emoji: '🔑' }] : []),
   ];

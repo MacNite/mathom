@@ -168,6 +168,27 @@ def test_templates_require_authentication(auth_harness) -> None:
     assert owner.get(f"/api/templates/{template_id}").status_code == 200
 
 
+def test_only_admins_can_change_shared_templates(auth_harness) -> None:
+    """A standard user must not alter prompts used for every user's summaries."""
+    owner = auth_harness.client()
+    auth_harness.login(owner, OWNER)
+    alice = auth_harness.client()
+    auth_harness.login(alice, ALICE)
+
+    template_id = owner.get("/api/templates").json()[0]["id"]
+    assert alice.get("/api/templates").status_code == 200
+    assert (
+        alice.post(
+            "/api/templates",
+            json={"slug": "alice-template", "name": "Alice", "prompt": "{transcript}"},
+        ).status_code
+        == 403
+    )
+    assert alice.put(f"/api/templates/{template_id}", json={"name": "Changed"}).status_code == 403
+    assert alice.delete(f"/api/templates/{template_id}").status_code == 403
+    assert owner.get(f"/api/templates/{template_id}").json()["name"] != "Changed"
+
+
 def test_settings_update_masks_secret(auth_harness) -> None:
     owner = auth_harness.client()
     auth_harness.login(owner, OWNER)

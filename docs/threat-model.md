@@ -45,8 +45,10 @@ Internet / LAN ──▶ mathom container ──▶ (nginx ──▶ FastAPI bac
 - **Unauthenticated network exposure (default).** Loopback-only bind; auth-off
   installs are not reachable off-host unless the operator opts in.
 - **Cross-user data access (SSO mode).** Every data query is scoped by
-  `user_id`; non-owned rows return `404`, so existence never leaks. RBAC guards
-  admin/owner actions, with last-Owner lockout protection.
+  `user_id`; non-owned rows return `404`, so existence never leaks. Shared
+  prompt templates are configuration rather than user data, and only admins
+  may change them; RBAC also guards other administrative actions, with
+  last-Owner lockout protection.
 - **Spoofed uploads.** Extension **and** content are checked: `ffprobe` must
   find a real audio stream before a file reaches whisper. Size is capped
   (`MAX_UPLOAD_MB`); stored filenames are server-generated UUIDs, so the

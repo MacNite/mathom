@@ -76,6 +76,22 @@ require_admin = require_roles(ROLE_ADMIN)
 require_owner = require_admin
 
 
+def require_admin_when_auth_enabled(
+    user: User | None = Depends(current_user),
+) -> User | None:
+    """Allow shared configuration edits only to admins in multi-user mode.
+
+    Prompt templates are global rather than user-owned: changing one affects
+    every user's future summaries.  In the original auth-disabled, single-user
+    mode there is no principal to authorize, so retain the existing editable
+    behavior.  Once authentication is enabled, treat templates as shared
+    configuration and require an administrator.
+    """
+    if user is not None and user.role != ROLE_ADMIN:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    return user
+
+
 def owned_filter(model: Any, user: User | None) -> ColumnElement[bool]:
     """WHERE clause that restricts a query to the current user's rows.
 

@@ -62,7 +62,10 @@ export default function App() {
       <Route element={<Layout />}>
         <Route index element={<Library />} />
         <Route path="mathoms/:id" element={<MathomDetail />} />
-        <Route path="templates" element={<Templates />} />
+        <Route
+          path="templates"
+          element={guard(!status.auth_enabled || isAdmin, <Templates />)}
+        />
         <Route path="collections" element={<Collections />} />
         <Route path="timeline" element={<Timeline />} />
         <Route path="register" element={<Register />} />

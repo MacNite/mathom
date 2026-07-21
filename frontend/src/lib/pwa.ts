@@ -64,6 +64,34 @@ export async function clearSharedAudio(): Promise<void> {
   }
 }
 
+/**
+ * Whether the device can hand text off to the native share sheet. iOS Safari
+ * has no Web Share *Target* (nothing can be shared *into* Mathom there), but it
+ * does support the outbound Web Share API, so this is how iOS users get a
+ * summary or transcript back out into Messages, Mail, Notes, and the rest.
+ */
+export function canShareText(): boolean {
+  return typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+}
+
+/**
+ * Open the native share sheet with the given text. Returns true when the share
+ * completed, false when it was unavailable or the user dismissed the sheet.
+ * Any other failure is re-thrown so the caller can surface it.
+ */
+export async function shareText(data: { title?: string; text: string }): Promise<boolean> {
+  if (!canShareText()) return false;
+  try {
+    await navigator.share({ title: data.title, text: data.text });
+    return true;
+  } catch (error) {
+    // The user tapping "cancel" rejects with AbortError; that is not an error
+    // worth reporting, so swallow it and report every other failure.
+    if (error instanceof DOMException && error.name === 'AbortError') return false;
+    throw error;
+  }
+}
+
 function decodeHeader(value: string | null): string {
   if (!value) return '';
   try {

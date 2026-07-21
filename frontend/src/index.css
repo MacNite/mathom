@@ -3,6 +3,11 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    /* Keep iOS Safari from bumping up text when the device rotates. */
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     @apply bg-paper font-body text-ink-900 antialiased;
     /* Faint surveyor's contour lines — like a chart left open on the table.
@@ -11,6 +16,10 @@
       repeating-radial-gradient(circle at 82% 12%, transparent 0 27px, rgba(63, 82, 51, 0.05) 27px 28px),
       repeating-radial-gradient(circle at 8% 92%, transparent 0 33px, rgba(138, 90, 43, 0.045) 33px 34px);
     background-attachment: fixed;
+    /* Drop the grey flash iOS paints over tapped buttons/links, and stop the
+       whole standalone app from rubber-band scrolling past its own content. */
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
   }
 
   /* Serif headings get room to break sensibly. */
@@ -19,12 +28,52 @@
   h3 {
     text-wrap: balance;
   }
+
+  /* On touch devices iOS zooms the page in whenever a focused field's text is
+     under 16px. Hold form controls at 16px there so focusing never zooms;
+     desktop keeps the smaller, denser sizing from the component classes. */
+  @media (pointer: coarse) {
+    input,
+    select,
+    textarea {
+      font-size: 16px;
+    }
+  }
 }
 
 @layer base {
   /* A single, consistent keyboard focus ring across every interactive element. */
   :where(a, button, input, select, textarea, [tabindex]):focus-visible {
     @apply outline-none ring-2 ring-hearth-500 ring-offset-2 ring-offset-paper;
+  }
+}
+
+@layer utilities {
+  /* Home-screen (standalone) iOS draws the app edge to edge behind the notch,
+     Dynamic Island, and home indicator. These insets keep the sidebar and the
+     main column clear of them; env() resolves to 0 everywhere else, so the
+     max() falls back to the ordinary padding on desktop and Android. */
+  .pad-safe-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  .pad-safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  /* Side insets only ever appear on a phone held in landscape, so keep this
+     off desktop where it would otherwise squeeze the wider column padding. */
+  @media (max-width: 767.98px) {
+    .pad-safe-x {
+      padding-left: max(1rem, env(safe-area-inset-left));
+      padding-right: max(1rem, env(safe-area-inset-right));
+    }
+  }
+  @media (min-width: 768px) {
+    .md\:pad-safe-top {
+      padding-top: max(1.5rem, env(safe-area-inset-top));
+    }
+    .md\:pad-safe-bottom {
+      padding-bottom: max(2rem, env(safe-area-inset-bottom));
+    }
   }
 }
 

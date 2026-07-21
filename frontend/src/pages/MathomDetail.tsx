@@ -5,6 +5,7 @@ import StatusBadge from "../components/StatusBadge";
 import { api } from "../lib/api";
 import { formatDateTime, formatDuration } from "../lib/format";
 import { useI18n } from "../lib/i18n";
+import { canShareText, shareText } from "../lib/pwa";
 import { useToast } from "../lib/toast";
 import type {
   ChatMessage,
@@ -42,6 +43,9 @@ export default function MathomDetail() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [currentTime, setCurrentTime] = useState(0);
+  // Feature-detected once: iOS/Android can pass text to the native share sheet,
+  // most desktop browsers cannot, so the button only appears where it works.
+  const [canShare] = useState(canShareText);
 
   const refresh = useCallback(() => {
     api
@@ -222,6 +226,19 @@ export default function MathomDetail() {
       );
     }
   };
+  const shareOut = async () => {
+    if (!mathom) return;
+    // Prefer the newest summary as the shareable gist; fall back to the
+    // transcript, then to just the title so there is always something to send.
+    const body = mathom.summaries[0]?.content || mathom.transcript || "";
+    const text = [mathom.title, body].filter(Boolean).join("\n\n");
+    try {
+      await shareText({ title: mathom.title, text });
+    } catch {
+      toast.error(t("detail.shareFailed"));
+    }
+  };
+
   const seekObservation = (seconds: number) => {
     const player = videoRef.current ?? audioRef.current;
     if (player) {
@@ -252,6 +269,15 @@ export default function MathomDetail() {
           />
           <div className="flex items-center gap-2">
             <StatusBadge status={mathom.status} />
+            {canShare && (
+              <button
+                onClick={() => void shareOut()}
+                className="btn-ghost"
+                title={t("detail.share")}
+              >
+                {t("detail.share")}
+              </button>
+            )}
             <button
               onClick={() => patch({ favorite: !mathom.favorite })}
               className="btn-ghost"

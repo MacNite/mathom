@@ -33,6 +33,16 @@ FastAPI backend run side by side under supervisord.
 - **ollama** — serves the LLM. **No published ports** — reachable only on the
   internal Compose network.
 
+### Optional local speaker diarization
+
+Speaker labels are off by default. Install the backend's optional
+`diarization` extra and set `MATHOM_DIARIZATION_ENABLED=true` plus
+`MATHOM_DIARIZATION_MODEL_PATH` to a locally provisioned pyannote pipeline to
+merge speaker turns into Whisper's timestamped segments. The provider is
+lazily loaded only when enabled; if it or the local model is unavailable,
+transcription continues without labels. Mathom never downloads diarization
+weights or sends audio to an external service.
+
 ## The Mathom lifecycle
 
 1. `POST /api/mathoms` stores the audio under a server-generated name, creates

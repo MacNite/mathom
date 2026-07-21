@@ -11,6 +11,7 @@ import type {
   Collection,
   Mathom,
   PromptTemplate,
+  Summary,
 } from "../lib/types";
 
 export default function MathomDetail() {
@@ -31,6 +32,9 @@ export default function MathomDetail() {
   const [pendingChat, setPendingChat] = useState<string | null>(null);
   const [summaryBusy, setSummaryBusy] = useState(false);
   const [streamingSummary, setStreamingSummary] = useState("");
+  const [streamingSummaryId, setStreamingSummaryId] = useState<number | null>(null);
+  const [editingSummaryId, setEditingSummaryId] = useState<number | null>(null);
+  const [summaryDraft, setSummaryDraft] = useState("");
   const [streamingChat, setStreamingChat] = useState("");
   const [editingTranscript, setEditingTranscript] = useState(false);
   const [transcriptDraft, setTranscriptDraft] = useState("");
@@ -133,6 +137,7 @@ export default function MathomDetail() {
 
   const makeSummary = async () => {
     setSummaryBusy(true);
+    setStreamingSummaryId(null);
     try {
       setStreamingSummary("");
       await api.streamSummary(mathom.id, summarySlug, lang, (token) =>
@@ -146,6 +151,40 @@ export default function MathomDetail() {
       );
     } finally {
       setStreamingSummary("");
+      setStreamingSummaryId(null);
+      setSummaryBusy(false);
+    }
+  };
+
+  const saveSummary = async (summaryId: number) => {
+    try {
+      await api.updateSummary(mathom.id, summaryId, summaryDraft);
+      setEditingSummaryId(null);
+      refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("settings.saveFailed"));
+    }
+  };
+
+  const regenerateSummary = async (summary: Summary) => {
+    setSummaryBusy(true);
+    setStreamingSummaryId(summary.id);
+    setStreamingSummary("");
+    try {
+      await api.streamSummary(
+        mathom.id,
+        summary.template_slug,
+        lang,
+        (token) => setStreamingSummary((current) => current + token),
+        summary.id,
+      );
+      refresh();
+      toast.success(t("detail.summaryCreated"));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("detail.summaryFailed"));
+    } finally {
+      setStreamingSummary("");
+      setStreamingSummaryId(null);
       setSummaryBusy(false);
     }
   };
@@ -337,7 +376,7 @@ export default function MathomDetail() {
             </button>
           </div>
         </div>
-        {streamingSummary && (
+        {streamingSummary && streamingSummaryId === null && (
           <div className="mt-3 rounded-xl bg-parchment-100 p-4 text-sm whitespace-pre-wrap">
             {streamingSummary}
           </div>
@@ -363,9 +402,48 @@ export default function MathomDetail() {
                 <p className="text-xs font-medium uppercase tracking-wide text-ink-500">
                   {summary.template_name} · {summary.model}
                 </p>
-                <p className="mt-2 whitespace-pre-wrap text-sm text-ink-900">
-                  {summary.content}
-                </p>
+                {editingSummaryId === summary.id ? (
+                  <div className="mt-2">
+                    <textarea
+                      value={summaryDraft}
+                      onChange={(event) => setSummaryDraft(event.target.value)}
+                      className="input min-h-32"
+                    />
+                    <div className="mt-2 flex gap-2">
+                      <button className="btn-primary" onClick={() => void saveSummary(summary.id)}>
+                        Save
+                      </button>
+                      <button className="btn-ghost" onClick={() => setEditingSummaryId(null)}>
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <p className="mt-2 whitespace-pre-wrap text-sm text-ink-900">
+                      {streamingSummaryId === summary.id ? streamingSummary : summary.content}
+                    </p>
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        className="btn-ghost text-sm"
+                        onClick={() => {
+                          setSummaryDraft(summary.content);
+                          setEditingSummaryId(summary.id);
+                        }}
+                        disabled={summaryBusy}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="btn-ghost text-sm"
+                        onClick={() => void regenerateSummary(summary)}
+                        disabled={summaryBusy}
+                      >
+                        Regenerate
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             ))}
           </div>

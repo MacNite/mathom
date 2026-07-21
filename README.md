@@ -117,6 +117,16 @@ All settings live in `.env` (see [`.env.example`](.env.example)):
 | `MAX_UPLOAD_MB`        | `200`      | Upload size limit per recording        |
 | `MAX_QUEUED_JOBS`      | `25`       | Maximum recordings waiting to process  |
 | `CHAT_CONCURRENCY`     | `1`        | Simultaneous interactive Ollama chats  |
+| `MATHOM_DIARIZATION_ENABLED` | `false` | Enable optional local speaker labels |
+| `MATHOM_DIARIZATION_MODEL_PATH` | empty | Local pyannote pipeline path; requires `[diarization]` extra |
+
+### Optional speaker diarization
+
+To label timestamped transcript segments by speaker, install the backend's
+`diarization` extra and provision a compatible [pyannote.audio](https://github.com/pyannote/pyannote-audio)
+pipeline on local storage. Set `MATHOM_DIARIZATION_ENABLED=true` and
+`MATHOM_DIARIZATION_MODEL_PATH` to that local path. Mathom loads this optional
+provider only when enabled and does not download models or send audio anywhere.
 
 ## Documentation
 

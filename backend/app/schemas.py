@@ -81,6 +81,7 @@ class SummaryUpdate(BaseModel):
 class SummaryCreate(BaseModel):
     template_slug: str = "general-summary"
     template_language: str = Field(default="en", pattern=r"^(en|de|es)$")
+    replace_summary_id: int | None = Field(default=None, gt=0)
 
 
 class ChatRequest(BaseModel):

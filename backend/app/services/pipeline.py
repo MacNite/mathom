@@ -15,6 +15,8 @@ from app.services.template_localization import localized_prompt
 
 logger = logging.getLogger("mathom.pipeline")
 
+COMBINE_SUMMARIES_PROMPT = "Combine these partial summaries into one coherent result:\n{transcript}"
+
 # Statuses a Mathom can hold while work is outstanding. After a restart these
 # are only legitimate if a queued/running job still owns the Mathom; otherwise
 # the Mathom was orphaned and is flipped to error.
@@ -119,7 +121,7 @@ def run(mathom_id: int, template_slug: str = "general-summary") -> None:
             return
         mathom.transcript = text
         mathom.language = language
-        mathom.segments = label_segments(segments)
+        mathom.segments = label_segments(segments, audio_path)
         mathom.status = "summarizing"
         session.commit()
         refresh_fts(session, mathom_id)
@@ -166,21 +168,10 @@ def summarize_mathom(
         if template is None:
             return None
         prompt = localized_prompt(template, template_language or mathom.template_language)
-        if len(mathom.transcript) > settings.summary_chunk_chars:
-            chunks = [
-                mathom.transcript[index : index + settings.summary_chunk_chars]
-                for index in range(0, len(mathom.transcript), settings.summary_chunk_chars)
-            ]
-            partials = [
-                ollama.generate_summary(chunk, prompt, language=mathom.language) for chunk in chunks
-            ]
-            content = ollama.generate_summary(
-                "\n\n".join(partials),
-                "Combine these partial summaries into one coherent result:\n{transcript}",
-                language=mathom.language,
-            )
-        else:
-            content = ollama.generate_summary(mathom.transcript, prompt, language=mathom.language)
+        summary_input, summary_prompt = prepare_summary_input(
+            mathom.transcript, prompt, mathom.language, settings.summary_chunk_chars
+        )
+        content = ollama.generate_summary(summary_input, summary_prompt, language=mathom.language)
         summary = Summary(
             mathom_id=mathom_id,
             template_slug=template.slug,
@@ -194,3 +185,25 @@ def summarize_mathom(
         session.commit()
         session.refresh(summary)
         return summary
+
+
+def prepare_summary_input(
+    transcript: str,
+    prompt: str,
+    language: str | None,
+    chunk_chars: int | None = None,
+) -> tuple[str, str]:
+    """Return the final summary input, mapping long transcripts into partials.
+
+    Both HTTP streaming and background summaries use this policy. The map step
+    deliberately finishes before the final request, which can then be streamed
+    without exposing an overlong transcript to Ollama.
+    """
+    threshold = chunk_chars if chunk_chars is not None else get_settings().summary_chunk_chars
+    if len(transcript) <= threshold:
+        return transcript, prompt
+    chunks = [
+        transcript[index : index + threshold] for index in range(0, len(transcript), threshold)
+    ]
+    partials = [ollama.generate_summary(chunk, prompt, language=language) for chunk in chunks]
+    return "\n\n".join(partials), COMBINE_SUMMARIES_PROMPT

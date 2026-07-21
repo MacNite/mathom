@@ -1,5 +1,6 @@
 import io
 
+import pytest
 from fastapi.testclient import TestClient
 
 
@@ -96,6 +97,59 @@ def test_extra_summary_with_template(client: TestClient, uploaded_mathom: dict) 
     )
     assert response.status_code == 201
     assert response.json()["template_slug"] == "tldr"
+
+
+def test_streaming_summary_chunks_long_transcripts_and_persists_content(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch, uploaded_mathom: dict
+) -> None:
+    """Short inputs stream directly; long ones map first and stream the combine."""
+    from app.config import get_settings
+    from app.db import get_session_factory
+    from app.models import Mathom
+    from app.services import ollama
+
+    monkeypatch.setenv("MATHOM_SUMMARY_CHUNK_CHARS", "1000")
+    get_settings.cache_clear()
+    streamed: list[tuple[str, str]] = []
+    mapped: list[str] = []
+    monkeypatch.setattr(
+        ollama,
+        "stream_generate_summary",
+        lambda transcript, prompt, language: (
+            streamed.append((transcript, prompt)) or iter(["combined"])
+        ),
+    )
+    monkeypatch.setattr(
+        ollama,
+        "generate_summary",
+        lambda transcript, prompt, language=None: (
+            mapped.append(transcript) or f"partial:{transcript}"
+        ),
+    )
+
+    mathom_id = uploaded_mathom["id"]
+    with get_session_factory()() as session:
+        mathom = session.get(Mathom, mathom_id)
+        assert mathom is not None
+        mathom.transcript = "short"
+        session.commit()
+    short_response = client.post(f"/api/mathoms/{mathom_id}/summaries/stream", json={})
+    assert short_response.status_code == 200
+    assert streamed[-1][0] == "short"
+    assert mapped == []
+
+    with get_session_factory()() as session:
+        mathom = session.get(Mathom, mathom_id)
+        assert mathom is not None
+        mathom.transcript = "a" * 2001
+        session.commit()
+    long_response = client.post(f"/api/mathoms/{mathom_id}/summaries/stream", json={})
+    assert long_response.status_code == 200
+    assert mapped == ["a" * 1000, "a" * 1000, "a"]
+    assert streamed[-1][0] == "\n\n".join(f"partial:{chunk}" for chunk in mapped)
+
+    detail = client.get(f"/api/mathoms/{mathom_id}").json()
+    assert [summary["content"] for summary in detail["summaries"][-2:]] == ["combined", "combined"]
 
 
 def test_delete_summary(client: TestClient, uploaded_mathom: dict) -> None:

@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     whisper_initial_prompt: str = ""
     summary_chunk_chars: int = Field(default=24000, ge=1000)
     diarization_enabled: bool = False
+    # Path to a locally provisioned pyannote diarization pipeline. Keeping this
+    # local preserves Mathom's no-cloud guarantee when diarization is enabled.
+    diarization_model_path: Path | None = None
     # Hard wall-clock ceiling for a single FFmpeg normalization run, so a
     # pathological upload cannot occupy a worker indefinitely.
     ffmpeg_timeout_seconds: float = 600.0

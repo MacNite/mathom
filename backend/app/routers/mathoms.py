@@ -226,24 +226,42 @@ def stream_summary(
     ).scalar_one_or_none()
     if template is None:
         raise HTTPException(status_code=404, detail="Prompt template not found")
+    if payload.replace_summary_id is not None:
+        replacement = db.get(Summary, payload.replace_summary_id)
+        if replacement is None or replacement.mathom_id != mathom.id:
+            raise HTTPException(status_code=404, detail="Summary not found")
 
     def events() -> Iterator[str]:
-        content = ""
-        for token in pipeline.ollama.stream_generate_summary(
+        summary_input, summary_prompt = pipeline.prepare_summary_input(
             mathom.transcript or "",
             localized_prompt(template, payload.template_language),
+            mathom.language,
+        )
+        content = ""
+        for token in pipeline.ollama.stream_generate_summary(
+            summary_input,
+            summary_prompt,
             mathom.language,
         ):
             content += token
             yield f"data: {token!r}\n\n"
-        summary = Summary(
-            mathom_id=mathom.id,
-            template_slug=template.slug,
-            template_name=template.name,
-            content=content,
-            model=get_settings().ollama_model,
+        summary = (
+            db.get(Summary, payload.replace_summary_id) if payload.replace_summary_id else None
         )
-        db.add(summary)
+        if summary is None:
+            summary = Summary(
+                mathom_id=mathom.id,
+                template_slug=template.slug,
+                template_name=template.name,
+                content=content,
+                model=get_settings().ollama_model,
+            )
+            db.add(summary)
+        else:
+            summary.template_slug = template.slug
+            summary.template_name = template.name
+            summary.content = content
+            summary.model = get_settings().ollama_model
         db.commit()
         refresh_fts(db, mathom.id)
         db.commit()

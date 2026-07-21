@@ -166,10 +166,15 @@ export const api = {
     templateSlug: string,
     templateLanguage: string,
     onToken: (token: string) => void,
+    replaceSummaryId?: number,
   ): Promise<void> {
     return this.streamSse(
       `/mathoms/${id}/summaries/stream`,
-      { template_slug: templateSlug, template_language: templateLanguage },
+      {
+        template_slug: templateSlug,
+        template_language: templateLanguage,
+        replace_summary_id: replaceSummaryId,
+      },
       onToken,
     );
   },

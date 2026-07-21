@@ -41,6 +41,7 @@ class MathomListItem(ORMModel):
     status: str
     duration_seconds: float | None
     language: str | None
+    source_type: str
     favorite: bool
     archived: bool
     created_at: datetime
@@ -72,6 +73,13 @@ class MathomUpdate(BaseModel):
     favorite: bool | None = None
     archived: bool | None = None
     transcript: str | None = None
+
+
+class TextMathomCreate(BaseModel):
+    text: str = Field(min_length=1)
+    title: str = Field(default="", max_length=300)
+    template_slug: str = "general-summary"
+    template_language: str = Field(default="en", pattern=r"^(en|de|es)$")
 
 
 class SummaryUpdate(BaseModel):

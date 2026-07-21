@@ -16,6 +16,7 @@ def _make_engine() -> Engine:
     settings = get_settings()
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     settings.audio_dir.mkdir(parents=True, exist_ok=True)
+    settings.source_dir.mkdir(parents=True, exist_ok=True)
     engine = create_engine(
         settings.database_url,
         connect_args={"check_same_thread": False},
@@ -90,6 +91,7 @@ def init_db(engine: Engine | None = None) -> None:
         _migrate_user_ownership(conn)
         _migrate_segments(conn)
         _migrate_template_language(conn)
+        _migrate_source_fields(conn)
         _migrate_local_auth(conn)
 
 
@@ -128,6 +130,17 @@ def get_db() -> Generator[Session, None, None]:
         yield session
     finally:
         session.close()
+
+
+def _migrate_source_fields(conn: object) -> None:
+    """Add source classification without disturbing existing recording rows."""
+    for name, definition in (
+        ("source_type", "VARCHAR(30) NOT NULL DEFAULT 'audio'"),
+        ("source_path", "VARCHAR(1000) NOT NULL DEFAULT ''"),
+    ):
+        if name not in _column_names(conn, "mathoms"):
+            conn.execute(text(f"ALTER TABLE mathoms ADD COLUMN {name} {definition}"))  # type: ignore[attr-defined]
+    conn.execute(text("CREATE INDEX IF NOT EXISTS ix_mathoms_source_type ON mathoms(source_type)"))  # type: ignore[attr-defined]
 
 
 def _migrate_local_auth(conn: object) -> None:

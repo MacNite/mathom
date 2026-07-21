@@ -93,6 +93,16 @@ export const api = {
     return request("/mathoms", { method: "POST", body: form });
   },
 
+  createTextMathom(text: string, title: string, templateSlug: string, templateLanguage: string): Promise<Mathom> {
+    return request('/mathoms/text', json('POST', { text, title, template_slug: templateSlug, template_language: templateLanguage }));
+  },
+
+  uploadDocument(file: File, title: string, templateSlug: string, templateLanguage: string): Promise<Mathom> {
+    const form = new FormData();
+    form.append('file', file); form.append('title', title); form.append('template_slug', templateSlug); form.append('template_language', templateLanguage);
+    return request('/mathoms/documents', { method: 'POST', body: form });
+  },
+
   updateMathom(
     id: number,
     changes: Partial<

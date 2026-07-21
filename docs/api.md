@@ -12,10 +12,13 @@ All routes are prefixed with `/api`.
 | ------------------------------------ | ------------------------------------------ |
 | `GET /mathoms`                       | List (filters: `favorite`, `archived`, `tag`, `status`, paging) |
 | `POST /mathoms`                      | Upload (multipart: `file`, `title?`, `template_slug?`) — starts the pipeline |
+| `POST /mathoms/text`                 | Queue pasted text (JSON: `text`, `title?`, template options) |
+| `POST /mathoms/documents`            | Queue TXT, MD, PDF, or DOCX extraction |
 | `GET /mathoms/{id}`                  | Full detail: transcript, summaries, chat, tags, collections |
 | `PATCH /mathoms/{id}`                | Update `title`, `favorite`, `archived`, `transcript` |
 | `DELETE /mathoms/{id}`               | Delete row + audio file                    |
 | `GET /mathoms/{id}/audio`            | Stream the original audio                  |
+| `GET /mathoms/{id}/source`           | Download the original media or document source |
 | `POST /mathoms/{id}/summaries`       | Generate another summary (`template_slug`) |
 | `POST /mathoms/{id}/tags`            | Add tag by name                            |
 | `DELETE /mathoms/{id}/tags/{tagId}`  | Remove tag                                 |

@@ -9,7 +9,7 @@ from sqlalchemy import CursorResult, select, update
 from app.config import get_settings
 from app.db import get_session_factory, refresh_fts
 from app.models import Mathom, PromptTemplate, Summary
-from app.services import ollama, transcription
+from app.services import documents, ollama, transcription
 from app.services.diarization import label_segments
 from app.services.template_localization import localized_prompt
 
@@ -50,6 +50,8 @@ def _safe_error(exc: Exception) -> str:
 
     if isinstance(exc, transcription.AudioValidationError):
         return "This file could not be read as audio. Please upload a valid recording."
+    if isinstance(exc, documents.DocumentExtractionError):
+        return str(exc)
     if isinstance(exc, SubprocessError):
         return "The recording could not be transcribed. It may be corrupt or unsupported."
     if isinstance(exc, HTTPError):
@@ -100,20 +102,32 @@ def run(mathom_id: int, template_slug: str = "general-summary") -> None:
         mathom = session.get(Mathom, mathom_id)
         if mathom is None:
             return
+        source_type = mathom.source_type
         audio_path = Path(mathom.audio_path)
+        source_path = Path(mathom.source_path)
 
-    # Reject spoofed uploads (right extension, non-audio bytes) before they
-    # ever reach whisper.
-    transcription.validate_audio(audio_path)
-
-    with factory() as session:
-        mathom = session.get(Mathom, mathom_id)
-        if mathom is None:
-            return
-        mathom.duration_seconds = transcription.probe_duration_seconds(audio_path)
-        session.commit()
-
-    text, language, segments = transcription.transcribe(audio_path)
+    if source_type in {"audio", "video_audio"}:
+        transcription.validate_audio(audio_path)
+        with factory() as session:
+            mathom = session.get(Mathom, mathom_id)
+            if mathom is None:
+                return
+            mathom.duration_seconds = transcription.probe_duration_seconds(audio_path)
+            session.commit()
+        text, language, segments = transcription.transcribe(audio_path)
+        segments = label_segments(segments, audio_path)
+    elif source_type == "document":
+        text = documents.extract_text(source_path, source_path.suffix.lower())
+        language, segments = None, []
+    elif source_type == "text":
+        with factory() as session:
+            mathom = session.get(Mathom, mathom_id)
+            if mathom is None or not mathom.transcript:
+                return
+            text = mathom.transcript
+        language, segments = None, []
+    else:
+        raise ValueError("unknown source type")
 
     with factory() as session:
         mathom = session.get(Mathom, mathom_id)
@@ -121,7 +135,7 @@ def run(mathom_id: int, template_slug: str = "general-summary") -> None:
             return
         mathom.transcript = text
         mathom.language = language
-        mathom.segments = label_segments(segments, audio_path)
+        mathom.segments = segments
         mathom.status = "summarizing"
         session.commit()
         refresh_fts(session, mathom_id)

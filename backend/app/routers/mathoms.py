@@ -1,5 +1,6 @@
 """Mathom CRUD, upload, audio streaming, summaries, tags, and exports."""
 
+import asyncio
 import json
 import uuid
 from collections.abc import Iterator
@@ -30,8 +31,9 @@ from app.schemas import (
     SummaryUpdate,
     TagCreate,
     TagOut,
+    TextMathomCreate,
 )
-from app.services import export, jobs, pipeline
+from app.services import export, jobs, pipeline, transcription
 from app.services.worker import worker
 
 router = APIRouter(prefix="/mathoms", tags=["mathoms"])
@@ -115,10 +117,18 @@ async def upload_mathom(
         target.unlink(missing_ok=True)
         raise HTTPException(status_code=400, detail="Uploaded file is empty")
 
+    try:
+        # Validate before a row/job exists; failed bytes leave no residue.
+        await asyncio.to_thread(transcription.validate_audio, target)
+    except transcription.AudioValidationError as exc:
+        target.unlink(missing_ok=True)
+        raise HTTPException(status_code=422, detail="File has no decodable audio stream") from exc
+    source_type = "video_audio" if extension == ".mp4" else "audio"
     mathom = Mathom(
         title=title.strip() or Path(original_name).stem or "Untitled Mathom",
         original_filename=original_name[:500],
         audio_path=str(target),
+        source_type=source_type,
         status="pending",
         template_language=template_language,
         user_id=user.id if user else None,
@@ -127,6 +137,93 @@ async def upload_mathom(
     db.commit()
     db.refresh(mathom)
     # Durable: the job survives a restart and is picked up by the worker.
+    jobs.enqueue(db, mathom.id, template_slug)
+    worker.notify()
+    return mathom
+
+
+@router.post("/text", response_model=MathomOut, status_code=201)
+def create_text_mathom(
+    payload: TextMathomCreate,
+    db: Session = Depends(get_db),
+    user: User | None = Depends(current_user),
+) -> Mathom:
+    if not payload.text.strip():
+        raise HTTPException(status_code=422, detail="Text cannot be empty")
+    if len(payload.text) > get_settings().max_text_chars:
+        raise HTTPException(status_code=413, detail="Text exceeds the configured character limit")
+    if jobs.queued_count(db) >= get_settings().max_queued_jobs:
+        raise HTTPException(
+            status_code=503, detail="Processing queue is full", headers={"Retry-After": "60"}
+        )
+    mathom = Mathom(
+        title=payload.title.strip() or "Untitled Mathom",
+        transcript=payload.text,
+        source_type="text",
+        status="pending",
+        template_language=payload.template_language,
+        user_id=user.id if user else None,
+    )
+    db.add(mathom)
+    db.commit()
+    db.refresh(mathom)
+    refresh_fts(db, mathom.id)
+    db.commit()
+    jobs.enqueue(db, mathom.id, payload.template_slug)
+    worker.notify()
+    return mathom
+
+
+@router.post("/documents", response_model=MathomOut, status_code=201)
+async def upload_document(
+    file: UploadFile,
+    title: str = Form(default=""),
+    template_slug: str = Form(default="general-summary"),
+    template_language: str = Form(default="en", pattern=r"^(en|de|es)$"),
+    db: Session = Depends(get_db),
+    user: User | None = Depends(current_user),
+) -> Mathom:
+    settings = get_settings()
+    original_name = file.filename or "document"
+    extension = Path(original_name).suffix.lower()
+    if extension not in {".txt", ".md", ".pdf", ".docx"}:
+        raise HTTPException(status_code=415, detail="Unsupported document format")
+    if jobs.queued_count(db) >= settings.max_queued_jobs:
+        raise HTTPException(
+            status_code=503, detail="Processing queue is full", headers={"Retry-After": "60"}
+        )
+    settings.source_dir.mkdir(parents=True, exist_ok=True)
+    target = settings.source_dir / f"{uuid.uuid4().hex}{extension}"
+    written = 0
+    maximum = settings.max_document_mb * 1024 * 1024
+    try:
+        with target.open("wb") as out:
+            while chunk := await file.read(CHUNK_SIZE):
+                written += len(chunk)
+                if written > maximum:
+                    raise HTTPException(
+                        status_code=413,
+                        detail=f"File exceeds the {settings.max_document_mb} MB document limit",
+                    )
+                out.write(chunk)
+    except HTTPException:
+        target.unlink(missing_ok=True)
+        raise
+    if not written:
+        target.unlink(missing_ok=True)
+        raise HTTPException(status_code=400, detail="Uploaded file is empty")
+    mathom = Mathom(
+        title=title.strip() or "Untitled Mathom",
+        original_filename=Path(original_name).name[:500],
+        source_type="document",
+        source_path=str(target),
+        status="pending",
+        template_language=template_language,
+        user_id=user.id if user else None,
+    )
+    db.add(mathom)
+    db.commit()
+    db.refresh(mathom)
     jobs.enqueue(db, mathom.id, template_slug)
     worker.notify()
     return mathom
@@ -172,12 +269,15 @@ def delete_mathom(
 ) -> Response:
     mathom = _get_mathom(mathom_id, db, user)
     audio_path = Path(mathom.audio_path) if mathom.audio_path else None
+    source_path = Path(mathom.source_path) if mathom.source_path else None
     db.delete(mathom)
     db.commit()
     refresh_fts(db, mathom_id)
     db.commit()
     if audio_path is not None:
         audio_path.unlink(missing_ok=True)
+    if source_path is not None:
+        source_path.unlink(missing_ok=True)
     return Response(status_code=204)
 
 
@@ -188,9 +288,22 @@ def get_audio(
     user: User | None = Depends(current_user),
 ) -> FileResponse:
     mathom = _get_mathom(mathom_id, db, user)
+    if mathom.source_type not in {"audio", "video_audio"}:
+        raise HTTPException(status_code=409, detail="This Mathom has no audio source")
     path = Path(mathom.audio_path)
     if not path.is_file():
         raise HTTPException(status_code=404, detail="Audio file not found")
+    return FileResponse(path, filename=mathom.original_filename or path.name)
+
+
+@router.get("/{mathom_id}/source")
+def get_source(
+    mathom_id: int, db: Session = Depends(get_db), user: User | None = Depends(current_user)
+) -> FileResponse:
+    mathom = _get_mathom(mathom_id, db, user)
+    path = Path(mathom.source_path or mathom.audio_path)
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="Original source file not found")
     return FileResponse(path, filename=mathom.original_filename or path.name)
 
 
@@ -362,8 +475,16 @@ def export_mathom(
     elif format == "json":
         body, media_type, ext = export.to_json(mathom), "application/json", "json"
     elif format == "srt":
+        if mathom.source_type not in {"audio", "video_audio"}:
+            raise HTTPException(
+                status_code=409, detail="Subtitles are only available for audio sources"
+            )
         body, media_type, ext = export.to_srt(mathom), "text/plain", "srt"
     elif format == "vtt":
+        if mathom.source_type not in {"audio", "video_audio"}:
+            raise HTTPException(
+                status_code=409, detail="Subtitles are only available for audio sources"
+            )
         body, media_type, ext = export.to_vtt(mathom), "text/vtt", "vtt"
     else:
         raise HTTPException(status_code=400, detail="format must be md, txt, json, srt, or vtt")

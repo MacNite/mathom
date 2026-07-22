@@ -56,8 +56,27 @@ export default function UploadDialog({
 
   useEffect(() => {
     if (open) {
-      api.listTemplates(lang).then(setTemplates).catch(() => setTemplates([]));
       setError('');
+      api
+        .listTemplates(lang)
+        .then((loaded) => {
+          setTemplates(loaded);
+          // The chosen style must be one the server actually offers. The initial
+          // 'general-summary' guess (or a stale earlier choice) is reconciled
+          // against the loaded list so a selection is never silently dropped in
+          // favour of the default when the requested style isn't available.
+          setTemplateSlug((current) =>
+            loaded.some((template) => template.slug === current)
+              ? current
+              : (loaded[0]?.slug ?? current),
+          );
+        })
+        .catch(() => {
+          // Surface the failure rather than leaving an empty picker that would
+          // quietly upload with the default template.
+          setTemplates([]);
+          setError(t('upload.templatesFailed'));
+        });
       setTitle(sharedTitle);
       if (sharedText) {
         setSource('text');
@@ -66,7 +85,7 @@ export default function UploadDialog({
         setSource(isDocument(sharedFile) ? 'document' : 'media');
       }
     }
-  }, [lang, open, sharedFile, sharedText, sharedTitle]);
+  }, [lang, open, sharedFile, sharedText, sharedTitle, t]);
 
   // Accessible-dialog behaviour: trap focus, restore it on close, close on
   // Escape, and move focus into the dialog when it opens.
@@ -110,6 +129,12 @@ export default function UploadDialog({
     const file = sharedFile ?? fileRef.current?.files?.[0];
     if (source !== 'text' && !file) {
       setError(t('upload.chooseFileFirst'));
+      return;
+    }
+    // Without a loaded template the backend would fall back to the default
+    // style, so block the upload and tell the user rather than misapplying it.
+    if (templates.length === 0 || !templates.some((template) => template.slug === templateSlug)) {
+      setError(t('upload.templatesFailed'));
       return;
     }
     setBusy(true);

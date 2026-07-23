@@ -95,6 +95,7 @@ def init_db(engine: Engine | None = None) -> None:
         _migrate_vision_fields(conn)
         _migrate_speaker(conn)
         _migrate_source_app(conn)
+        _migrate_tag_fields(conn)
         _migrate_local_auth(conn)
 
 
@@ -179,6 +180,71 @@ def _migrate_source_app(conn: object) -> None:
             conn.execute(  # type: ignore[attr-defined]
                 text("UPDATE mathoms SET source_app = :app WHERE id = :id"),
                 {"app": app_name, "id": row_id},
+            )
+
+
+def _migrate_tag_fields(conn: object) -> None:
+    """Add display colour + kind to tags and fold existing origins into tags.
+
+    Additive: new columns default to a manual moss-green tag. The one-time
+    backfill mirrors each recording's ``source_app`` into an auto ``source`` tag
+    so origins become first-class, filterable tags. Idempotent via
+    find-before-create on the tag and INSERT OR IGNORE on the join table.
+    """
+    from app.services.tags import DEFAULT_TAG_COLOR, SOURCE_TAG_COLOR
+
+    cols = _column_names(conn, "tags")
+    if "color" not in cols:
+        conn.execute(  # type: ignore[attr-defined]
+            text(
+                "ALTER TABLE tags ADD COLUMN color VARCHAR(20) NOT NULL "
+                f"DEFAULT '{DEFAULT_TAG_COLOR}'"
+            )
+        )
+    if "kind" not in cols:
+        conn.execute(  # type: ignore[attr-defined]
+            text("ALTER TABLE tags ADD COLUMN kind VARCHAR(20) NOT NULL DEFAULT 'manual'")
+        )
+    conn.execute(text("CREATE INDEX IF NOT EXISTS ix_tags_kind ON tags(kind)"))  # type: ignore[attr-defined]
+
+    rows = conn.execute(  # type: ignore[attr-defined]
+        text(
+            "SELECT DISTINCT user_id, source_app FROM mathoms "
+            "WHERE source_app IS NOT NULL AND source_app != ''"
+        )
+    ).all()
+    for user_id, source_app in rows:
+        name = source_app.strip().lower()
+        if user_id is None:
+            tag_id = conn.execute(  # type: ignore[attr-defined]
+                text("SELECT id FROM tags WHERE name = :n AND user_id IS NULL"), {"n": name}
+            ).scalar()
+        else:
+            tag_id = conn.execute(  # type: ignore[attr-defined]
+                text("SELECT id FROM tags WHERE name = :n AND user_id = :u"),
+                {"n": name, "u": user_id},
+            ).scalar()
+        if tag_id is None:
+            conn.execute(  # type: ignore[attr-defined]
+                text("INSERT INTO tags (user_id, name, color, kind) VALUES (:u, :n, :c, 'source')"),
+                {"u": user_id, "n": name, "c": SOURCE_TAG_COLOR},
+            )
+            tag_id = conn.execute(text("SELECT last_insert_rowid()")).scalar()  # type: ignore[attr-defined]
+        if user_id is None:
+            conn.execute(  # type: ignore[attr-defined]
+                text(
+                    "INSERT OR IGNORE INTO mathom_tags (mathom_id, tag_id) "
+                    "SELECT id, :t FROM mathoms WHERE source_app = :a AND user_id IS NULL"
+                ),
+                {"t": tag_id, "a": source_app},
+            )
+        else:
+            conn.execute(  # type: ignore[attr-defined]
+                text(
+                    "INSERT OR IGNORE INTO mathom_tags (mathom_id, tag_id) "
+                    "SELECT id, :t FROM mathoms WHERE source_app = :a AND user_id = :u"
+                ),
+                {"t": tag_id, "a": source_app, "u": user_id},
             )
 
 

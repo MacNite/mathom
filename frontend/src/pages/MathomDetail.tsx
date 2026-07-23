@@ -6,6 +6,7 @@ import { api } from "../lib/api";
 import { formatDateTime, formatDuration } from "../lib/format";
 import { useI18n } from "../lib/i18n";
 import { canShareText, shareText } from "../lib/pwa";
+import { chipClasses } from "../lib/tagColor";
 import { useToast } from "../lib/toast";
 import type {
   ChatMessage,
@@ -414,10 +415,10 @@ export default function MathomDetail() {
             <button
               key={tag.id}
               onClick={() => api.removeTag(mathom.id, tag.id).then(refresh)}
-              className="chip hover:bg-red-100 hover:text-red-700"
+              className={`inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-[11px] uppercase tracking-wide transition-opacity hover:opacity-80 ${chipClasses(tag.color)}`}
               title={t("detail.removeTag")}
             >
-              #{tag.name} ×
+              {tag.name} ×
             </button>
           ))}
           <form onSubmit={addTag}>

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 
 import { formatDate, formatDuration } from '../lib/format';
 import { useI18n } from '../lib/i18n';
+import { chipClasses } from '../lib/tagColor';
 import type { MathomListItem } from '../lib/types';
 import StatusBadge from './StatusBadge';
 
@@ -31,12 +32,14 @@ export default function MathomCard({ mathom, onDelete, deleting = false }: Matho
           {formatDate(mathom.created_at, lang)}
           {mathom.duration_seconds != null && ` · ${formatDuration(mathom.duration_seconds, t)}`}
           {mathom.language && ` · ${mathom.language}`}
-          {mathom.source_app && ` · ${mathom.source_app}`}
         </p>
         {mathom.tags.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1">
             {mathom.tags.map((tag) => (
-              <span key={tag.id} className="chip">
+              <span
+                key={tag.id}
+                className={`inline-flex items-center rounded-sm px-2 py-0.5 text-[11px] uppercase tracking-wide ${chipClasses(tag.color)}`}
+              >
                 {tag.name}
               </span>
             ))}

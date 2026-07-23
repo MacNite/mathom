@@ -17,6 +17,7 @@ from app.routers import (
     mathoms,
     search,
     settings,
+    tags,
     templates,
     users,
 )
@@ -62,4 +63,5 @@ app.include_router(mathoms.router, prefix=API_PREFIX)
 app.include_router(chat.router, prefix=API_PREFIX)
 app.include_router(templates.router, prefix=API_PREFIX)
 app.include_router(collections.router, prefix=API_PREFIX)
+app.include_router(tags.router, prefix=API_PREFIX)
 app.include_router(search.router, prefix=API_PREFIX)

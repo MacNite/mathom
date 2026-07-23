@@ -12,6 +12,9 @@ class ORMModel(BaseModel):
 class TagOut(ORMModel):
     id: int
     name: str
+    color: str = "moss"
+    kind: str = "manual"
+    mathom_count: int = 0
 
 
 class SummaryOut(ORMModel):
@@ -115,6 +118,16 @@ class ChatRequest(BaseModel):
 
 class TagCreate(BaseModel):
     name: str = Field(min_length=1, max_length=100)
+    color: str | None = Field(default=None, max_length=20)
+
+
+class TagUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=100)
+    color: str | None = Field(default=None, max_length=20)
+
+
+class TagMerge(BaseModel):
+    into_id: int = Field(gt=0)
 
 
 class CollectionCreate(BaseModel):

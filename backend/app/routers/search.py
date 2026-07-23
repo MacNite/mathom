@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.deps import current_user, owned_filter, owns
-from app.models import Mathom, Tag, User
-from app.schemas import MathomListItem, SearchHit, TagOut, TimelineBucket
+from app.models import Mathom, User
+from app.schemas import MathomListItem, SearchHit, TimelineBucket
 
 router = APIRouter(tags=["search"])
 
@@ -52,15 +52,6 @@ def search(
         if len(hits) >= min(limit, 100):
             break
     return hits
-
-
-@router.get("/tags", response_model=list[TagOut])
-def list_tags(
-    db: Session = Depends(get_db),
-    user: User | None = Depends(current_user),
-) -> list[Tag]:
-    query = select(Tag).where(owned_filter(Tag, user)).order_by(Tag.name)
-    return list(db.execute(query).scalars())
 
 
 @router.get("/timeline", response_model=list[TimelineBucket])

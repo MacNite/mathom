@@ -11,11 +11,12 @@ from fastapi import (
     Depends,
     Form,
     HTTPException,
+    Query,
     Response,
     UploadFile,
 )
 from fastapi.responses import FileResponse, StreamingResponse
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
@@ -36,6 +37,7 @@ from app.schemas import (
 )
 from app.services import export, jobs, pipeline, transcription, vision
 from app.services.source_app import detect_source_app
+from app.services.tags import DEFAULT_TAG_COLOR, apply_source_tag
 from app.services.worker import worker
 
 router = APIRouter(prefix="/mathoms", tags=["mathoms"])
@@ -57,7 +59,9 @@ def list_mathoms(
     user: User | None = Depends(current_user),
     favorite: bool | None = None,
     archived: bool = False,
-    tag: str | None = None,
+    tag: list[str] | None = Query(default=None),
+    match: str = Query(default="any", pattern="^(any|all)$"),
+    untagged: bool = False,
     status: str | None = None,
     source_app: str | None = None,
     limit: int = 100,
@@ -70,8 +74,15 @@ def list_mathoms(
         query = query.where(Mathom.status == status)
     if source_app is not None:
         query = query.where(Mathom.source_app == source_app)
-    if tag is not None:
-        query = query.join(Mathom.tags).where(Tag.name == tag)
+    if untagged:
+        query = query.where(~Mathom.tags.any())
+    # Filter by one or more tags. "all" requires every named tag (AND), "any"
+    # matches recordings carrying at least one (OR). EXISTS subqueries avoid the
+    # row duplication a join would introduce.
+    names = [name for name in (tag or []) if name]
+    if names:
+        clauses = [Mathom.tags.any(Tag.name == name) for name in names]
+        query = query.where(and_(*clauses) if match == "all" else or_(*clauses))
     query = query.order_by(Mathom.created_at.desc()).limit(min(limit, 500)).offset(offset)
     return list(db.execute(query).scalars().unique())
 
@@ -191,6 +202,9 @@ async def upload_mathom(
         user_id=user.id if user else None,
     )
     db.add(mathom)
+    # Fold the detected origin into the shared tag system before the row is
+    # committed, so the recording is filterable by source from the first render.
+    apply_source_tag(db, mathom)
     db.commit()
     db.refresh(mathom)
     # Durable: the job survives a restart and is picked up by the worker.
@@ -291,6 +305,7 @@ async def upload_document(
         user_id=user.id if user else None,
     )
     db.add(mathom)
+    apply_source_tag(db, mathom)
     db.commit()
     db.refresh(mathom)
     jobs.enqueue(db, mathom.id, template_slug)
@@ -536,7 +551,12 @@ def add_tag(
         select(Tag).where(Tag.name == name, owned_filter(Tag, user))
     ).scalar_one_or_none()
     if tag is None:
-        tag = Tag(name=name, user_id=user.id if user else None)
+        tag = Tag(
+            name=name,
+            color=DEFAULT_TAG_COLOR,
+            kind="manual",
+            user_id=user.id if user else None,
+        )
         db.add(tag)
     if tag not in mathom.tags:
         mathom.tags.append(tag)

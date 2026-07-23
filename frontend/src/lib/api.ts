@@ -60,8 +60,9 @@ const json = (method: string, body: unknown): RequestInit => ({
 export interface MathomFilters {
   favorite?: boolean;
   archived?: boolean;
-  tag?: string;
-  sourceApp?: string;
+  tags?: string[];
+  match?: "any" | "all";
+  untagged?: boolean;
 }
 
 export const api = {
@@ -71,14 +72,11 @@ export const api = {
       params.set("favorite", String(filters.favorite));
     if (filters.archived !== undefined)
       params.set("archived", String(filters.archived));
-    if (filters.tag) params.set("tag", filters.tag);
-    if (filters.sourceApp) params.set("source_app", filters.sourceApp);
+    for (const name of filters.tags ?? []) params.append("tag", name);
+    if (filters.match) params.set("match", filters.match);
+    if (filters.untagged) params.set("untagged", "true");
     const query = params.toString();
     return request(`/mathoms${query ? `?${query}` : ""}`);
-  },
-
-  listSources(): Promise<string[]> {
-    return request("/mathoms/sources");
   },
 
   getMathom(id: number): Promise<Mathom> {
@@ -298,6 +296,25 @@ export const api = {
 
   listTags(): Promise<Tag[]> {
     return request("/tags");
+  },
+
+  createTag(name: string, color?: string): Promise<Tag> {
+    return request("/tags", json("POST", { name, color }));
+  },
+
+  updateTag(
+    id: number,
+    changes: { name?: string; color?: string },
+  ): Promise<Tag> {
+    return request(`/tags/${id}`, json("PATCH", changes));
+  },
+
+  deleteTag(id: number): Promise<void> {
+    return request(`/tags/${id}`, { method: "DELETE" });
+  },
+
+  mergeTag(id: number, intoId: number): Promise<Tag> {
+    return request(`/tags/${id}/merge`, json("POST", { into_id: intoId }));
   },
 
   search(q: string): Promise<SearchHit[]> {

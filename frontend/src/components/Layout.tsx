@@ -9,6 +9,7 @@ import UploadDialog from './UploadDialog';
 const links = [
   { to: '/', labelKey: 'nav.library', emoji: '📚' },
   { to: '/collections', labelKey: 'nav.collections', emoji: '🗂️' },
+  { to: '/tags', labelKey: 'nav.tags', emoji: '🏷️' },
   { to: '/timeline', labelKey: 'nav.timeline', emoji: '🗓️' },
 ];
 

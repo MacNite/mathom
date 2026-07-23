@@ -41,6 +41,20 @@ export default {
           300: '#e9c88a', // aged gold — brand + primary action on the dark panel
           200: '#d8ccb0', // muted parchment text on the dark panel
         },
+        // Tag label inks: a small, muted set that stays in the cartographer's
+        // key — deep enough to carry parchment-50 text at AA. Tokens mirror
+        // backend app/services/tags.py TAG_COLORS; keep the two lists in step.
+        tag: {
+          moss: '#4f6a3f',
+          hearth: '#8a5a2b',
+          ochre: '#7d6410',
+          clay: '#9c4f3a',
+          rose: '#97445d',
+          plum: '#5f4a7a',
+          indigo: '#3f5578',
+          teal: '#2f6b60',
+          stone: '#5c5647',
+        },
       },
       fontFamily: {
         display: ['ui-serif', '"Iowan Old Style"', '"Hoefler Text"', 'Georgia', 'Cambria', 'serif'],

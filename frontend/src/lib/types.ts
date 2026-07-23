@@ -1,6 +1,11 @@
 export interface Tag {
   id: number;
   name: string;
+  // Present on every server response; optional so lightweight fixtures and
+  // freshly-typed literals don't have to spell them out.
+  color?: string;
+  kind?: "manual" | "source";
+  mathom_count?: number;
 }
 
 export interface Summary {

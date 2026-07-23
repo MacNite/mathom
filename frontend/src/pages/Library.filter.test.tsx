@@ -4,14 +4,13 @@ import { vi } from 'vitest';
 
 import { I18nProvider } from '../lib/i18n';
 import { ToastProvider } from '../lib/toast';
-import type { MathomListItem } from '../lib/types';
+import type { MathomListItem, Tag } from '../lib/types';
 import Library from './Library';
 
 const { api } = vi.hoisted(() => ({
   api: {
     listMathoms: vi.fn(),
     listTags: vi.fn(),
-    listSources: vi.fn(),
     search: vi.fn(),
     deleteMathom: vi.fn(),
   },
@@ -25,12 +24,16 @@ const recording: MathomListItem = {
   status: 'ready',
   duration_seconds: 30,
   language: 'de',
-  source_app: 'WhatsApp',
   favorite: false,
   archived: false,
   created_at: '2026-07-01T10:00:00Z',
   tags: [],
 };
+
+const tags: Tag[] = [
+  { id: 1, name: 'house', color: 'clay', kind: 'manual', mathom_count: 3 },
+  { id: 2, name: 'whatsapp', color: 'stone', kind: 'source', mathom_count: 2 },
+];
 
 function renderLibrary() {
   return render(
@@ -44,28 +47,43 @@ function renderLibrary() {
   );
 }
 
-describe('Library source filter', () => {
+describe('Library tag filter', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     api.listMathoms.mockResolvedValue([recording]);
-    api.listTags.mockResolvedValue([]);
-    api.listSources.mockResolvedValue(['Signal', 'WhatsApp']);
+    api.listTags.mockResolvedValue(tags);
   });
 
-  it('offers a chip per available source and filters by the one clicked', async () => {
+  it('offers a chip per tag — including folded-in source tags — and filters by it', async () => {
     renderLibrary();
 
-    // A chip appears for each distinct source app the archive contains.
-    const whatsapp = await screen.findByRole('button', { name: 'WhatsApp' });
-    await screen.findByRole('button', { name: 'Signal' });
+    // Source origins now appear in the shared tag vocabulary, not a separate row.
+    const house = await screen.findByRole('button', { name: 'house' });
+    await screen.findByRole('button', { name: 'whatsapp' });
 
-    fireEvent.click(whatsapp);
+    fireEvent.click(house);
 
     await waitFor(() =>
       expect(api.listMathoms).toHaveBeenLastCalledWith(
-        expect.objectContaining({ sourceApp: 'WhatsApp' }),
+        expect.objectContaining({ tags: ['house'] }),
       ),
     );
-    expect(whatsapp).toHaveAttribute('aria-pressed', 'true');
+    expect(house).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('reveals an any/all toggle once two tags are selected', async () => {
+    renderLibrary();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'house' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'whatsapp' }));
+
+    const toggle = await screen.findByRole('button', { name: 'Any tag' });
+    fireEvent.click(toggle);
+
+    await waitFor(() =>
+      expect(api.listMathoms).toHaveBeenLastCalledWith(
+        expect.objectContaining({ tags: ['house', 'whatsapp'], match: 'all' }),
+      ),
+    );
   });
 });

@@ -189,6 +189,11 @@ class Tag(Base):
         ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True
     )
     name: Mapped[str] = mapped_column(String(100), index=True)
+    # Display colour token from services.tags.TAG_COLORS; purely cosmetic.
+    color: Mapped[str] = mapped_column(String(20), default="moss")
+    # "manual" for user-created tags; "source" for auto-applied origin tags
+    # (WhatsApp, Telegram, …) that the app manages and regenerates on import.
+    kind: Mapped[str] = mapped_column(String(20), default="manual", index=True)
 
     mathoms: Mapped[list[Mathom]] = relationship(secondary=mathom_tags, back_populates="tags")
 

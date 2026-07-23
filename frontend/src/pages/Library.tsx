@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import MathomCard from '../components/MathomCard';
 import UploadDialog from '../components/UploadDialog';
 import { api } from '../lib/api';
 import { useI18n } from '../lib/i18n';
+import { chipClasses } from '../lib/tagColor';
 import { useToast } from '../lib/toast';
 import type { MathomListItem, SearchHit, Tag } from '../lib/types';
 
 type Shelf = 'all' | 'favorites' | 'archived';
+type Match = 'any' | 'all';
 
 // Snippets arrive as plain text with <mark>…</mark> around matches. Render the
 // highlights without injecting the transcript text as HTML.
@@ -28,9 +31,9 @@ export default function Library() {
   const toast = useToast();
   const [mathoms, setMathoms] = useState<MathomListItem[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
-  const [activeTag, setActiveTag] = useState<string | null>(null);
-  const [sources, setSources] = useState<string[]>([]);
-  const [activeSource, setActiveSource] = useState<string | null>(null);
+  const [activeTags, setActiveTags] = useState<string[]>([]);
+  const [match, setMatch] = useState<Match>('any');
+  const [untagged, setUntagged] = useState(false);
   const [shelf, setShelf] = useState<Shelf>('all');
   const [query, setQuery] = useState('');
   const [hits, setHits] = useState<SearchHit[] | null>(null);
@@ -48,8 +51,9 @@ export default function Library() {
         .listMathoms({
           favorite: shelf === 'favorites' ? true : undefined,
           archived: shelf === 'archived',
-          tag: activeTag ?? undefined,
-          sourceApp: activeSource ?? undefined,
+          tags: untagged ? undefined : activeTags,
+          match,
+          untagged: untagged || undefined,
         })
         .then((list) => {
           setMathoms(list);
@@ -57,21 +61,24 @@ export default function Library() {
         })
         .catch(() => setLoadError(true))
         .finally(() => setLoading(false));
-      api.listTags().then(setTags).catch(() => setTags([]));
-      // The set of source apps grows as recordings are imported, so refresh it
-      // alongside the list. A selected source that no longer exists is cleared
-      // so the filter can't get stuck on an empty result.
+      // Refresh the vocabulary alongside the list; a selected tag that no longer
+      // exists is dropped so the filter can't get stuck on an empty result.
       api
-        .listSources()
+        .listTags()
         .then((available) => {
-          setSources(available);
-          setActiveSource((current) =>
-            current && !available.includes(current) ? null : current,
-          );
+          setTags(available);
+          const names = new Set(available.map((tag) => tag.name));
+          // Return the same array reference when nothing was pruned, otherwise
+          // this state update re-triggers `refresh` (which depends on
+          // `activeTags`) on every load — an infinite fetch loop.
+          setActiveTags((current) => {
+            const pruned = current.filter((name) => names.has(name));
+            return pruned.length === current.length ? current : pruned;
+          });
         })
-        .catch(() => setSources([]));
+        .catch(() => setTags([]));
     },
-    [shelf, activeTag, activeSource],
+    [shelf, activeTags, match, untagged],
   );
 
   useEffect(() => refresh(), [refresh]);
@@ -128,6 +135,14 @@ export default function Library() {
     { key: 'archived', label: t('library.shelf.archived') },
   ];
 
+  // Selecting a tag clears the "untagged" filter — they're mutually exclusive.
+  const toggleTag = (name: string) => {
+    setUntagged(false);
+    setActiveTags((current) =>
+      current.includes(name) ? current.filter((tag) => tag !== name) : [...current, name],
+    );
+  };
+
   const removeMathom = async (mathom: MathomListItem) => {
     if (!window.confirm(t('detail.confirmDelete'))) return;
     setDeletingId(mathom.id);
@@ -178,39 +193,58 @@ export default function Library() {
               {entry.label}
             </button>
           ))}
-          {tags.map((tag) => (
+          {tags.map((tag) => {
+            const active = activeTags.includes(tag.name);
+            return (
+              <button
+                key={tag.id}
+                onClick={() => toggleTag(tag.name)}
+                aria-pressed={active}
+                className={`rounded-sm px-3 py-1 text-xs uppercase tracking-wide transition ${chipClasses(
+                  tag.color,
+                )} ${
+                  untagged
+                    ? 'opacity-30'
+                    : active
+                      ? 'ring-2 ring-ink-900 ring-offset-1 ring-offset-paper'
+                      : 'opacity-60 hover:opacity-100'
+                }`}
+              >
+                {tag.name}
+              </button>
+            );
+          })}
+          {tags.length > 0 && (
             <button
-              key={tag.id}
-              onClick={() => setActiveTag(activeTag === tag.name ? null : tag.name)}
-              aria-pressed={activeTag === tag.name}
+              onClick={() => {
+                setUntagged((current) => !current);
+                setActiveTags([]);
+              }}
+              aria-pressed={untagged}
               className={`rounded-sm border px-3 py-1 text-xs uppercase tracking-wide ${
-                activeTag === tag.name
-                  ? 'border-moss-700 bg-moss-700 text-parchment-50'
-                  : 'border-moss-500 text-moss-700 hover:bg-moss-500 hover:text-parchment-50'
+                untagged
+                  ? 'border-ink-700 bg-ink-700 text-parchment-50'
+                  : 'border-parchment-300 text-ink-500 hover:bg-parchment-100'
               }`}
             >
-              #{tag.name}
+              {t('library.untagged')}
             </button>
-          ))}
-          {sources.length > 0 && (
-            <span className="ml-1 text-[11px] uppercase tracking-wide text-ink-400">
-              {t('library.source')}
-            </span>
           )}
-          {sources.map((source) => (
+          {activeTags.length > 1 && (
             <button
-              key={source}
-              onClick={() => setActiveSource(activeSource === source ? null : source)}
-              aria-pressed={activeSource === source}
-              className={`rounded-sm border px-3 py-1 text-xs uppercase tracking-wide ${
-                activeSource === source
-                  ? 'border-hearth-600 bg-hearth-600 text-parchment-50'
-                  : 'border-hearth-400 text-hearth-600 hover:bg-hearth-400 hover:text-parchment-50'
-              }`}
+              onClick={() => setMatch((current) => (current === 'any' ? 'all' : 'any'))}
+              className="rounded-sm border border-parchment-300 px-3 py-1 text-xs uppercase tracking-wide text-ink-700 hover:bg-parchment-100"
+              title={t('library.matchHint')}
             >
-              {source}
+              {match === 'all' ? t('library.matchAll') : t('library.matchAny')}
             </button>
-          ))}
+          )}
+          <Link
+            to="/tags"
+            className="ml-auto rounded-sm px-2 py-1 text-[11px] uppercase tracking-wide text-ink-500 underline hover:text-hearth-600"
+          >
+            {t('library.manageTags')}
+          </Link>
         </div>
       )}
 

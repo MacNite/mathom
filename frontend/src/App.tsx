@@ -12,6 +12,7 @@ import Login from "./pages/Login";
 import Onboarding from "./pages/Onboarding";
 import MathomDetail from "./pages/MathomDetail";
 import ShareTarget from "./pages/ShareTarget";
+import Tags from "./pages/Tags";
 import Templates from "./pages/Templates";
 import Timeline from "./pages/Timeline";
 import Users from "./pages/Users";
@@ -67,6 +68,7 @@ export default function App() {
           element={guard(!status.auth_enabled || isAdmin, <Templates />)}
         />
         <Route path="collections" element={<Collections />} />
+        <Route path="tags" element={<Tags />} />
         <Route path="timeline" element={<Timeline />} />
         <Route path="register" element={<Register />} />
         <Route path="admin/users" element={guard(isAdmin, <Users />)} />

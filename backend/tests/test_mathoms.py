@@ -152,6 +152,53 @@ def test_extra_summary_with_template(client: TestClient, uploaded_mathom: dict) 
     assert response.json()["template_slug"] == "tldr"
 
 
+def test_successful_extra_summary_clears_stale_error_status(
+    client: TestClient, uploaded_mathom: dict
+) -> None:
+    from app.db import get_session_factory
+    from app.models import Mathom
+
+    mathom_id = uploaded_mathom["id"]
+    with get_session_factory()() as session:
+        mathom = session.get(Mathom, mathom_id)
+        assert mathom is not None
+        mathom.status = "error"
+        mathom.error_message = "The local AI model could not be reached."
+        session.commit()
+
+    response = client.post(f"/api/mathoms/{mathom_id}/summaries", json={})
+
+    assert response.status_code == 201
+    detail = client.get(f"/api/mathoms/{mathom_id}").json()
+    assert detail["status"] == "ready"
+    assert detail["error_message"] is None
+
+
+def test_successful_streamed_summary_clears_stale_error_status(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch, uploaded_mathom: dict
+) -> None:
+    from app.db import get_session_factory
+    from app.models import Mathom
+    from app.services import ollama
+
+    monkeypatch.setattr(ollama, "stream_generate_summary", lambda *args, **kwargs: iter(["ok"]))
+
+    mathom_id = uploaded_mathom["id"]
+    with get_session_factory()() as session:
+        mathom = session.get(Mathom, mathom_id)
+        assert mathom is not None
+        mathom.status = "error"
+        mathom.error_message = "The local AI model could not be reached."
+        session.commit()
+
+    response = client.post(f"/api/mathoms/{mathom_id}/summaries/stream", json={})
+
+    assert response.status_code == 200
+    detail = client.get(f"/api/mathoms/{mathom_id}").json()
+    assert detail["status"] == "ready"
+    assert detail["error_message"] is None
+
+
 def test_streaming_summary_chunks_long_transcripts_and_persists_content(
     client: TestClient, monkeypatch: pytest.MonkeyPatch, uploaded_mathom: dict
 ) -> None:

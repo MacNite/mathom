@@ -39,6 +39,23 @@ def _set_status(mathom_id: int, status: str, error: str | None = None) -> None:
         session.commit()
 
 
+def mark_summary_success(mathom_id: int) -> None:
+    """Clear a stale pipeline fault after a later summary succeeds.
+
+    Creating an additional summary does not run the full transcription
+    pipeline, but it does prove that the previously unavailable local model is
+    working again. Only replace an error state so an unrelated in-flight job
+    cannot accidentally be marked ready.
+    """
+    with get_session_factory()() as session:
+        mathom = session.get(Mathom, mathom_id)
+        if mathom is None or mathom.status != "error":
+            return
+        mathom.status = "ready"
+        mathom.error_message = None
+        session.commit()
+
+
 def _safe_error(exc: Exception) -> str:
     """Map an internal failure to a calm, user-facing message.
 
@@ -288,6 +305,7 @@ def summarize_mathom(
         refresh_fts(session, mathom_id)
         session.commit()
         session.refresh(summary)
+        mark_summary_success(mathom_id)
         return summary
 
 

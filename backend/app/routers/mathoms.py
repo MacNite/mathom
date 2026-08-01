@@ -489,6 +489,12 @@ def stream_summary(
             summary.content = content
             summary.model = get_settings().ollama_model
         db.commit()
+        # A completed generation proves that a transient Ollama/pipeline fault
+        # no longer applies. Do this only after the complete result is durable.
+        if mathom.status == "error":
+            mathom.status = "ready"
+            mathom.error_message = None
+            db.commit()
         refresh_fts(db, mathom.id)
         db.commit()
         yield "event: done\ndata: done\n\n"

@@ -11,6 +11,24 @@ models. Confirm `/api/health` reports `vision_model_installed: true` and
 contact registries itself. Tune bounded frame, batch, dimension, quality, timeout, and response
 limits through the documented `MATHOM_VISION_*` variables in `.env.example`.
 
+If visual analysis reports that the model returned an invalid response, Ollama
+was reachable but its `/api/chat` result did not match Mathom's structured frame
+schema. Troubleshoot it in this order:
+
+1. Check `curl -s http://localhost:31313/api/health` and verify that vision is
+   enabled and both vision model fields are `true`.
+2. Check the application and Ollama logs with
+   `docker compose logs --tail=200 app ollama`. Look for model-load failures,
+   out-of-memory errors, timeouts, or an Ollama response-validation exception.
+3. Pull the configured model again with `docker compose exec ollama ollama pull
+   gemma3:4b` (replace the name when `MATHOM_VISION_MODEL` differs), then restart
+   the stack and retry.
+4. If memory is constrained or the model is inconsistent with multi-image
+   prompts, set `MATHOM_VISION_BATCH_SIZE=1` and reduce
+   `MATHOM_VISION_MAX_FRAMES`, recreate the Mathom container, and run the visual
+   analysis again. A different installed vision-capable model can be selected
+   with `MATHOM_VISION_MODEL`.
+
 ## Any Docker host
 
 ```bash

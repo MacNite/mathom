@@ -1,13 +1,5 @@
 # Threat Model
 
-## Sampled video frames
-
-When explicitly enabled, frame files exist only in a server-created private temporary directory and
-are deleted after processing. Only base64-encoded local frames are sent to the configured Ollama
-base URL; no URLs from frames or model output are followed. Visible text is treated as untrusted
-data, and structured responses are validated before storage. Raw frames, base64 data, internal
-paths, and raw Ollama failures are not exposed to users.
-
 This document describes what Mathom does and does not defend against, so
 operators can deploy it safely. Mathom is a **local-first, self-hosted**
 archive; its security posture assumes a trusted host and a small number of
@@ -74,6 +66,13 @@ Internet / LAN ──▶ mathom container ──▶ (nginx ──▶ FastAPI bac
   default). OAuth uses a checked `state` token, and the login is bound to the
   ID token's `nonce`.
 - **Secret disclosure.** The Authentik client secret is write-only over the API.
+- **Sampled video frames** (when visual analysis is explicitly enabled). Frame
+  files exist only in a server-created private temporary directory and are
+  deleted after processing. Only base64-encoded local frames are sent to the
+  configured Ollama base URL; no URL found in a frame or in model output is
+  ever followed. Text visible in a frame is treated as untrusted data, and
+  structured responses are validated before storage. Raw frames, base64 data,
+  internal paths, and raw Ollama failures are never exposed to users.
 
 ## Out of scope (operator's responsibility)
 

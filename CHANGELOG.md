@@ -6,101 +6,145 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Fixed
+Nothing yet.
 
-- **Android shares no longer land on "Nothing was shared."** The share-target
-  service worker handed the shared file off with a relative
-  `Response.redirect('/share-target?…')`, which throws a `TypeError` because
-  `Response.redirect` requires an absolute URL — breaking the whole hand-off.
-  Redirects are now built against the app's own origin. The worker also reads
-  the `url` field (so shared links come through, not just plain text) and falls
-  back to the first file-shaped form entry if a share sheet uses an unexpected
-  field name, and a real shared file always wins over any accompanying text.
-- **Mathom appears in the Android Share Sheet for every supported format.** The
-  `share_target` manifest matched by MIME type but was missing `video/webm`
-  (so `.webm` recordings never offered Mathom), `application/ogg` (the MIME many
-  apps use for shared `.ogg`/`.opus` voice notes), and `text/x-markdown`. All
-  accepted media and document formats now surface Mathom when shared.
-- **Streaming summaries and chat render again.** Server-sent tokens are now
-  emitted as JSON (`json.dumps`) instead of Python `repr()`, which the browser's
-  `JSON.parse` rejected — the live typewriter view previously errored on the
-  first token and content only appeared after a reload.
-- **Deleting a summary now updates search.** The full-text index is refreshed on
-  summary deletion, so removed summaries no longer surface as stale search hits.
+## [0.1.0] — 2026-08-11
 
-### Security
+First public release. Mathom turns the voice messages that interrupt your day
+into private, searchable notes — transcribed and summarized entirely on your own
+hardware. Nothing leaves your server.
 
-- **Rate limiter can no longer be evaded with a spoofed `X-Forwarded-For`.** The
-  per-client key is derived from the proxy-set `X-Real-IP` (falling back to the
-  right-most forwarded hop), so a caller can no longer rotate the left-most,
-  client-supplied header to mint a fresh bucket and bypass login throttling.
-- **Prompt-template endpoints require authentication** when auth is enabled.
-  Listing, creating, editing, and deleting templates previously accepted
-  unauthenticated requests even though templates are global.
-- **`must_change_password` is now enforced.** Accounts flagged for a mandatory
-  password change (admin-created users and resets) are held at a change-password
-  screen until they set a new password; the flag is exposed on the user API.
-- **OIDC nonce binding.** The login is now bound to the ID token's `nonce`, so a
-  replayed or injected token is rejected (`auth_error=invalid_nonce`).
-- **Shorter default session lifetime** — 14 days instead of 30
-  (`SESSION_TTL_HOURS`).
-- **Content-Security-Policy and HSTS** headers at the proxy; the self-contained
-  frontend is locked to `'self'`.
-- **CycloneDX SBOM** generated and archived in CI (`security.yml`).
-- **Loopback bind by default.** With authentication off (the default) the web UI
-  now publishes on `127.0.0.1`; opt into LAN exposure with `MATHOM_BIND=0.0.0.0`.
-- **Per-client rate limiting** on uploads, chat, summaries, search, and the
-  login surface (in-process, no external store).
-- **Content-based upload validation** with `ffprobe` (not just the extension),
-  plus bounded FFmpeg execution (`-nostdin`, thread cap, timeout).
-- **Safe user-facing errors** — pipeline failures no longer echo raw exception
-  text (which could leak paths or upstream bodies); details are logged only.
-- Pinned the Ollama image instead of tracking `latest`.
-
-### Reliability
-
-- **Durable background jobs**: replaced in-process `BackgroundTasks` with a
-  `jobs` table drained by a single worker thread. Processing now survives a
-  restart, failed runs retry with exponential backoff, and interrupted jobs are
-  requeued (or the Mathom is flipped to a retryable `error`) at startup instead
-  of hanging forever. The upload API is unchanged.
-- SQLite `busy_timeout` so worker and request threads no longer race to a
-  "database is locked" error.
-
-### Documentation
-
-- Added a [threat model](docs/threat-model.md); expanded backup and added
-  disaster-recovery/restore guidance; documented the new secure defaults.
+Everything below is new, because this is where the archive opens.
 
 ### Added
 
-- Optional user management with **Authentik single sign-on** (OAuth2/OIDC),
-  disabled by default so existing installs are unaffected. When enabled, each
-  person signs in through Authentik and gets a private per-user mathom
-  (Mathoms, chats, tags, collections are scoped per user). Roles are
-  **Owner / Admin / User**; MFA/2FA is delegated to Authentik. The Owner can edit
-  the Authentik connection in the UI, and pre-existing recordings are claimed by
-  the Owner on first sign-in. Sessions use HttpOnly, SameSite=Lax, Secure
-  cookies. See [docs/authentication.md](docs/authentication.md).
-- Installable Progressive Web App with Android **Web Share Target** support:
-  share a WhatsApp voice message (or any audio file) straight from the Android
-  Share Sheet into your local mathom. A service worker receives the file
-  and the app opens the upload dialog pre-filled, so the flow is
-  *Share → Mathom → title/template → upload → transcribe → summarize*. Audio
-  goes from your device to your own server only — no third parties.
-- Language-aware AI output: summaries and follow-up chat now answer in the
-  transcript's detected language instead of always English.
-- Multilingual frontend (English, German, Spanish) with an in-app language
-  switcher; the choice is remembered and defaults to the browser language.
-- Initial Mathom stack: FastAPI backend, React + Vite + Tailwind frontend,
-  nginx proxy, Ollama and faster-whisper integration, SQLite storage.
-- mathom archive: upload → transcribe → summarize pipeline with status
-  tracking, tags, favorites, archive, collections, timeline, and exports
-  (Markdown / text / JSON).
-- Full-text search (SQLite FTS5) with highlighted snippets.
-- Follow-up AI chat grounded in each recording's transcript.
-- 12 editable prompt templates seeded into SQLite.
-- Docker Compose stack (CPU + NVIDIA GPU overlay), health checks, non-root
-  containers, persistent volumes; TrueNAS SCALE deployment guide.
-- CI: backend and frontend pipelines, compose validation, Docker builds,
-  security scanning, GHCR release publishing.
+#### The archive
+
+- **Upload → transcribe → summarize pipeline.** Every recording becomes a
+  *Mathom* and moves through `pending → transcribing → summarizing → ready`,
+  with its audio, transcript, summaries, chat, tags, and metadata kept together.
+- **Audio and video.** Common audio formats plus MP4/WebM video, whose audio
+  track is transcribed with [faster-whisper](https://github.com/SYSTRAN/faster-whisper).
+- **Text and documents.** Paste text directly or import TXT, Markdown, PDF, and
+  DOCX files.
+- **12 editable prompt templates**, seeded into SQLite on first start and
+  editable in the UI: TL;DR, General Summary, Meeting Minutes, Action Items,
+  Email Draft, GitHub Issue, Jira Issue, CRM Entry, Calendar Events, Executive
+  Brief, Customer Call, Technical Discussion.
+- **Summaries you can steer** — generate several per Mathom, edit them by hand,
+  regenerate with a different template, or delete the ones you don't want.
+- **Streaming AI output.** Summaries and chat replies arrive token by token
+  instead of after a long silence.
+- **Follow-up chat** grounded in a recording's transcript, persisted per Mathom.
+- **Full-text search** (SQLite FTS5) across titles, transcripts, summaries, and
+  tags, with highlighted snippets.
+- **Tags with colors**, favorites, an archive, collections, a timeline view, and
+  filtering by source app — plus a speaker field and source-app hint at upload.
+- **Exports** per Mathom as Markdown, plain text, or JSON.
+
+#### Getting recordings in
+
+- **Installable Progressive Web App** with Android **Web Share Target** support:
+  share a WhatsApp voice message — or any supported audio, video, or document —
+  straight from the share sheet into your own archive. The flow is
+  *Share → Mathom → title/template → upload → transcribe → summarize*, and the
+  file goes from your device to your server only. There is deliberately no app
+  store build; see [docs/pwa.md](docs/pwa.md).
+- **iOS-aware PWA layout** with safe-area handling and outbound sharing.
+
+#### Language
+
+- **Language-aware AI output.** Summaries and chat answer in the transcript's
+  detected language rather than always English.
+- **Multilingual interface** — English, German, and Spanish, with an in-app
+  switcher that defaults to your browser language and remembers your choice.
+
+#### Optional, off by default
+
+- **Local video visual analysis** (`MATHOM_VISION_ENABLED`). Samples still
+  frames, sends only those frames to a local vision-capable Ollama model, and
+  stores timestamped observations separately from the spoken transcript. No
+  model is ever downloaded automatically; `/api/health` reports whether the
+  configured model is installed and vision-capable.
+- **Speaker diarization** (`MATHOM_DIARIZATION_ENABLED`) via a locally
+  provisioned [pyannote.audio](https://github.com/pyannote/pyannote-audio)
+  pipeline and the backend's `diarization` extra. Mathom downloads nothing and
+  sends audio nowhere.
+- **User management and Authentik SSO.** Enable `AUTH_ENABLED` for local
+  accounts with first-start onboarding, or connect
+  [Authentik](https://goauthentik.io/) (OAuth2/OIDC) for single sign-on with
+  MFA delegated to your identity provider. Roles are **Owner / Admin / User**,
+  each person gets a private archive (Mathoms, chats, tags, and collections are
+  scoped per user), the Owner can edit the connection in the UI, and recordings
+  created before sign-in is enabled are claimed by the Owner. See
+  [docs/authentication.md](docs/authentication.md).
+- **SMTP invitations** — invite people by email, with branded invitation mail
+  and revocable invitations.
+
+#### Running it
+
+- **One Docker Compose stack**: a single `mathom` image (React frontend,
+  FastAPI backend, and nginx under supervisord) plus the stock, pinned Ollama
+  image. Only Mathom publishes a port; Ollama stays on the internal network.
+- **NVIDIA GPU overlay** (`compose.gpu.yaml`), health checks on every service,
+  non-root containers, persistent named volumes, and a TrueNAS SCALE
+  deployment path.
+- **Published images** on GHCR (`ghcr.io/macnite/mathom`) for tagged releases.
+- **Makefile targets** for the common operations: `up`, `up-gpu`, `models`,
+  `backup`, `test`, `lint`, `validate`.
+- **Landing site** with an interactive static demo of the app, deployed to
+  GitHub Pages.
+
+### Security
+
+Mathom ships locked down by default, so that a fresh install is safe before you
+have configured anything.
+
+- **Loopback bind by default.** With authentication off (the default) the web UI
+  publishes on `127.0.0.1` and is reachable only from the host. Opt into LAN
+  exposure with `MATHOM_BIND=0.0.0.0` — behind a VPN or an authenticating
+  reverse proxy, or with SSO enabled.
+- **No telemetry, no cloud.** The only outbound calls are backend→Ollama on the
+  internal network, and backend→Authentik when you enable SSO.
+- **Content-based upload validation** with `ffprobe` — not just the file
+  extension — plus size caps, server-generated filenames, and bounded FFmpeg
+  execution (`-nostdin`, thread cap, timeout).
+- **Per-client rate limiting** on uploads, chat, summaries, search, and the
+  login surface, keyed off the proxy-set client address so a spoofed
+  `X-Forwarded-For` cannot mint a fresh bucket. In-process; no external store.
+- **Content-Security-Policy and HSTS** at the proxy; the self-contained
+  frontend is locked to `'self'`.
+- **Session and account handling**: HttpOnly, SameSite=Lax, Secure cookies; a
+  14-day default session lifetime (`SESSION_TTL_HOURS`); enforced
+  `must_change_password` for admin-created and reset accounts; OIDC logins bound
+  to the ID token `nonce` so a replayed token is rejected.
+- **Authenticated prompt-template endpoints** when auth is enabled.
+- **Safe user-facing errors** — pipeline failures never echo raw exception text;
+  details go to the logs only.
+- **CI supply-chain checks**: pip-audit, npm audit, Trivy filesystem scan, and a
+  CycloneDX SBOM archived on every run.
+
+### Reliability
+
+- **Durable background jobs.** A `jobs` table drained by a single worker thread
+  replaces in-process background tasks: processing survives a restart, failed
+  runs retry with exponential backoff, and interrupted jobs are requeued (or
+  flipped to a retryable `error`) at startup instead of hanging forever.
+- **Queue backpressure** — new uploads receive `503` with `Retry-After` once
+  `MAX_QUEUED_JOBS` recordings are already waiting.
+- SQLite `busy_timeout`, so the worker and request threads no longer race into
+  "database is locked".
+- Stale error state is cleared after a successful run, and failed visual
+  inspections recover instead of pinning a Mathom to `error`.
+
+### Documentation
+
+- [Architecture](docs/architecture.md), [Deployment incl. TrueNAS
+  SCALE](docs/deployment.md), [Threat model](docs/threat-model.md),
+  [Authentication](docs/authentication.md), [PWA & Android Share
+  Target](docs/pwa.md), and an [API overview](docs/api.md).
+- Backup, restore, and disaster-recovery guidance; the exposure warning to read
+  before putting Mathom on a network.
+
+[Unreleased]: https://github.com/MacNite/mathom/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/MacNite/mathom/releases/tag/v0.1.0

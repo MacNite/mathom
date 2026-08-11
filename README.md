@@ -153,6 +153,7 @@ provider only when enabled and does not download models or send audio anywhere.
 - [Authentication & user management (Authentik SSO)](docs/authentication.md)
 - [PWA & Android Share Target](docs/pwa.md)
 - [API overview](docs/api.md)
+- [Release notes: v0.1.0](docs/releases/v0.1.0.md)
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) ·
   [Changelog](CHANGELOG.md)
 - [CLAUDE.md](CLAUDE.md) — project standards and conventions

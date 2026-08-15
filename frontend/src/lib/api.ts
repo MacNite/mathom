@@ -13,6 +13,7 @@ import type {
   PromptTemplate,
   Role,
   SearchHit,
+  Speaker,
   Summary,
   Tag,
   TimelineBucket,
@@ -63,6 +64,7 @@ export interface MathomFilters {
   tags?: string[];
   match?: "any" | "all";
   untagged?: boolean;
+  speaker?: string;
 }
 
 export const api = {
@@ -75,8 +77,21 @@ export const api = {
     for (const name of filters.tags ?? []) params.append("tag", name);
     if (filters.match) params.set("match", filters.match);
     if (filters.untagged) params.set("untagged", "true");
+    if (filters.speaker) params.set("speaker", filters.speaker);
     const query = params.toString();
     return request(`/mathoms${query ? `?${query}` : ""}`);
+  },
+
+  listSpeakers(): Promise<Speaker[]> {
+    return request("/mathoms/speakers");
+  },
+
+  renameSpeaker(name: string, nextName: string): Promise<Speaker> {
+    return request(`/mathoms/speakers/${encodeURIComponent(name)}`, json("PATCH", { name: nextName }));
+  },
+
+  deleteSpeaker(name: string): Promise<void> {
+    return request(`/mathoms/speakers/${encodeURIComponent(name)}`, { method: "DELETE" });
   },
 
   getMathom(id: number): Promise<Mathom> {
@@ -114,7 +129,7 @@ export const api = {
   updateMathom(
     id: number,
     changes: Partial<
-      Pick<Mathom, "title" | "favorite" | "archived" | "transcript">
+      Pick<Mathom, "title" | "speaker" | "favorite" | "archived" | "transcript">
     >,
   ): Promise<Mathom> {
     return request(`/mathoms/${id}`, json("PATCH", changes));

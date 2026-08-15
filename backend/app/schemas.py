@@ -53,6 +53,7 @@ class MathomListItem(ORMModel):
     favorite: bool
     archived: bool
     created_at: datetime
+    speaker: str | None = None
     tags: list[TagOut] = []
 
 
@@ -64,7 +65,6 @@ class TranscriptSegment(BaseModel):
 
 
 class MathomOut(MathomListItem):
-    speaker: str | None = None
     original_filename: str
     error_message: str | None
     transcript: str | None
@@ -88,6 +88,15 @@ class MathomUpdate(BaseModel):
     favorite: bool | None = None
     archived: bool | None = None
     transcript: str | None = None
+
+
+class SpeakerOut(BaseModel):
+    name: str
+    mathom_count: int
+
+
+class SpeakerUpdate(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
 
 
 class TextMathomCreate(BaseModel):

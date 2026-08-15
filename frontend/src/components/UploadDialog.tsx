@@ -4,7 +4,7 @@ import { api } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { detectSourceApp } from '../lib/sourceApp';
 import { useToast } from '../lib/toast';
-import type { PromptTemplate } from '../lib/types';
+import type { PromptTemplate, Speaker } from '../lib/types';
 
 interface Props {
   open: boolean;
@@ -44,6 +44,7 @@ export default function UploadDialog({
   const [templates, setTemplates] = useState<PromptTemplate[]>([]);
   const [title, setTitle] = useState('');
   const [speaker, setSpeaker] = useState('');
+  const [speakers, setSpeakers] = useState<Speaker[]>([]);
   const [templateSlug, setTemplateSlug] = useState('general-summary');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -80,6 +81,9 @@ export default function UploadDialog({
           setTemplates([]);
           setError(t('upload.templatesFailed'));
         });
+      // Some embedded/test API adapters may not yet expose speaker discovery;
+      // free-form entry remains available in that case.
+      api.listSpeakers?.().then(setSpeakers).catch(() => setSpeakers([]));
       setTitle(sharedTitle);
       setSpeaker('');
       setPickedName('');
@@ -272,7 +276,11 @@ export default function UploadDialog({
             onChange={(event) => setSpeaker(event.target.value)}
             placeholder={t('upload.speakerPlaceholder')}
             className="input mt-1"
+            list="known-speakers"
           />
+          <datalist id="known-speakers">
+            {speakers.map((entry) => <option key={entry.name} value={entry.name} />)}
+          </datalist>
         </label>
         <label className="mt-3 block text-sm text-ink-700">
           {t('upload.summaryStyle')}

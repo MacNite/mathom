@@ -85,6 +85,31 @@ def test_update_speaker(client: TestClient, uploaded_mathom: dict) -> None:
     assert response.json()["speaker"] == "Mum and me"
 
 
+def test_manage_and_filter_speakers(client: TestClient, uploaded_mathom: dict) -> None:
+    first_id = uploaded_mathom["id"]
+    assert client.patch(f"/api/mathoms/{first_id}", json={"speaker": "Max"}).status_code == 200
+    second = client.post(
+        "/api/mathoms/text",
+        json={"text": "Another note", "title": "Second", "speaker": "Ada"},
+    )
+    assert second.status_code == 201
+
+    assert client.get("/api/mathoms/speakers").json() == [
+        {"name": "Ada", "mathom_count": 1},
+        {"name": "Max", "mathom_count": 1},
+    ]
+    filtered = client.get("/api/mathoms", params={"speaker": "Ada"}).json()
+    assert [item["speaker"] for item in filtered] == ["Ada"]
+    assert [hit["mathom"]["speaker"] for hit in client.get("/api/search?q=Ad").json()] == ["Ada"]
+
+    renamed = client.patch("/api/mathoms/speakers/Ada", json={"name": "Grace"})
+    assert renamed.json() == {"name": "Grace", "mathom_count": 1}
+    assert client.get(f"/api/mathoms/{second.json()['id']}").json()["speaker"] == "Grace"
+
+    assert client.delete("/api/mathoms/speakers/Grace").status_code == 204
+    assert client.get(f"/api/mathoms/{second.json()['id']}").json()["speaker"] is None
+
+
 def test_list_and_filters(client: TestClient, uploaded_mathom: dict) -> None:
     listed = client.get("/api/mathoms").json()
     assert len(listed) == 1

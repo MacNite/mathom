@@ -7,7 +7,7 @@ import { api } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { chipClasses } from '../lib/tagColor';
 import { useToast } from '../lib/toast';
-import type { MathomListItem, SearchHit, Tag } from '../lib/types';
+import type { MathomListItem, SearchHit, Speaker, Tag } from '../lib/types';
 
 type Shelf = 'all' | 'favorites' | 'archived';
 type Match = 'any' | 'all';
@@ -32,6 +32,8 @@ export default function Library() {
   const [mathoms, setMathoms] = useState<MathomListItem[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [activeTags, setActiveTags] = useState<string[]>([]);
+  const [speakers, setSpeakers] = useState<Speaker[]>([]);
+  const [speaker, setSpeaker] = useState('');
   const [match, setMatch] = useState<Match>('any');
   const [untagged, setUntagged] = useState(false);
   const [shelf, setShelf] = useState<Shelf>('all');
@@ -54,6 +56,7 @@ export default function Library() {
           tags: untagged ? undefined : activeTags,
           match,
           untagged: untagged || undefined,
+          speaker: speaker || undefined,
         })
         .then((list) => {
           setMathoms(list);
@@ -77,8 +80,9 @@ export default function Library() {
           });
         })
         .catch(() => setTags([]));
+      api.listSpeakers?.().then(setSpeakers).catch(() => setSpeakers([]));
     },
-    [shelf, activeTags, match, untagged],
+    [shelf, activeTags, match, untagged, speaker],
   );
 
   useEffect(() => refresh(), [refresh]);
@@ -193,6 +197,17 @@ export default function Library() {
               {entry.label}
             </button>
           ))}
+          <select
+            value={speaker}
+            onChange={(event) => setSpeaker(event.target.value)}
+            aria-label={t('library.speakerFilter')}
+            className="rounded-sm border border-parchment-300 bg-paper px-3 py-1 text-xs uppercase tracking-wide text-ink-700"
+          >
+            <option value="">{t('library.allSpeakers')}</option>
+            {speakers.map((entry) => (
+              <option key={entry.name} value={entry.name}>{entry.name} ({entry.mathom_count})</option>
+            ))}
+          </select>
           {tags.map((tag) => {
             const active = activeTags.includes(tag.name);
             return (
@@ -244,6 +259,9 @@ export default function Library() {
             className="ml-auto rounded-sm px-2 py-1 text-[11px] uppercase tracking-wide text-ink-500 underline hover:text-hearth-600"
           >
             {t('library.manageTags')}
+          </Link>
+          <Link to="/speakers" className="rounded-sm px-2 py-1 text-[11px] uppercase tracking-wide text-ink-500 underline hover:text-hearth-600">
+            {t('library.manageSpeakers')}
           </Link>
         </div>
       )}

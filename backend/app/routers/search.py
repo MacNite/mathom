@@ -51,6 +51,29 @@ def search(
         hits.append(SearchHit(mathom=MathomListItem.model_validate(mathom), snippet=snippet or ""))
         if len(hits) >= min(limit, 100):
             break
+    # Speaker labels are structured metadata rather than FTS content. Include
+    # partial, case-insensitive speaker matches without rebuilding archives'
+    # search indexes, and avoid duplicates when text and speaker both match.
+    remaining = min(limit, 100) - len(hits)
+    if remaining > 0:
+        seen = {hit.mathom.id for hit in hits}
+        speaker_rows = db.execute(
+            select(Mathom)
+            .where(owned_filter(Mathom, user), Mathom.speaker.icontains(q.strip(), autoescape=True))
+            .order_by(Mathom.created_at.desc())
+            .limit(remaining + len(seen))
+        ).scalars()
+        for mathom in speaker_rows:
+            if mathom.id in seen:
+                continue
+            hits.append(
+                SearchHit(
+                    mathom=MathomListItem.model_validate(mathom),
+                    snippet=f"Speaker: {mathom.speaker}",
+                )
+            )
+            if len(hits) >= min(limit, 100):
+                break
     return hits
 
 

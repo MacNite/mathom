@@ -53,7 +53,7 @@ describe('UploadDialog summary style', () => {
     await screen.findByRole('option', { name: 'TL;DR' });
 
     pickFile();
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'tldr' } });
+    fireEvent.change(screen.getByLabelText(/summary style/i), { target: { value: 'tldr' } });
     fireEvent.click(screen.getByRole('button', { name: /^upload$/i }));
 
     await waitFor(() => expect(api.uploadMathom).toHaveBeenCalled());

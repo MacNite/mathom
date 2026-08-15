@@ -16,7 +16,7 @@ from fastapi import (
     UploadFile,
 )
 from fastapi.responses import FileResponse, StreamingResponse
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, func, or_, select, update
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
@@ -27,6 +27,8 @@ from app.schemas import (
     MathomListItem,
     MathomOut,
     MathomUpdate,
+    SpeakerOut,
+    SpeakerUpdate,
     SummaryCreate,
     SummaryOut,
     SummaryUpdate,
@@ -64,6 +66,7 @@ def list_mathoms(
     untagged: bool = False,
     status: str | None = None,
     source_app: str | None = None,
+    speaker: str | None = None,
     limit: int = 100,
     offset: int = 0,
 ) -> list[Mathom]:
@@ -74,6 +77,8 @@ def list_mathoms(
         query = query.where(Mathom.status == status)
     if source_app is not None:
         query = query.where(Mathom.source_app == source_app)
+    if speaker is not None:
+        query = query.where(Mathom.speaker == speaker)
     if untagged:
         query = query.where(~Mathom.tags.any())
     # Filter by one or more tags. "all" requires every named tag (AND), "any"
@@ -85,6 +90,74 @@ def list_mathoms(
         query = query.where(and_(*clauses) if match == "all" else or_(*clauses))
     query = query.order_by(Mathom.created_at.desc()).limit(min(limit, 500)).offset(offset)
     return list(db.execute(query).scalars().unique())
+
+
+@router.get("/speakers", response_model=list[SpeakerOut])
+def list_speakers(
+    db: Session = Depends(get_db),
+    user: User | None = Depends(current_user),
+) -> list[SpeakerOut]:
+    """Return the caller's speaker vocabulary and usage counts."""
+    query = (
+        select(Mathom.speaker, func.count(Mathom.id))
+        .where(owned_filter(Mathom, user), Mathom.speaker.is_not(None))
+        .group_by(Mathom.speaker)
+        .order_by(func.lower(Mathom.speaker))
+    )
+    return [SpeakerOut(name=name, mathom_count=count) for name, count in db.execute(query) if name]
+
+
+@router.patch("/speakers/{speaker_name}", response_model=SpeakerOut)
+def rename_speaker(
+    speaker_name: str,
+    payload: SpeakerUpdate,
+    db: Session = Depends(get_db),
+    user: User | None = Depends(current_user),
+) -> SpeakerOut:
+    """Rename a speaker on every matching mathom owned by the caller."""
+    name = payload.name.strip()
+    if not name:
+        raise HTTPException(status_code=422, detail="Speaker name cannot be empty")
+    matched = db.scalar(
+        select(func.count(Mathom.id)).where(
+            owned_filter(Mathom, user), Mathom.speaker == speaker_name
+        )
+    )
+    if not matched:
+        raise HTTPException(status_code=404, detail="Speaker not found")
+    db.execute(
+        update(Mathom)
+        .where(owned_filter(Mathom, user), Mathom.speaker == speaker_name)
+        .values(speaker=name)
+    )
+    db.commit()
+    count = db.scalar(
+        select(func.count(Mathom.id)).where(owned_filter(Mathom, user), Mathom.speaker == name)
+    )
+    return SpeakerOut(name=name, mathom_count=count or 0)
+
+
+@router.delete("/speakers/{speaker_name}", status_code=204)
+def delete_speaker(
+    speaker_name: str,
+    db: Session = Depends(get_db),
+    user: User | None = Depends(current_user),
+) -> Response:
+    """Clear a speaker from every matching mathom; recordings remain intact."""
+    matched = db.scalar(
+        select(func.count(Mathom.id)).where(
+            owned_filter(Mathom, user), Mathom.speaker == speaker_name
+        )
+    )
+    if not matched:
+        raise HTTPException(status_code=404, detail="Speaker not found")
+    db.execute(
+        update(Mathom)
+        .where(owned_filter(Mathom, user), Mathom.speaker == speaker_name)
+        .values(speaker=None)
+    )
+    db.commit()
+    return Response(status_code=204)
 
 
 @router.get("/sources", response_model=list[str])

@@ -48,7 +48,13 @@ export interface MathomListItem {
   favorite: boolean;
   archived: boolean;
   created_at: string;
+  speaker?: string | null;
   tags: Tag[];
+}
+
+export interface Speaker {
+  name: string;
+  mathom_count: number;
 }
 
 export interface TranscriptSegment {

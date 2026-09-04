@@ -45,6 +45,7 @@ export default function UploadDialog({
   const [title, setTitle] = useState('');
   const [speaker, setSpeaker] = useState('');
   const [speakers, setSpeakers] = useState<Speaker[]>([]);
+  const [speakerPickerOpen, setSpeakerPickerOpen] = useState(false);
   const [templateSlug, setTemplateSlug] = useState('general-summary');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -57,6 +58,8 @@ export default function UploadDialog({
   const dialogRef = useRef<HTMLFormElement>(null);
   const titleId = useId();
   const descId = useId();
+  const speakerLabelId = useId();
+  const speakerListId = useId();
 
   useEffect(() => {
     if (open) {
@@ -86,6 +89,7 @@ export default function UploadDialog({
       api.listSpeakers?.().then(setSpeakers).catch(() => setSpeakers([]));
       setTitle(sharedTitle);
       setSpeaker('');
+      setSpeakerPickerOpen(false);
       setPickedName('');
       if (sharedText) {
         setSource('text');
@@ -168,6 +172,9 @@ export default function UploadDialog({
   // Best-effort hint at the app the recording came from, inferred from the
   // filename (the platform never tells us directly). Null hides the badge.
   const sourceApp = detectSourceApp(sharedFile?.name ?? pickedName);
+  const matchingSpeakers = speakers.filter((entry) =>
+    entry.name.toLocaleLowerCase().includes(speaker.trim().toLocaleLowerCase()),
+  );
 
   return (
     <div
@@ -269,19 +276,71 @@ export default function UploadDialog({
             className="input mt-1"
           />
         </label>
-        <label className="mt-3 block text-sm text-ink-700">
-          {t('upload.speakerLabel')} <span className="text-ink-400">{t('upload.optional')}</span>
-          <input
-            value={speaker}
-            onChange={(event) => setSpeaker(event.target.value)}
-            placeholder={t('upload.speakerPlaceholder')}
-            className="input mt-1"
-            list="known-speakers"
-          />
-          <datalist id="known-speakers">
-            {speakers.map((entry) => <option key={entry.name} value={entry.name} />)}
-          </datalist>
-        </label>
+        <div className="relative mt-3 text-sm text-ink-700">
+          <label id={speakerLabelId} htmlFor={`${speakerListId}-input`}>
+            {t('upload.speakerLabel')} <span className="text-ink-400">{t('upload.optional')}</span>
+          </label>
+          <div className="relative mt-1">
+            <input
+              id={`${speakerListId}-input`}
+              value={speaker}
+              onChange={(event) => {
+                setSpeaker(event.target.value);
+                setSpeakerPickerOpen(true);
+              }}
+              onFocus={() => setSpeakerPickerOpen(true)}
+              onBlur={() => setSpeakerPickerOpen(false)}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') setSpeakerPickerOpen(false);
+                if (event.key === 'ArrowDown') setSpeakerPickerOpen(true);
+              }}
+              placeholder={t('upload.speakerPlaceholder')}
+              className="input pr-10"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-expanded={speakerPickerOpen}
+              aria-controls={speakerListId}
+            />
+            <button
+              type="button"
+              className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-ink-500"
+              aria-label={t('upload.showSpeakers')}
+              aria-expanded={speakerPickerOpen}
+              tabIndex={-1}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => setSpeakerPickerOpen((current) => !current)}
+            >
+              <span aria-hidden className={`transition-transform ${speakerPickerOpen ? 'rotate-180' : ''}`}>⌄</span>
+            </button>
+          </div>
+          {speakerPickerOpen && (
+            <div
+              id={speakerListId}
+              role="listbox"
+              aria-labelledby={speakerLabelId}
+              className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded border border-parchment-300 bg-parchment-50 py-1 shadow-lg"
+            >
+              {matchingSpeakers.length > 0 ? matchingSpeakers.map((entry) => (
+                <button
+                  key={entry.name}
+                  type="button"
+                  role="option"
+                  aria-selected={speaker === entry.name}
+                  className="block w-full px-3 py-2 text-left hover:bg-parchment-100 focus:bg-parchment-100"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => {
+                    setSpeaker(entry.name);
+                    setSpeakerPickerOpen(false);
+                  }}
+                >
+                  {entry.name}
+                </button>
+              )) : (
+                <p className="px-3 py-2 text-ink-500">{t('upload.noSpeakers')}</p>
+              )}
+            </div>
+          )}
+        </div>
         <label className="mt-3 block text-sm text-ink-700">
           {t('upload.summaryStyle')}
           <select

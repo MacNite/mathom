@@ -9,6 +9,7 @@ import UploadDialog from './UploadDialog';
 const { api } = vi.hoisted(() => ({
   api: {
     listTemplates: vi.fn(),
+    listSpeakers: vi.fn(),
     uploadMathom: vi.fn(),
     uploadDocument: vi.fn(),
     createTextMathom: vi.fn(),
@@ -44,6 +45,7 @@ function pickFile() {
 describe('UploadDialog summary style', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    api.listSpeakers.mockResolvedValue([]);
   });
 
   it('sends the style the user selected', async () => {
@@ -67,12 +69,36 @@ describe('UploadDialog summary style', () => {
     await screen.findByRole('option', { name: 'TL;DR' });
 
     pickFile();
-    fireEvent.change(screen.getByLabelText(/speaker/i), { target: { value: 'Max' } });
+    fireEvent.change(screen.getByRole('combobox', { name: /speaker/i }), { target: { value: 'Max' } });
     fireEvent.click(screen.getByRole('button', { name: /^upload$/i }));
 
     await waitFor(() => expect(api.uploadMathom).toHaveBeenCalled());
     // speaker is the final positional argument to uploadMathom.
     expect(api.uploadMathom.mock.calls[0][5]).toBe('Max');
+  });
+
+  it('shows all known speakers and filters them while typing', async () => {
+    api.listTemplates.mockResolvedValue(templates);
+    api.listSpeakers.mockResolvedValue([
+      { name: 'Max', mathom_count: 2 },
+      { name: 'Mama and me', mathom_count: 1 },
+      { name: 'Alice', mathom_count: 3 },
+    ]);
+    renderDialog();
+
+    const picker = screen.getByRole('combobox', { name: /^speaker/i });
+    fireEvent.focus(picker);
+    expect(await screen.findByRole('option', { name: 'Max' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Alice' })).toBeInTheDocument();
+
+    fireEvent.change(picker, { target: { value: 'ma' } });
+    expect(screen.getByRole('option', { name: 'Max' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Mama and me' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Alice' })).not.toBeInTheDocument();
+
+    fireEvent.mouseDown(screen.getByRole('option', { name: 'Mama and me' }));
+    fireEvent.click(screen.getByRole('option', { name: 'Mama and me' }));
+    expect(picker).toHaveValue('Mama and me');
   });
 
   it('does not silently upload with the default when styles failed to load', async () => {

@@ -232,13 +232,32 @@ export interface ApiTokenCreated extends ApiToken {
   /** The plaintext token — shown once, never returned again. */
   token: string;
 }
+export interface InboxFolderInfo {
+  name: string;
+  user: string;
+  present: boolean;
+  imported: number;
+}
 export interface InboxStatus {
   enabled: boolean;
   path: string;
-  owner_email: string;
+  /** Sign-in enabled: one subfolder per user. */
+  per_user: boolean;
   running: boolean;
   last_scan_at: string | null;
   last_error: string;
   imported_total: number;
   waiting: number;
+  folders: InboxFolderInfo[];
+  unmatched_folders: string[];
+  loose_files: number;
+}
+/** The watched-folder location the signed-in user should fill. */
+export interface MyInboxFolder {
+  enabled: boolean;
+  per_user: boolean;
+  inbox_name: string | null;
+  path: string;
+  present: boolean;
+  imported: number;
 }

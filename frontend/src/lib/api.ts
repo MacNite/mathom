@@ -11,6 +11,7 @@ import type {
   ChatMessage,
   Collection,
   InboxStatus,
+  MyInboxFolder,
   Mathom,
   MathomListItem,
   NotificationChannelResult,
@@ -482,6 +483,14 @@ export const api = {
 
   getInboxStatus(): Promise<InboxStatus> {
     return request("/ingest/inbox");
+  },
+
+  getMyInboxFolder(): Promise<MyInboxFolder> {
+    return request("/ingest/inbox/me");
+  },
+
+  renameMyInboxFolder(inboxName: string): Promise<MyInboxFolder> {
+    return request("/ingest/inbox/me", json("PUT", { inbox_name: inboxName }));
   },
 
   scanInboxNow(): Promise<void> {

@@ -6,7 +6,7 @@ import { useAuth } from '../lib/auth';
 import { formatDateTime } from '../lib/format';
 import { useI18n } from '../lib/i18n';
 import { useToast } from '../lib/toast';
-import type { ApiToken, ApiTokenCreated, InboxStatus } from '../lib/types';
+import type { ApiToken, ApiTokenCreated, InboxStatus, MyInboxFolder } from '../lib/types';
 
 const EXPIRY_OPTIONS = [null, 30, 90, 365] as const;
 
@@ -21,18 +21,34 @@ export default function Automation() {
   const [expiry, setExpiry] = useState<number | null>(null);
   const [created, setCreated] = useState<ApiTokenCreated | null>(null);
   const [inbox, setInbox] = useState<InboxStatus | null>(null);
+  const [mine, setMine] = useState<MyInboxFolder | null>(null);
+  const [folderName, setFolderName] = useState('');
   const [busy, setBusy] = useState(false);
 
   const refreshTokens = useCallback(async () => setTokens(await api.listApiTokens()), []);
   const refreshInbox = useCallback(async () => {
     if (canSeeInbox) setInbox(await api.getInboxStatus());
   }, [canSeeInbox]);
+  const applyMine = (data: MyInboxFolder) => {
+    setMine(data);
+    setFolderName(data.inbox_name ?? '');
+  };
+  const refreshMine = useCallback(async () => applyMine(await api.getMyInboxFolder()), []);
 
   useEffect(() => {
-    void Promise.all([refreshTokens(), refreshInbox()]).catch(() =>
+    void Promise.all([refreshTokens(), refreshInbox(), refreshMine()]).catch(() =>
       toast.error(t('common.loadError')),
     );
-  }, [refreshTokens, refreshInbox, t, toast]);
+  }, [refreshTokens, refreshInbox, refreshMine, t, toast]);
+
+  const renameFolder = (event: FormEvent) => {
+    event.preventDefault();
+    void run(async () => {
+      applyMine(await api.renameMyInboxFolder(folderName));
+      toast.success(t('settings.saved'));
+      await refreshInbox();
+    });
+  };
 
   const run = async (work: () => Promise<void>) => {
     setBusy(true);
@@ -199,6 +215,41 @@ export default function Automation() {
         <p className="text-xs text-ink-500">{t('automation.fields')}</p>
       </section>
 
+      {mine?.enabled && mine.per_user && (
+        <form onSubmit={renameFolder} className="card mt-4 space-y-3">
+          <div>
+            <h3 className="font-display text-lg text-ink-900">{t('automation.myFolder')}</h3>
+            <p className="text-sm text-ink-500">{t('automation.myFolderHint')}</p>
+          </div>
+          <div className="flex flex-wrap items-end gap-2">
+            <label className="block flex-1 text-sm text-ink-700">
+              {t('automation.myFolderName')}
+              <input
+                value={folderName}
+                onChange={(event) => setFolderName(event.target.value)}
+                maxLength={48}
+                className="input mt-1 font-mono"
+              />
+            </label>
+            <button
+              type="submit"
+              className="btn-ghost"
+              disabled={busy || !folderName.trim() || folderName === mine.inbox_name}
+            >
+              {t('automation.myFolderRename')}
+            </button>
+          </div>
+          <p className="text-sm text-ink-700">
+            {t('automation.myFolderPath')}{' '}
+            <code className="font-mono text-xs text-ink-900">{mine.path}</code>
+          </p>
+          <p className="text-xs text-ink-500">
+            {mine.present ? t('automation.myFolderPresent') : t('automation.myFolderMissing')}{' '}
+            {t('automation.myFolderImported', { count: mine.imported })}
+          </p>
+        </form>
+      )}
+
       {canSeeInbox && inbox && (
         <section className="card mt-4 space-y-3">
           <h3 className="font-display text-lg text-ink-900">{t('automation.inbox')}</h3>
@@ -209,12 +260,6 @@ export default function Automation() {
               <dl className="grid grid-cols-[auto,1fr] gap-x-4 gap-y-1 text-sm">
                 <dt className="text-ink-500">{t('automation.inbox.folder')}</dt>
                 <dd className="font-mono text-xs text-ink-900">{inbox.path}</dd>
-                {inbox.owner_email && (
-                  <>
-                    <dt className="text-ink-500">{t('automation.inbox.owner')}</dt>
-                    <dd className="text-ink-900">{inbox.owner_email}</dd>
-                  </>
-                )}
                 <dt className="text-ink-500">{t('automation.inbox.lastScan')}</dt>
                 <dd className="text-ink-900">
                   {inbox.last_scan_at
@@ -226,6 +271,43 @@ export default function Automation() {
                 <dt className="text-ink-500">{t('automation.inbox.waiting')}</dt>
                 <dd className="text-ink-900">{inbox.waiting}</dd>
               </dl>
+              {inbox.per_user && inbox.folders.length > 0 && (
+                <table className="w-full text-left text-sm">
+                  <thead className="text-xs uppercase tracking-[0.1em] text-ink-500">
+                    <tr>
+                      <th className="py-1 font-normal">{t('automation.inbox.folderName')}</th>
+                      <th className="py-1 font-normal">{t('automation.inbox.user')}</th>
+                      <th className="py-1 font-normal">{t('automation.inbox.imported')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {inbox.folders.map((folder) => (
+                      <tr key={folder.name} className="border-t border-ink-400/20">
+                        <td className="py-1 font-mono text-xs text-ink-900">
+                          {folder.name}/
+                          {!folder.present && (
+                            <span className="ml-2 font-sans text-ink-400">
+                              {t('automation.inbox.notCreated')}
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-1 text-ink-900">{folder.user}</td>
+                        <td className="py-1 text-ink-900">{folder.imported}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              {inbox.unmatched_folders.length > 0 && (
+                <p className="text-sm text-hearth-600">
+                  {t('automation.inbox.unmatched', { names: inbox.unmatched_folders.join(', ') })}
+                </p>
+              )}
+              {inbox.loose_files > 0 && (
+                <p className="text-sm text-hearth-600">
+                  {t('automation.inbox.loose', { count: inbox.loose_files })}
+                </p>
+              )}
               {inbox.last_error && (
                 <p role="alert" className="text-sm text-hearth-600">
                   {inbox.last_error}

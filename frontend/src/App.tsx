@@ -11,6 +11,7 @@ import Library from "./pages/Library";
 import Login from "./pages/Login";
 import Onboarding from "./pages/Onboarding";
 import MathomDetail from "./pages/MathomDetail";
+import Notifications from "./pages/Notifications";
 import ShareTarget from "./pages/ShareTarget";
 import Speakers from "./pages/Speakers";
 import Tags from "./pages/Tags";
@@ -72,6 +73,7 @@ export default function App() {
         <Route path="tags" element={<Tags />} />
         <Route path="speakers" element={<Speakers />} />
         <Route path="timeline" element={<Timeline />} />
+        <Route path="notifications" element={<Notifications />} />
         <Route path="register" element={<Register />} />
         <Route path="admin/users" element={guard(isAdmin, <Users />)} />
         <Route

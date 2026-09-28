@@ -10,6 +10,9 @@ import type {
   Collection,
   Mathom,
   MathomListItem,
+  NotificationChannelResult,
+  NotificationSettings,
+  NotificationSettingsUpdate,
   PromptTemplate,
   Role,
   SearchHit,
@@ -18,6 +21,7 @@ import type {
   Tag,
   TimelineBucket,
   User,
+  WebPushSubscriptionPayload,
 } from "./types";
 
 const BASE = "/api";
@@ -428,5 +432,36 @@ export const api = {
     changes: AuthentikSettingsUpdate,
   ): Promise<AuthentikSettings> {
     return request("/settings/authentik", json("PUT", changes));
+  },
+
+  getNotificationSettings(): Promise<NotificationSettings> {
+    return request("/notifications/settings");
+  },
+
+  updateNotificationSettings(
+    changes: NotificationSettingsUpdate,
+  ): Promise<NotificationSettings> {
+    return request("/notifications/settings", json("PUT", changes));
+  },
+
+  async sendTestNotification(): Promise<NotificationChannelResult[]> {
+    const body = await request<{ results: NotificationChannelResult[] }>(
+      "/notifications/test",
+      { method: "POST" },
+    );
+    return body.results;
+  },
+
+  async getWebPushKey(): Promise<string> {
+    const body = await request<{ public_key: string }>("/notifications/webpush/key");
+    return body.public_key;
+  },
+
+  addPushSubscription(subscription: WebPushSubscriptionPayload): Promise<void> {
+    return request("/notifications/webpush/subscriptions", json("POST", subscription));
+  },
+
+  removePushSubscription(endpoint: string): Promise<void> {
+    return request("/notifications/webpush/unsubscribe", json("POST", { endpoint }));
   },
 };

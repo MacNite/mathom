@@ -10,7 +10,7 @@ from sqlalchemy import CursorResult, select, update
 from app.config import get_settings
 from app.db import get_session_factory, refresh_fts
 from app.models import Mathom, PromptTemplate, Summary
-from app.services import documents, ollama, transcription, vision
+from app.services import documents, notifications, ollama, transcription, vision
 from app.services.diarization import label_segments
 from app.services.template_localization import localized_prompt
 
@@ -234,6 +234,7 @@ def run(mathom_id: int, template_slug: str = "general-summary") -> None:
 
     summarize_mathom(mathom_id, template_slug)
     _set_status(mathom_id, "ready")
+    notifications.notify_mathom(mathom_id, notifications.EVENT_READY)
 
 
 def process_mathom(mathom_id: int, template_slug: str = "general-summary") -> None:

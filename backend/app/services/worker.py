@@ -12,7 +12,7 @@ import logging
 import threading
 
 from app.db import get_session_factory
-from app.services import jobs, pipeline
+from app.services import jobs, notifications, pipeline
 
 logger = logging.getLogger("mathom.worker")
 
@@ -94,6 +94,7 @@ class Worker:
                 else:
                     # Out of retries: surface the failure on the Mathom itself.
                     pipeline.mark_error(mathom_id, exc)
+                    notifications.notify_mathom(mathom_id, notifications.EVENT_ERROR)
             return True
 
         with get_session_factory()() as session:

@@ -15,6 +15,7 @@ from app.routers import (
     health,
     invitations,
     mathoms,
+    notifications,
     search,
     settings,
     tags,
@@ -65,3 +66,4 @@ app.include_router(templates.router, prefix=API_PREFIX)
 app.include_router(collections.router, prefix=API_PREFIX)
 app.include_router(tags.router, prefix=API_PREFIX)
 app.include_router(search.router, prefix=API_PREFIX)
+app.include_router(notifications.router, prefix=API_PREFIX)

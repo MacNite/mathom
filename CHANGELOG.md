@@ -6,7 +6,14 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- **"Your Mathom is ready" notifications.** A new *Notifications* page lets each
+  person get told when a recording is ready (or couldn't be finished), with a
+  link to it. Channels: Web Push to the installed PWA (RFC 8291-encrypted,
+  VAPID-signed), a self-hosted ntfy topic, or an HMAC-signed JSON webhook.
+  Off until a user sets a channel up; `NOTIFICATIONS_ENABLED=false` disables it
+  server-wide. See [docs/notifications.md](docs/notifications.md).
 
 ## [0.1.0] — 2026-08-11
 

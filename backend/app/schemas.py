@@ -328,3 +328,57 @@ class SmtpSettingsUpdate(BaseModel):
     public_base_url: str | None = Field(default=None, max_length=500)
     use_tls: bool | None = None
     invite_expiry_hours: int | None = Field(default=None, ge=1, le=720)
+
+
+class NotificationSettingsOut(BaseModel):
+    # False when an administrator switched notifications off server-wide.
+    enabled: bool
+    notify_on_ready: bool
+    notify_on_error: bool
+    ntfy_url: str
+    webhook_url: str
+    # Secrets are never returned; the UI only learns whether one is stored.
+    ntfy_token_set: bool
+    webhook_secret_set: bool
+    web_push_devices: int
+    # Links in ntfy/webhook messages need an absolute URL to be clickable.
+    public_base_url_set: bool
+
+
+class NotificationSettingsUpdate(BaseModel):
+    notify_on_ready: bool | None = None
+    notify_on_error: bool | None = None
+    ntfy_url: str | None = Field(default=None, max_length=500)
+    ntfy_token: str | None = Field(default=None, max_length=500)
+    webhook_url: str | None = Field(default=None, max_length=500)
+    webhook_secret: str | None = Field(default=None, max_length=500)
+
+
+class ChannelResult(BaseModel):
+    channel: str
+    ok: bool
+    detail: str = ""
+
+
+class NotificationTestOut(BaseModel):
+    results: list[ChannelResult]
+
+
+class WebPushKeyOut(BaseModel):
+    public_key: str
+
+
+class PushSubscriptionKeys(BaseModel):
+    p256dh: str = Field(min_length=20, max_length=200)
+    auth: str = Field(min_length=8, max_length=100)
+
+
+class PushSubscriptionIn(BaseModel):
+    """The browser's ``PushSubscription.toJSON()`` shape."""
+
+    endpoint: str = Field(min_length=10, max_length=2000)
+    keys: PushSubscriptionKeys
+
+
+class PushUnsubscribeIn(BaseModel):
+    endpoint: str = Field(min_length=10, max_length=2000)

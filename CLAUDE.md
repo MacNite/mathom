@@ -116,7 +116,9 @@ require an explicit migration script in `scripts/`.
 ## Security
 
 - Local-first: no telemetry, no outbound calls except backend→Ollama on the
-  internal network.
+  internal network — and the opt-in, per-user notification channels
+  (`services/notifications.py`: Web Push, ntfy, webhook) a user configures
+  themselves (see `docs/notifications.md`).
 - The mathom container is the only exposed service; inside it nginx is the
   front door and the backend (uvicorn) binds to loopback only.
 - Validate all uploads: extension + content-type allowlist, size limit

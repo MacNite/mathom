@@ -1,6 +1,7 @@
 # Automated audio collection — exploration
 
-> Status: **proposal / research note.** Nothing here is implemented yet. It
+> Status: **research note.** Phases 1 and 2 (notifications) are implemented;
+> see [notifications.md](notifications.md). Everything else is still a proposal. It
 > weighs the options for collecting voice messages into Mathom on its own
 > (without the manual Share → Mathom step from [the PWA guide](pwa.md)) and for
 > telling the user when the transcript is ready.
@@ -201,8 +202,8 @@ WhatsApp self-chat only as part of the optional companion.
 
 | Phase | Scope | Rough size |
 | --- | --- | --- |
-| 1 | `notify.py` with the ready/error hook, ntfy and webhook channels, per-user settings UI | S |
-| 2 | Web Push: VAPID, subscriptions API, service-worker handlers, "Enable notifications" toggle | M |
+| 1 | ✅ `services/notifications.py` with the ready/error hook, ntfy and webhook channels, per-user settings UI | S |
+| 2 | ✅ Web Push: VAPID, subscriptions API, service-worker handlers, "Turn on for this device" | M |
 | 3 | Watch-folder inbox, plus a Syncthing guide in `docs/deployment.md` | M |
 | 4 | Scoped API tokens and `POST /api/ingest/audio` with `external_id` dedup and `recorded_at` (also unlocks Tasker/iOS Shortcuts automation) | M |
 | 5 | Optional `mathom-whatsapp` sidecar (whatsmeow) in `compose.whatsapp.yaml`: QR pairing page, self-chat mode first, allowlist later, self-chat notifications, threat-model update | L |

@@ -66,6 +66,11 @@ Internet / LAN ──▶ mathom container ──▶ (nginx ──▶ FastAPI bac
   default). OAuth uses a checked `state` token, and the login is bound to the
   ID token's `nonce`.
 - **Secret disclosure.** The Authentik client secret is write-only over the API.
+- **Notification channels** (opt-in per user). Web Push payloads are
+  end-to-end encrypted (RFC 8291) and subscriptions may only point at known
+  push-service hosts. ntfy/webhook URLs can't target loopback, link-local
+  metadata ranges, or Ollama, and redirects are not followed. Tokens and
+  secrets are write-only. Delivery failures never affect processing.
 - **Sampled video frames** (when visual analysis is explicitly enabled). Frame
   files exist only in a server-created private temporary directory and are
   deleted after processing. Only base64-encoded local frames are sent to the
@@ -98,6 +103,10 @@ Internet / LAN ──▶ mathom container ──▶ (nginx ──▶ FastAPI bac
   defense-in-depth rather than a gap. Full JWKS verification is a future step.
 - Sessions have an absolute lifetime (14 days by default) but no idle expiry or
   rotation; a stolen cookie is valid until it expires or the user logs out.
+- Notifications are the one deliberate exception to "no outbound calls". Web
+  Push goes through the browser vendor's push service, which learns when a
+  device is notified (not what it says). ntfy/webhook URLs can reach LAN hosts
+  by design. `NOTIFICATIONS_ENABLED=false` turns all of it off.
 - The single worker processes one recording at a time; a very long transcription
   delays others in the queue (throughput, not correctness).
 

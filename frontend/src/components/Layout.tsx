@@ -12,6 +12,7 @@ const links = [
   { to: '/tags', labelKey: 'nav.tags', emoji: '🏷️' },
   { to: '/speakers', labelKey: 'nav.speakers', emoji: '🗣️' },
   { to: '/timeline', labelKey: 'nav.timeline', emoji: '🗓️' },
+  { to: '/notifications', labelKey: 'nav.notifications', emoji: '🔔' },
 ];
 
 export default function Layout() {

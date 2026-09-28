@@ -59,6 +59,10 @@ services:
       MATHOM_SMTP_FROM_NAME: ${SMTP_FROM_NAME:-Mathom}
       MATHOM_SMTP_USE_TLS: ${SMTP_USE_TLS:-false}
       MATHOM_INVITE_EXPIRY_HOURS: ${INVITE_EXPIRY_HOURS:-168}
+      # "Your Mathom is ready" notifications (Web Push, ntfy, webhook). Nothing is
+      # sent until a user sets up a channel; false switches all of it off.
+      MATHOM_NOTIFICATIONS_ENABLED: ${NOTIFICATIONS_ENABLED:-true}
+      MATHOM_WEB_PUSH_CONTACT: ${WEB_PUSH_CONTACT:-}
       MATHOM_AUTHENTIK_ISSUER: ${AUTHENTIK_ISSUER:-}
       MATHOM_AUTHENTIK_CLIENT_ID: ${AUTHENTIK_CLIENT_ID:-}
       MATHOM_AUTHENTIK_CLIENT_SECRET: ${AUTHENTIK_CLIENT_SECRET:-}

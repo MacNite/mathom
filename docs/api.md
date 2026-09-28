@@ -53,6 +53,20 @@ does not resurrect it (seeding is insert-only).
 | `GET /timeline`      | Mathom counts bucketed by month                    |
 | `GET /health`        | Status, version, Ollama reachability               |
 
+## Notifications
+
+Per user (or the single local user when auth is off). See
+[notifications.md](notifications.md).
+
+| Method & path                                | Purpose                                              |
+| -------------------------------------------- | ---------------------------------------------------- |
+| `GET /notifications/settings`                | Preferences, channel URLs, `*_set` flags, device count |
+| `PUT /notifications/settings`                | Partial update; blank token/secret keeps the stored one |
+| `POST /notifications/test`                   | Send a test on every channel; per-channel results    |
+| `GET /notifications/webpush/key`             | VAPID public key for `pushManager.subscribe`         |
+| `POST /notifications/webpush/subscriptions`  | Register this device (`PushSubscription.toJSON()`)   |
+| `POST /notifications/webpush/unsubscribe`    | Forget a device by `endpoint`                        |
+
 ## Authentication (optional)
 
 Active only when `MATHOM_AUTH_ENABLED=true`; otherwise these behave as noted and

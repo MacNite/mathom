@@ -53,6 +53,7 @@ class MathomListItem(ORMModel):
     favorite: bool
     archived: bool
     created_at: datetime
+    recorded_at: datetime | None = None
     speaker: str | None = None
     tags: list[TagOut] = []
 

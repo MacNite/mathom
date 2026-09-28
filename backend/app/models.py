@@ -108,6 +108,17 @@ class Mathom(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, onupdate=utcnow
     )
+    # When the recording was originally made or received (e.g. the WhatsApp
+    # message time), as opposed to when it reached Mathom. NULL = unknown.
+    recorded_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
+    # SHA-256 of the uploaded file, used to skip duplicate automated imports.
+    content_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    # Idempotency key from an automated sender (e.g. source "whatsapp" plus the
+    # message ID), so retries never create a second Mathom.
+    external_source: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    external_id: Mapped[str | None] = mapped_column(String(200), nullable=True)
 
     summaries: Mapped[list[Summary]] = relationship(
         back_populates="mathom", cascade="all, delete-orphan", order_by="Summary.created_at"
@@ -338,3 +349,48 @@ class PushSubscription(Base):
     user_agent: Mapped[str] = mapped_column(String(300), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     last_success_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class ApiToken(Base):
+    """A personal access token for automated uploads (Tasker, Shortcuts, scripts).
+
+    Only a SHA-256 of the token is stored; the plaintext is shown once at
+    creation. ``user_id`` is NULL in single-user mode (auth disabled).
+    """
+
+    __tablename__ = "api_tokens"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=True
+    )
+    name: Mapped[str] = mapped_column(String(100), default="")
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    # The first characters of the token, so people can tell tokens apart.
+    prefix: Mapped[str] = mapped_column(String(16), default="")
+    scope: Mapped[str] = mapped_column(String(30), default="ingest")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class IngestLedgerEntry(Base):
+    """Every file the watched folder has already handled.
+
+    Kept independently of the Mathom it produced, so deleting a Mathom does not
+    make the (still present) source file import again.
+    """
+
+    __tablename__ = "ingest_ledger"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    sha256: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    path: Mapped[str] = mapped_column(String(1000), index=True)
+    size: Mapped[int] = mapped_column(Integer, default=0)
+    mtime_ns: Mapped[int] = mapped_column(Integer, default=0)
+    # "imported", or why the file was skipped ("too_large", "invalid").
+    outcome: Mapped[str] = mapped_column(String(30), default="imported")
+    mathom_id: Mapped[int | None] = mapped_column(
+        ForeignKey("mathoms.id", ondelete="SET NULL"), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

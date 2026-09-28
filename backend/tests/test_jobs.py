@@ -168,9 +168,9 @@ def test_upload_creates_and_finishes_a_job(client: TestClient, wait_for_status) 
 
 
 def test_upload_is_rejected_when_queue_is_full(client: TestClient, monkeypatch) -> None:  # type: ignore[no-untyped-def]
-    from app.routers import mathoms
+    from app.services import ingest
 
-    monkeypatch.setattr(mathoms, "get_settings", lambda: Settings(max_queued_jobs=0))
+    monkeypatch.setattr(ingest, "get_settings", lambda: Settings(max_queued_jobs=0))
     response = client.post(
         "/api/mathoms",
         files={"file": ("hello.mp3", io.BytesIO(b"audio"), "audio/mpeg")},

@@ -97,6 +97,7 @@ def init_db(engine: Engine | None = None) -> None:
         _migrate_source_app(conn)
         _migrate_tag_fields(conn)
         _migrate_local_auth(conn)
+        _migrate_ingest_fields(conn)
 
 
 def refresh_fts(session: Session, mathom_id: int) -> None:
@@ -343,3 +344,22 @@ def _migrate_segments(conn: object) -> None:
     """Add JSON timestamp segments for installations created before this feature."""
     if "segments" not in _column_names(conn, "mathoms"):
         conn.execute(text("ALTER TABLE mathoms ADD COLUMN segments JSON"))  # type: ignore[attr-defined]
+
+
+def _migrate_ingest_fields(conn: object) -> None:
+    """Add automated-ingest bookkeeping columns to existing archives."""
+    for name, definition in (
+        ("recorded_at", "DATETIME"),
+        ("content_sha256", "VARCHAR(64)"),
+        ("external_source", "VARCHAR(50)"),
+        ("external_id", "VARCHAR(200)"),
+    ):
+        if name not in _column_names(conn, "mathoms"):
+            conn.execute(text(f"ALTER TABLE mathoms ADD COLUMN {name} {definition}"))  # type: ignore[attr-defined]
+    for statement in (
+        "CREATE INDEX IF NOT EXISTS ix_mathoms_recorded_at ON mathoms(recorded_at)",
+        "CREATE INDEX IF NOT EXISTS ix_mathoms_content_sha256 ON mathoms(content_sha256)",
+        "CREATE INDEX IF NOT EXISTS ix_mathoms_external "
+        "ON mathoms(user_id, external_source, external_id)",
+    ):
+        conn.execute(text(statement))  # type: ignore[attr-defined]

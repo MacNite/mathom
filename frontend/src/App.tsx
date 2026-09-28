@@ -5,6 +5,7 @@ import Layout from "./components/Layout";
 import { useAuth } from "./lib/auth";
 import { useI18n } from "./lib/i18n";
 import AuthentikSettings from "./pages/AuthentikSettings";
+import Automation from "./pages/Automation";
 import Collections from "./pages/Collections";
 import ForcePasswordChange from "./pages/ForcePasswordChange";
 import Library from "./pages/Library";
@@ -74,6 +75,7 @@ export default function App() {
         <Route path="speakers" element={<Speakers />} />
         <Route path="timeline" element={<Timeline />} />
         <Route path="notifications" element={<Notifications />} />
+        <Route path="automation" element={<Automation />} />
         <Route path="register" element={<Register />} />
         <Route path="admin/users" element={guard(isAdmin, <Users />)} />
         <Route

@@ -48,6 +48,7 @@ export interface MathomListItem {
   favorite: boolean;
   archived: boolean;
   created_at: string;
+  recorded_at?: string | null;
   speaker?: string | null;
   tags: Tag[];
 }
@@ -217,4 +218,27 @@ export interface NotificationChannelResult {
 export interface WebPushSubscriptionPayload {
   endpoint: string;
   keys: { p256dh: string; auth: string };
+}
+export interface ApiToken {
+  id: number;
+  name: string;
+  prefix: string;
+  scope: string;
+  created_at: string;
+  expires_at: string | null;
+  last_used_at: string | null;
+}
+export interface ApiTokenCreated extends ApiToken {
+  /** The plaintext token — shown once, never returned again. */
+  token: string;
+}
+export interface InboxStatus {
+  enabled: boolean;
+  path: string;
+  owner_email: string;
+  running: boolean;
+  last_scan_at: string | null;
+  last_error: string;
+  imported_total: number;
+  waiting: number;
 }

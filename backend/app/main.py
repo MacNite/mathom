@@ -13,16 +13,20 @@ from app.routers import (
     chat,
     collections,
     health,
+    ingest,
     invitations,
     mathoms,
+    notifications,
     search,
     settings,
     tags,
     templates,
+    tokens,
     users,
 )
 from app.seed import seed_templates
 from app.services import jobs, pipeline
+from app.services.inbox import inbox_watcher
 from app.services.worker import worker
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
@@ -38,9 +42,11 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     jobs.recover_stuck()
     pipeline.recover_interrupted_jobs()
     worker.start()
+    inbox_watcher.start()
     try:
         yield
     finally:
+        inbox_watcher.stop()
         worker.stop()
 
 
@@ -65,3 +71,6 @@ app.include_router(templates.router, prefix=API_PREFIX)
 app.include_router(collections.router, prefix=API_PREFIX)
 app.include_router(tags.router, prefix=API_PREFIX)
 app.include_router(search.router, prefix=API_PREFIX)
+app.include_router(notifications.router, prefix=API_PREFIX)
+app.include_router(tokens.router, prefix=API_PREFIX)
+app.include_router(ingest.router, prefix=API_PREFIX)

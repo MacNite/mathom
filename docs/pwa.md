@@ -37,6 +37,13 @@ an app-store distribution account and its associated tracking/policy surface, an
 lets the browser provide the native-feeling share-sheet integration. The PWA is
 the recommended mobile installation method.
 
+## Push notifications
+
+The same service worker shows "your Mathom is ready" push notifications and
+opens the Mathom when you tap one. Turn them on per device under
+**🔔 Notifications**. On iOS this works once Mathom has been added to the Home
+Screen. See [notifications.md](notifications.md).
+
 ## Installing on Android
 
 1. Open Mathom in Chrome (or another Chromium browser) on your phone.

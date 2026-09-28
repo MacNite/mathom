@@ -124,6 +124,21 @@ Mathom runs as a custom Docker Compose app on TrueNAS SCALE 24.04+
 > The mathom container runs as UID/GID 1000. Give the datasets matching
 > ownership (or an ACL allowing 1000) so it can write.
 
+**Watched folder (optional).** To have new voice notes imported on their own,
+add a read-only host path for the folder Syncthing (or an SMB share) fills and
+point `MATHOM_INBOX_DIR` at it. UID 1000 needs read access (write is not
+needed):
+
+```yaml
+    volumes:
+      - /mnt/tank/sync/whatsapp-voice-notes:/inbox:ro
+    environment:
+      MATHOM_INBOX_DIR: /inbox
+      MATHOM_INBOX_OWNER_EMAIL: you@example.com  # only with AUTH_ENABLED=true
+```
+
+See [ingest.md](ingest.md) for the phone side.
+
 ## Backups
 
 `make backup` (or `scripts/backup.sh`) creates `backups/mathom-<timestamp>/`

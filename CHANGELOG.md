@@ -6,7 +6,23 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- **"Your Mathom is ready" notifications.** A new *Notifications* page lets each
+  person get told when a recording is ready (or couldn't be finished), with a
+  link to it. Channels: Web Push to the installed PWA (RFC 8291-encrypted,
+  VAPID-signed), a self-hosted ntfy topic, or an HMAC-signed JSON webhook.
+  Off until a user sets a channel up; `NOTIFICATIONS_ENABLED=false` disables it
+  server-wide. See [docs/notifications.md](docs/notifications.md).
+- **Watched folder.** Set `INBOX_DIR` and mount a folder (e.g. a Syncthing copy
+  of WhatsApp's Voice Notes) and new recordings import on their own, once each,
+  without the source files ever being modified.
+- **API tokens and an ingest API.** Per-user, revocable tokens authorize
+  `POST /api/ingest/audio` (multipart) and `/api/ingest/audio/raw` (raw body)
+  for Tasker, iOS Shortcuts and scripts, with speaker, tags, recorded time and
+  idempotent message IDs. See [docs/ingest.md](docs/ingest.md).
+- **Recorded time.** Mathoms carry `recorded_at` (from the sender or the
+  filename); the Timeline files recordings by it when known.
 
 ## [0.1.0] — 2026-08-11
 

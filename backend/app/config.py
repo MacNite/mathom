@@ -98,6 +98,39 @@ class Settings(BaseSettings):
     smtp_use_tls: bool = False
     invite_expiry_hours: int = 168
 
+    # --- "Your Mathom is ready" notifications ----------------------------------
+    # Nothing is sent until a user configures a channel (ntfy, webhook) or turns
+    # on push notifications for a device. Set false to switch every channel off.
+    notifications_enabled: bool = True
+    notify_timeout_seconds: float = Field(default=10.0, ge=1, le=60)
+    # VAPID contact (mailto: or https:) that push services can use to reach the
+    # operator. Apple requires a real one. Falls back to the public base URL.
+    web_push_contact: str = ""
+    # Push-service hosts (and their subdomains) that subscriptions may point at.
+    web_push_allowed_hosts: str = (
+        "fcm.googleapis.com,android.googleapis.com,push.services.mozilla.com,"
+        "push.apple.com,notify.windows.com"
+    )
+
+    # --- Watched folder ("inbox") ----------------------------------------------
+    # A directory (inside the container) Mathom scans for new recordings, e.g. a
+    # Syncthing copy of WhatsApp's "Voice Notes" folder. Empty = off. Files are
+    # never modified; a ledger remembers what was already imported.
+    inbox_dir: str = ""
+    inbox_poll_seconds: float = Field(default=30, ge=5, le=3600)
+    # Required when auth is enabled: the account that owns imported recordings.
+    inbox_owner_email: str = ""
+    inbox_template: str = "general-summary"
+    inbox_template_language: str = Field(default="en", pattern=r"^(en|de|es)$")
+
+    @property
+    def inbox_path(self) -> Path | None:
+        return Path(self.inbox_dir) if self.inbox_dir.strip() else None
+
+    @property
+    def web_push_allowed_host_list(self) -> list[str]:
+        return [h.strip().lower() for h in self.web_push_allowed_hosts.split(",") if h.strip()]
+
     @property
     def database_url(self) -> str:
         return f"sqlite:///{self.data_dir / 'mathom.db'}"

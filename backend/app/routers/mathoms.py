@@ -1,6 +1,5 @@
 """Mathom CRUD, upload, audio streaming, summaries, tags, and exports."""
 
-import asyncio
 import json
 import uuid
 from collections.abc import Iterator
@@ -37,7 +36,7 @@ from app.schemas import (
     TextMathomCreate,
     VisualAnalysisRequest,
 )
-from app.services import export, jobs, pipeline, transcription, vision
+from app.services import export, ingest, jobs, pipeline
 from app.services.source_app import detect_source_app
 from app.services.tags import DEFAULT_TAG_COLOR, apply_source_tag
 from app.services.worker import worker
@@ -187,102 +186,20 @@ async def upload_mathom(
     db: Session = Depends(get_db),
     user: User | None = Depends(current_user),
 ) -> Mathom:
-    settings = get_settings()
-    if jobs.queued_count(db) >= settings.max_queued_jobs:
-        raise HTTPException(
-            status_code=503,
-            detail="Processing queue is full. Please try again once a recording has finished.",
-            headers={"Retry-After": "60"},
-        )
-    original_name = file.filename or "recording"
-    extension = Path(original_name).suffix.lower()
-    if extension not in settings.allowed_extensions:
-        raise HTTPException(
-            status_code=415,
-            detail=f"Unsupported audio format '{extension or 'unknown'}'",
-        )
-
-    stored_name = f"{uuid.uuid4().hex}{extension}"
-    target = settings.audio_dir / stored_name
-    settings.audio_dir.mkdir(parents=True, exist_ok=True)
-    max_bytes = settings.max_upload_mb * 1024 * 1024
-    written = 0
-    try:
-        with target.open("wb") as out:
-            while chunk := await file.read(CHUNK_SIZE):
-                written += len(chunk)
-                if written > max_bytes:
-                    raise HTTPException(
-                        status_code=413,
-                        detail=f"File exceeds the {settings.max_upload_mb} MB upload limit",
-                    )
-                out.write(chunk)
-    except HTTPException:
-        target.unlink(missing_ok=True)
-        raise
-    if written == 0:
-        target.unlink(missing_ok=True)
-        raise HTTPException(status_code=400, detail="Uploaded file is empty")
-
-    try:
-        # Ordinary audio retains the established validation path. Potential
-        # videos (and every visual-analysis request) are stream-classified by
-        # ffprobe before a row/job exists.
-        if extension not in {".mp4", ".webm"} and not analyze_visuals:
-            await asyncio.to_thread(transcription.validate_audio, target)
-            has_audio, has_video, duration = True, False, None
-        else:
-            has_audio, has_video, duration = await asyncio.to_thread(vision.media_streams, target)
-        if not has_audio and not has_video:
-            raise vision.VisionError("No usable media streams")
-        if analyze_visuals and not has_video:
-            raise HTTPException(
-                status_code=422, detail="Visual analysis is only available for videos"
-            )
-        if analyze_visuals and not settings.vision_enabled:
-            raise HTTPException(
-                status_code=409, detail="Visual analysis is disabled by this server"
-            )
-        if has_video and not has_audio and not analyze_visuals:
-            raise HTTPException(
-                status_code=422, detail="A video without audio requires visual analysis"
-            )
-    except (vision.VisionError, transcription.AudioValidationError) as exc:
-        target.unlink(missing_ok=True)
-        raise HTTPException(
-            status_code=422, detail="File has no usable audio or video stream"
-        ) from exc
-    except HTTPException:
-        target.unlink(missing_ok=True)
-        raise
-    source_type = "video" if has_video else "audio"
-    mathom = Mathom(
-        title=title.strip() or Path(original_name).stem or "Untitled Mathom",
-        speaker=speaker.strip()[:200] or None,
-        source_app=detect_source_app(original_name),
-        original_filename=original_name[:500],
-        audio_path=str(target),
-        source_path=str(target) if has_video else "",
-        source_type=source_type,
-        duration_seconds=duration,
-        has_audio_stream=has_audio,
-        has_video_stream=has_video,
-        vision_requested=analyze_visuals,
-        vision_status="pending" if analyze_visuals else "not_requested",
-        vision_model=settings.vision_model if analyze_visuals else None,
-        status="pending",
-        template_language=template_language,
+    request = ingest.IngestRequest(
+        original_name=file.filename or "recording",
         user_id=user.id if user else None,
+        title=title,
+        title_from_filename=True,
+        speaker=speaker,
+        template_slug=template_slug,
+        template_language=template_language,
+        analyze_visuals=analyze_visuals,
     )
-    db.add(mathom)
-    # Fold the detected origin into the shared tag system before the row is
-    # committed, so the recording is filterable by source from the first render.
-    apply_source_tag(db, mathom)
-    db.commit()
-    db.refresh(mathom)
-    # Durable: the job survives a restart and is picked up by the worker.
-    jobs.enqueue(db, mathom.id, template_slug)
-    worker.notify()
+    try:
+        mathom, _ = await ingest.ingest_stream(db, ingest.upload_chunks(file), request)
+    except ingest.IngestError as exc:
+        raise HTTPException(exc.status, exc.detail, headers=exc.headers) from exc
     return mathom
 
 

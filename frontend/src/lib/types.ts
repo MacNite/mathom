@@ -48,6 +48,7 @@ export interface MathomListItem {
   favorite: boolean;
   archived: boolean;
   created_at: string;
+  recorded_at?: string | null;
   speaker?: string | null;
   tags: Tag[];
 }
@@ -188,4 +189,56 @@ export interface SmtpSettingsUpdate {
   public_base_url?: string;
   use_tls?: boolean;
   invite_expiry_hours?: number;
+}
+export interface NotificationSettings {
+  enabled: boolean;
+  notify_on_ready: boolean;
+  notify_on_error: boolean;
+  ntfy_url: string;
+  webhook_url: string;
+  ntfy_token_set: boolean;
+  webhook_secret_set: boolean;
+  web_push_devices: number;
+  public_base_url_set: boolean;
+}
+export interface NotificationSettingsUpdate {
+  notify_on_ready?: boolean;
+  notify_on_error?: boolean;
+  ntfy_url?: string;
+  ntfy_token?: string;
+  webhook_url?: string;
+  webhook_secret?: string;
+}
+export interface NotificationChannelResult {
+  channel: "ntfy" | "webhook" | "web_push";
+  ok: boolean;
+  detail: string;
+}
+/** The shape of `PushSubscription.toJSON()` the backend stores. */
+export interface WebPushSubscriptionPayload {
+  endpoint: string;
+  keys: { p256dh: string; auth: string };
+}
+export interface ApiToken {
+  id: number;
+  name: string;
+  prefix: string;
+  scope: string;
+  created_at: string;
+  expires_at: string | null;
+  last_used_at: string | null;
+}
+export interface ApiTokenCreated extends ApiToken {
+  /** The plaintext token — shown once, never returned again. */
+  token: string;
+}
+export interface InboxStatus {
+  enabled: boolean;
+  path: string;
+  owner_email: string;
+  running: boolean;
+  last_scan_at: string | null;
+  last_error: string;
+  imported_total: number;
+  waiting: number;
 }

@@ -84,7 +84,11 @@ def timeline(
 ) -> list[TimelineBucket]:
     rows = db.execute(
         select(
-            func.strftime("%Y-%m", Mathom.created_at).label("month"),
+            # File a recording under when it was made, if known (automated
+            # imports often arrive long after the message was sent).
+            func.strftime("%Y-%m", func.coalesce(Mathom.recorded_at, Mathom.created_at)).label(
+                "month"
+            ),
             func.count(Mathom.id),
         )
         .where(owned_filter(Mathom, user))

@@ -1,5 +1,7 @@
 // The only module that talks to the backend. Everything goes through /api.
 import type {
+  ApiToken,
+  ApiTokenCreated,
   AuthentikSettings,
   AuthentikSettingsUpdate,
   Invitation,
@@ -8,8 +10,12 @@ import type {
   AuthStatus,
   ChatMessage,
   Collection,
+  InboxStatus,
   Mathom,
   MathomListItem,
+  NotificationChannelResult,
+  NotificationSettings,
+  NotificationSettingsUpdate,
   PromptTemplate,
   Role,
   SearchHit,
@@ -18,6 +24,7 @@ import type {
   Tag,
   TimelineBucket,
   User,
+  WebPushSubscriptionPayload,
 } from "./types";
 
 const BASE = "/api";
@@ -48,7 +55,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     }
     throw new ApiError(detail, response.status);
   }
-  if (response.status === 204) return undefined as T;
+  if (response.status === 204 || response.status === 202) return undefined as T;
   return (await response.json()) as T;
 }
 
@@ -428,5 +435,56 @@ export const api = {
     changes: AuthentikSettingsUpdate,
   ): Promise<AuthentikSettings> {
     return request("/settings/authentik", json("PUT", changes));
+  },
+
+  getNotificationSettings(): Promise<NotificationSettings> {
+    return request("/notifications/settings");
+  },
+
+  updateNotificationSettings(
+    changes: NotificationSettingsUpdate,
+  ): Promise<NotificationSettings> {
+    return request("/notifications/settings", json("PUT", changes));
+  },
+
+  async sendTestNotification(): Promise<NotificationChannelResult[]> {
+    const body = await request<{ results: NotificationChannelResult[] }>(
+      "/notifications/test",
+      { method: "POST" },
+    );
+    return body.results;
+  },
+
+  async getWebPushKey(): Promise<string> {
+    const body = await request<{ public_key: string }>("/notifications/webpush/key");
+    return body.public_key;
+  },
+
+  addPushSubscription(subscription: WebPushSubscriptionPayload): Promise<void> {
+    return request("/notifications/webpush/subscriptions", json("POST", subscription));
+  },
+
+  removePushSubscription(endpoint: string): Promise<void> {
+    return request("/notifications/webpush/unsubscribe", json("POST", { endpoint }));
+  },
+
+  listApiTokens(): Promise<ApiToken[]> {
+    return request("/tokens");
+  },
+
+  createApiToken(name: string, expiresInDays: number | null): Promise<ApiTokenCreated> {
+    return request("/tokens", json("POST", { name, expires_in_days: expiresInDays }));
+  },
+
+  deleteApiToken(id: number): Promise<void> {
+    return request(`/tokens/${id}`, { method: "DELETE" });
+  },
+
+  getInboxStatus(): Promise<InboxStatus> {
+    return request("/ingest/inbox");
+  },
+
+  scanInboxNow(): Promise<void> {
+    return request("/ingest/inbox/scan", { method: "POST" });
   },
 };

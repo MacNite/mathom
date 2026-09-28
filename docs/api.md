@@ -53,6 +53,34 @@ does not resurrect it (seeding is insert-only).
 | `GET /timeline`      | Mathom counts bucketed by month                    |
 | `GET /health`        | Status, version, Ollama reachability               |
 
+## Notifications
+
+Per user (or the single local user when auth is off). See
+[notifications.md](notifications.md).
+
+| Method & path                                | Purpose                                              |
+| -------------------------------------------- | ---------------------------------------------------- |
+| `GET /notifications/settings`                | Preferences, channel URLs, `*_set` flags, device count |
+| `PUT /notifications/settings`                | Partial update; blank token/secret keeps the stored one |
+| `POST /notifications/test`                   | Send a test on every channel; per-channel results    |
+| `GET /notifications/webpush/key`             | VAPID public key for `pushManager.subscribe`         |
+| `POST /notifications/webpush/subscriptions`  | Register this device (`PushSubscription.toJSON()`)   |
+| `POST /notifications/webpush/unsubscribe`    | Forget a device by `endpoint`                        |
+
+## Automated ingest
+
+See [ingest.md](ingest.md).
+
+| Method & path                          | Purpose                                                   |
+| -------------------------------------- | --------------------------------------------------------- |
+| `GET /tokens`                          | Your API tokens (never the secret)                        |
+| `POST /tokens`                         | Create `{name, expires_in_days?}`; returns `token` once   |
+| `DELETE /tokens/{id}`                  | Revoke a token                                            |
+| `POST /ingest/audio`                   | Bearer-token multipart upload; `200` + `X-Mathom-Duplicate` on a resend |
+| `POST /ingest/audio/raw?filename=`     | Same, with the file as the raw body                       |
+| `GET /ingest/inbox`                    | Watched-folder status (admins when auth is on)            |
+| `POST /ingest/inbox/scan`              | Scan the watched folder now                               |
+
 ## Authentication (optional)
 
 Active only when `MATHOM_AUTH_ENABLED=true`; otherwise these behave as noted and

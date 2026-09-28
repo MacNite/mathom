@@ -5,12 +5,14 @@ import Layout from "./components/Layout";
 import { useAuth } from "./lib/auth";
 import { useI18n } from "./lib/i18n";
 import AuthentikSettings from "./pages/AuthentikSettings";
+import Automation from "./pages/Automation";
 import Collections from "./pages/Collections";
 import ForcePasswordChange from "./pages/ForcePasswordChange";
 import Library from "./pages/Library";
 import Login from "./pages/Login";
 import Onboarding from "./pages/Onboarding";
 import MathomDetail from "./pages/MathomDetail";
+import Notifications from "./pages/Notifications";
 import ShareTarget from "./pages/ShareTarget";
 import Speakers from "./pages/Speakers";
 import Tags from "./pages/Tags";
@@ -72,6 +74,8 @@ export default function App() {
         <Route path="tags" element={<Tags />} />
         <Route path="speakers" element={<Speakers />} />
         <Route path="timeline" element={<Timeline />} />
+        <Route path="notifications" element={<Notifications />} />
+        <Route path="automation" element={<Automation />} />
         <Route path="register" element={<Register />} />
         <Route path="admin/users" element={guard(isAdmin, <Users />)} />
         <Route

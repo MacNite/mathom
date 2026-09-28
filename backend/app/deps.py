@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.db import get_db
 from app.models import ROLE_ADMIN, User
-from app.services import auth
+from app.services import api_tokens, auth
 
 
 def _cookie_token(request: Request) -> str | None:
@@ -108,3 +108,29 @@ def owns(obj: object, user: User | None) -> bool:
     if user is None:
         return True
     return getattr(obj, "user_id", None) == user.id
+
+
+def ingest_user(request: Request, db: Session = Depends(get_db)) -> User | None:
+    """The principal behind an ``Authorization: Bearer mth_…`` API token.
+
+    Always required, even with auth disabled, so automation endpoints are
+    never open. Returns ``None`` in single-user mode and the token's (active)
+    owner otherwise; anything else is a 401.
+    """
+    scheme, _, value = request.headers.get("authorization", "").partition(" ")
+    challenge = {"WWW-Authenticate": "Bearer"}
+    if scheme.lower() != "bearer" or not value.strip():
+        raise HTTPException(status_code=401, detail="An API token is required", headers=challenge)
+    token = api_tokens.authenticate(db, value.strip())
+    if token is None:
+        raise HTTPException(
+            status_code=401, detail="Invalid or expired API token", headers=challenge
+        )
+    if not get_settings().auth_enabled:
+        return None
+    user = db.get(User, token.user_id) if token.user_id is not None else None
+    if user is None or not user.is_active:
+        raise HTTPException(
+            status_code=401, detail="Invalid or expired API token", headers=challenge
+        )
+    return user

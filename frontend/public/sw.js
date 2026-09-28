@@ -1,7 +1,8 @@
 // Mathom service worker.
 //
-// Its one job is to make Mathom installable and to receive files from the
-// Android Share Sheet via the Web Share Target API. When another app (e.g.
+// It makes Mathom installable, receives files from the Android Share Sheet
+// via the Web Share Target API, and shows "your Mathom is ready" push
+// notifications. When another app (e.g.
 // WhatsApp) shares a recording or document to Mathom, the browser POSTs a multipart
 // form to `/share-target`. A page cannot read that POST directly, so the
 // service worker intercepts it, stashes the shared file in the Cache Storage,
@@ -95,3 +96,54 @@ async function handleShareTarget(request) {
     return shareRedirect('/share-target?shared=error');
   }
 }
+
+// ── Push notifications ───────────────────────────────────────────────────────
+// The backend sends an encrypted Web Push message when a recording finishes.
+// The browser decrypts it; we only display it and open the Mathom on tap.
+
+self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (error) {
+    data = { body: event.data ? event.data.text() : '' };
+  }
+  const title = data.title || 'Mathom';
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: data.body || '',
+      icon: '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
+      tag: data.tag || 'mathom',
+      data: { url: data.url || '/' },
+    }),
+  );
+});
+
+// Only ever navigate within our own origin, whatever the payload says.
+function sameOriginUrl(value) {
+  try {
+    const url = new URL(value || '/', self.location.origin);
+    return url.origin === self.location.origin ? url.href : self.location.origin + '/';
+  } catch (error) {
+    return self.location.origin + '/';
+  }
+}
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const target = sameOriginUrl(event.notification.data && event.notification.data.url);
+  event.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      for (const client of windows) {
+        if ('focus' in client && new URL(client.url).origin === self.location.origin) {
+          await client.focus();
+          if ('navigate' in client) await client.navigate(target);
+          return;
+        }
+      }
+      await self.clients.openWindow(target);
+    })(),
+  );
+});

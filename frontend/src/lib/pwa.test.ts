@@ -128,3 +128,38 @@ describe('clearSharedAudio', () => {
     expect(cache.delete).toHaveBeenCalledWith('/__shared-audio');
   });
 });
+
+describe('web push helpers', () => {
+  it('decodes a base64url VAPID key', async () => {
+    const { urlBase64ToUint8Array } = await import('./pwa');
+    // "BP8" → 0x04 0xff (padding restored, URL alphabet mapped back).
+    expect(Array.from(urlBase64ToUint8Array('BP8'))).toEqual([0x04, 0xff]);
+    expect(Array.from(urlBase64ToUint8Array('-_8'))).toEqual([0xfb, 0xff]);
+  });
+
+  it('reports an insecure context before anything else', async () => {
+    const { pushSupport } = await import('./pwa');
+    vi.stubGlobal('isSecureContext', false);
+    expect(pushSupport()).toBe('insecure');
+  });
+
+  it('asks iOS users to install the app first', async () => {
+    const { pushSupport } = await import('./pwa');
+    vi.stubGlobal('isSecureContext', true);
+    const agent = vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone)');
+    expect(pushSupport()).toBe('ios-needs-install');
+    agent.mockRestore();
+  });
+
+  it('serialises a subscription for the backend', async () => {
+    const { subscriptionPayload } = await import('./pwa');
+    const subscription = {
+      endpoint: 'https://fcm.googleapis.com/fcm/send/x',
+      toJSON: () => ({ endpoint: 'ignored', keys: { p256dh: 'pk', auth: 'au' } }),
+    } as unknown as PushSubscription;
+    expect(subscriptionPayload(subscription)).toEqual({
+      endpoint: 'https://fcm.googleapis.com/fcm/send/x',
+      keys: { p256dh: 'pk', auth: 'au' },
+    });
+  });
+});

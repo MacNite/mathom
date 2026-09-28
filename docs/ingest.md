@@ -36,9 +36,27 @@ audio/video files (the same extension allowlist as uploads).
   that date.
 - A full processing queue (`MAX_QUEUED_JOBS`) just defers the rest to a later
   scan, so a large backfill trickles in instead of failing.
-- With sign-in enabled (`AUTH_ENABLED=true`) every import belongs to
-  `INBOX_OWNER_EMAIL`. If that is unset or unknown, the inbox pauses and the
-  reason is shown on the **Automation** page and logged once.
+- **Who owns an import** depends on sign-in:
+  - *Sign-in off* (single user): everything in the folder, at any depth, is
+    yours.
+  - *Sign-in on* (`AUTH_ENABLED=true`): every user has a **folder name**, and
+    `/inbox/<folder name>/…` belongs to them. It is filled in from the display
+    name (`Alice Baker` → `alice-baker`), unique, and editable under
+    **📥 Automation → Your inbox folder**.
+
+    ```
+    /inbox/
+      alice-baker/            ← Alice's phone syncs here
+        WhatsApp Voice Notes/…
+      bob/                    ← Bob's
+    ```
+
+    Files lying directly in `/inbox`, and folders that match no active
+    account, are left alone; admins see them listed on the Automation page.
+    Content is de-duplicated **per person**, so a voice note forwarded to both
+    Alice and Bob becomes one Mathom for each. Renaming a folder name means
+    renaming the folder on disk too; files already imported are recognised by
+    their content and not imported again.
 
 ### Setup
 
@@ -55,14 +73,13 @@ audio/video files (the same extension allowlist as uploads).
    ```dotenv
    INBOX_HOST_DIR=/mnt/tank/sync/whatsapp-voice-notes
    INBOX_DIR=/inbox
-   # only with AUTH_ENABLED=true:
-   INBOX_OWNER_EMAIL=you@example.com
    ```
 
    The container runs as UID 1000, which needs **read** access to the folder.
-2. `docker compose up -d`. The **📥 Automation** page shows the folder, last
-   scan, how many files were imported, and any problem. **Scan now** skips the
-   wait.
+2. `docker compose up -d`. The **📥 Automation** page shows each user their
+   folder (with sign-in on) and admins the overall status: every user's folder,
+   last scan, imports, unmatched folders and loose files. **Scan now** skips
+   the wait.
 
 ### Android: WhatsApp voice notes via Syncthing
 
@@ -73,9 +90,11 @@ audio/video files (the same extension allowlist as uploads).
    (older WhatsApp versions: `WhatsApp/Media/WhatsApp Voice Notes`), with
    **Folder type: Send Only**.
 3. Share it with the NAS and accept it there into the host folder you mounted
-   (on the NAS side use **Receive Only**).
-4. Optional: add `WhatsApp Audio` too (forwarded audio files), as a second
-   folder under the same inbox, e.g. `/inbox/audio`.
+   (on the NAS side use **Receive Only**). With sign-in on, accept it into
+   **your** subfolder, e.g. `<inbox host folder>/alice-baker/Voice Notes`. Each
+   family member pairs their own phone into their own subfolder.
+4. Optional: add `WhatsApp Audio` too (forwarded audio files) as a second
+   Syncthing folder next to it, e.g. `…/alice-baker/Audio`.
 
 New voice notes — sent **and** received — now appear in Mathom a minute or two
 after they reach the phone. Remember this collects other people's voice
@@ -91,7 +110,9 @@ can only upload — it can't read or change anything else, and it doesn't work o
 the rest of the API. Revoke it any time.
 
 Tokens are required even when sign-in is disabled, so the automation endpoints
-are never open. With sign-in enabled, uploads belong to the token's owner.
+are never open. With sign-in enabled, **each user creates their own tokens**
+and uploads land in the archive of the token's owner — so several people can
+each automate their own phone with no shared configuration.
 
 ### Endpoints
 
@@ -151,6 +172,10 @@ to Files* or share it straight to the shortcut.
 
 ## Security notes
 
+- Anyone who can write into a user's subfolder can file recordings into that
+  user's archive. With Syncthing each phone only reaches its own folder; don't
+  hand out one shared drop folder if users shouldn't be able to fill each
+  other's archives.
 - Tokens are 256-bit random secrets (`mth_` prefix, easy to spot in logs or
   secret scanners); the database holds only SHA-256 digests. Last use is shown
   on the Automation page.

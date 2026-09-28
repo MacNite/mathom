@@ -406,12 +406,37 @@ class ApiTokenCreated(ApiTokenOut):
     token: str
 
 
+class InboxFolderInfo(BaseModel):
+    name: str
+    user: str
+    present: bool
+    imported: int = 0
+
+
 class InboxStatusOut(BaseModel):
     enabled: bool
     path: str = ""
-    owner_email: str = ""
+    per_user: bool = False
     running: bool = False
     last_scan_at: datetime | None = None
     last_error: str = ""
     imported_total: int = 0
     waiting: int = 0
+    folders: list[InboxFolderInfo] = []
+    unmatched_folders: list[str] = []
+    loose_files: int = 0
+
+
+class MyInboxFolderOut(BaseModel):
+    enabled: bool
+    # True with sign-in enabled: the user fills their own named subfolder.
+    per_user: bool = False
+    inbox_name: str | None = None
+    # Path inside the container, e.g. /inbox/alice.
+    path: str = ""
+    present: bool = False
+    imported: int = 0
+
+
+class MyInboxFolderUpdate(BaseModel):
+    inbox_name: str = Field(min_length=1, max_length=48)

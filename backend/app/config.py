@@ -115,11 +115,10 @@ class Settings(BaseSettings):
     # --- Watched folder ("inbox") ----------------------------------------------
     # A directory (inside the container) Mathom scans for new recordings, e.g. a
     # Syncthing copy of WhatsApp's "Voice Notes" folder. Empty = off. Files are
-    # never modified; a ledger remembers what was already imported.
+    # never modified; a ledger remembers what was already imported. With sign-in
+    # enabled, each user fills their own subfolder (<inbox_dir>/<inbox name>).
     inbox_dir: str = ""
     inbox_poll_seconds: float = Field(default=30, ge=5, le=3600)
-    # Required when auth is enabled: the account that owns imported recordings.
-    inbox_owner_email: str = ""
     inbox_template: str = "general-summary"
     inbox_template_language: str = Field(default="en", pattern=r"^(en|de|es)$")
 

@@ -16,7 +16,9 @@ adheres to [Semantic Versioning](https://semver.org/).
   server-wide. See [docs/notifications.md](docs/notifications.md).
 - **Watched folder.** Set `INBOX_DIR` and mount a folder (e.g. a Syncthing copy
   of WhatsApp's Voice Notes) and new recordings import on their own, once each,
-  without the source files ever being modified.
+  without the source files ever being modified. With sign-in enabled, each user
+  has their own subfolder (`/inbox/<folder name>/`), named from their display
+  name and editable on the Automation page.
 - **API tokens and an ingest API.** Per-user, revocable tokens authorize
   `POST /api/ingest/audio` (multipart) and `/api/ingest/audio/raw` (raw body)
   for Tasker, iOS Shortcuts and scripts, with speaker, tags, recorded time and

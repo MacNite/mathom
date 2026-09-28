@@ -98,6 +98,7 @@ def init_db(engine: Engine | None = None) -> None:
         _migrate_tag_fields(conn)
         _migrate_local_auth(conn)
         _migrate_ingest_fields(conn)
+        _migrate_inbox_names(conn)
 
 
 def refresh_fts(session: Session, mathom_id: int) -> None:
@@ -363,3 +364,17 @@ def _migrate_ingest_fields(conn: object) -> None:
         "ON mathoms(user_id, external_source, external_id)",
     ):
         conn.execute(text(statement))  # type: ignore[attr-defined]
+
+
+def _migrate_inbox_names(conn: object) -> None:
+    """Per-user watched-folder names and per-owner ledger rows."""
+    if "inbox_name" not in _column_names(conn, "users"):
+        conn.execute(text("ALTER TABLE users ADD COLUMN inbox_name VARCHAR(64)"))  # type: ignore[attr-defined]
+    conn.execute(  # type: ignore[attr-defined]
+        text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_inbox_name ON users(inbox_name)")
+    )
+    if "user_id" not in _column_names(conn, "ingest_ledger"):
+        conn.execute(text("ALTER TABLE ingest_ledger ADD COLUMN user_id INTEGER"))  # type: ignore[attr-defined]
+    conn.execute(  # type: ignore[attr-defined]
+        text("CREATE INDEX IF NOT EXISTS ix_ingest_ledger_user_id ON ingest_ledger(user_id)")
+    )

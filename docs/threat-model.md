@@ -66,6 +66,10 @@ Internet / LAN ──▶ mathom container ──▶ (nginx ──▶ FastAPI bac
   default). OAuth uses a checked `state` token, and the login is bound to the
   ID token's `nonce`.
 - **Secret disclosure.** The Authentik client secret is write-only over the API.
+- **Automation tokens.** API tokens are 256-bit random, stored only as
+  SHA-256 digests, scoped to uploads (they don't authenticate the rest of the
+  API), revocable, and optionally expiring. Ingest shares upload validation.
+  The watched folder is read-only to Mathom and skips symlinks.
 - **Notification channels** (opt-in per user). Web Push payloads are
   end-to-end encrypted (RFC 8291) and subscriptions may only point at known
   push-service hosts. ntfy/webhook URLs can't target loopback, link-local

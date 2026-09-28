@@ -52,7 +52,8 @@ by supervisord) plus the stock Ollama image.
 ### Data model (SQLite)
 
 Core tables: `mathoms`, `summaries`, `chat_messages`, `tags`, `mathom_tags`,
-`collections`, `collection_mathoms`, `prompt_templates`. Schema lives in
+`collections`, `collection_mathoms`, `prompt_templates` (plus `api_tokens`,
+`ingest_ledger`, `push_subscriptions` for automation and notifications). Schema lives in
 `backend/app/models.py` (SQLAlchemy). Migrations are handled by
 `Base.metadata.create_all` plus additive migration helpers in
 `backend/app/db.py` — keep schema changes additive; destructive changes

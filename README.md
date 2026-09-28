@@ -153,6 +153,7 @@ provider only when enabled and does not download models or send audio anywhere.
 - [Authentication & user management (Authentik SSO)](docs/authentication.md)
 - [PWA & Android Share Target](docs/pwa.md)
 - [Notifications (Web Push, ntfy, webhook)](docs/notifications.md)
+- [Automated ingest: watched folder & API tokens](docs/ingest.md)
 - [Automated audio collection (exploration)](docs/automated-ingest.md)
 - [API overview](docs/api.md)
 - [Release notes: v0.1.0](docs/releases/v0.1.0.md)

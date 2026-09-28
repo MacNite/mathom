@@ -85,6 +85,7 @@ def test_ignores_hidden_temp_and_foreign_files(client: TestClient, inbox) -> Non
     _write(inbox.folder, "download.opus.part")
     _write(inbox.folder, "photo.jpg")
     _write(inbox.folder, "notes.pdf")
+    (inbox.folder / "link.opus").symlink_to(Path(__file__))
     inbox.scan_once()
     result = inbox.scan_once()
     assert (result.imported, result.skipped, result.waiting) == (0, 0, 0)

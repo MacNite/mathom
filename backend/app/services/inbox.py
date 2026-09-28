@@ -92,6 +92,10 @@ def iter_candidates(root: Path) -> Iterator[_Candidate]:
             relative = path.relative_to(root)
             if _is_ignored(relative) or path.suffix.lower() not in allowed:
                 continue
+            # Symlinks are skipped so a link in a synced folder can never make
+            # Mathom read a file from elsewhere in the container.
+            if path.is_symlink():
+                continue
             try:
                 stat = path.stat()
             except OSError:

@@ -15,15 +15,17 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from datetime import datetime
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request, Response, UploadFile
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
 from app.db import get_db
-from app.deps import ingest_user, require_admin_when_auth_enabled
+from app.deps import current_user, ingest_user, require_admin_when_auth_enabled
 from app.models import Mathom, User
-from app.schemas import InboxStatusOut, MathomOut
-from app.services import ingest
+from app.schemas import InboxStatusOut, MathomOut, MyInboxFolderOut, MyInboxFolderUpdate
+from app.services import inbox_names, ingest
 from app.services.inbox import inbox_watcher
 
 router = APIRouter(prefix="/ingest", tags=["ingest"])
@@ -151,7 +153,7 @@ def inbox_status(
     _admin: User | None = Depends(require_admin_when_auth_enabled),
 ) -> InboxStatusOut:
     status = inbox_watcher.status(db)
-    return InboxStatusOut(**status.__dict__)
+    return InboxStatusOut.model_validate(status, from_attributes=True)
 
 
 @router.post("/inbox/scan", status_code=202)
@@ -160,3 +162,43 @@ def inbox_scan_now(_admin: User | None = Depends(require_admin_when_auth_enabled
         raise HTTPException(status_code=409, detail="The watched folder is not enabled")
     inbox_watcher.wake()
     return Response(status_code=202)
+
+
+def _my_folder(db: Session, user: User | None) -> MyInboxFolderOut:
+    settings = get_settings()
+    if settings.inbox_path is None:
+        return MyInboxFolderOut(enabled=False)
+    path, imported = inbox_watcher.folder_for(db, user)
+    per_user = settings.auth_enabled and user is not None
+    return MyInboxFolderOut(
+        enabled=True,
+        per_user=per_user,
+        inbox_name=user.inbox_name if per_user and user is not None else None,
+        path=path,
+        present=Path(path).is_dir(),
+        imported=imported,
+    )
+
+
+@router.get("/inbox/me", response_model=MyInboxFolderOut)
+def my_inbox_folder(
+    db: Session = Depends(get_db), user: User | None = Depends(current_user)
+) -> MyInboxFolderOut:
+    return _my_folder(db, user)
+
+
+@router.put("/inbox/me", response_model=MyInboxFolderOut)
+def rename_my_inbox_folder(
+    payload: MyInboxFolderUpdate,
+    db: Session = Depends(get_db),
+    user: User | None = Depends(current_user),
+) -> MyInboxFolderOut:
+    if user is None:
+        raise HTTPException(
+            status_code=409, detail="Without sign-in the whole watched folder is yours"
+        )
+    try:
+        inbox_names.rename(db, user, payload.inbox_name)
+    except inbox_names.InboxNameError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return _my_folder(db, user)

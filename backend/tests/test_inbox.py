@@ -138,27 +138,95 @@ def test_status_when_disabled(client: TestClient) -> None:
     assert client.get("/api/ingest/inbox").json()["enabled"] is False
 
 
-def test_auth_mode_requires_an_owner(auth_harness, monkeypatch, tmp_path: Path) -> None:  # type: ignore[no-untyped-def]
+@pytest.fixture()
+def family(auth_harness, monkeypatch, tmp_path: Path):  # type: ignore[no-untyped-def]
+    """Two signed-in users sharing one watched folder."""
     from app.config import get_settings
     from app.services.inbox import InboxWatcher
 
-    alice = auth_harness.client()
-    auth_harness.login(alice, {"sub": "a", "email": "alice@example.com", "name": "Alice"})
+    alice, bob = auth_harness.client(), auth_harness.client()
+    auth_harness.login(alice, {"sub": "a", "email": "alice@example.com", "name": "Alice Baker"})
+    auth_harness.login(bob, {"sub": "b", "email": "bob@example.com", "name": "Bob"})
     folder = tmp_path / "inbox"
-    _write(folder, "PTT-20260722-WA0004.opus")
+    folder.mkdir()
     monkeypatch.setenv("MATHOM_INBOX_DIR", str(folder))
     get_settings.cache_clear()
-
     watcher = InboxWatcher()
-    watcher.scan_once()
-    assert "MATHOM_INBOX_OWNER_EMAIL" in watcher.last_error
+    # The status endpoints report on the app's watcher; use this one instead.
+    monkeypatch.setattr("app.routers.ingest.inbox_watcher", watcher)
+    return alice, bob, folder, watcher
 
-    monkeypatch.setenv("MATHOM_INBOX_OWNER_EMAIL", "Alice@Example.com")
-    get_settings.cache_clear()
+
+def test_each_user_fills_their_own_folder(family) -> None:  # type: ignore[no-untyped-def]
+    alice, bob, folder, watcher = family
+    assert alice.get("/api/ingest/inbox/me").json()["inbox_name"] == "alice-baker"
+    assert bob.get("/api/ingest/inbox/me").json()["path"] == str(folder / "bob")
+
+    _write(folder, "alice-baker/Voice Notes/PTT-20260722-WA0004.opus", b"hello")
+    # The same forwarded note reaches both: each gets their own Mathom.
+    _write(folder, "bob/PTT-20260722-WA0009.opus", b"hello")
+    watcher.scan_once()
+    assert watcher.scan_once().imported == 2
+
+    [alices] = alice.get("/api/mathoms").json()
+    [bobs] = bob.get("/api/mathoms").json()
+    assert alices["id"] != bobs["id"]
+    assert bob.get(f"/api/mathoms/{alices['id']}").status_code == 404
+    assert alice.get("/api/ingest/inbox/me").json()["imported"] == 1
+
+
+def test_loose_files_and_unknown_folders_are_left_alone(family) -> None:  # type: ignore[no-untyped-def]
+    alice, _, folder, watcher = family
+    _write(folder, "loose.opus")
+    _write(folder, "carol/PTT-20260722-WA0004.opus")
+    watcher.scan_once()
+    assert watcher.scan_once().imported == 0
+
+    status = alice.get("/api/ingest/inbox").json()  # Alice signed in first: admin
+    assert status["per_user"] is True
+    assert status["unmatched_folders"] == ["carol"]
+    assert status["loose_files"] == 1
+    assert {f["name"]: f["present"] for f in status["folders"]} == {
+        "alice-baker": False,
+        "bob": False,
+    }
+
+
+def test_renaming_the_folder(family) -> None:  # type: ignore[no-untyped-def]
+    alice, bob, folder, watcher = family
+    renamed = alice.put("/api/ingest/inbox/me", json={"inbox_name": "Alice"}).json()
+    assert renamed["inbox_name"] == "alice"
+    assert renamed["path"] == str(folder / "alice")
+
+    taken = bob.put("/api/ingest/inbox/me", json={"inbox_name": "alice"})
+    assert taken.status_code == 422
+    for bad in ("../etc", ".hidden", "a/b", "x" * 49):
+        assert bob.put("/api/ingest/inbox/me", json={"inbox_name": bad}).status_code == 422
+
+    _write(folder, "alice/PTT-20260722-WA0004.opus")
     watcher.scan_once()
     assert watcher.scan_once().imported == 1
-    assert watcher.last_error == ""
     assert len(alice.get("/api/mathoms").json()) == 1
+
+
+def test_non_admins_cannot_see_the_admin_status(family) -> None:  # type: ignore[no-untyped-def]
+    _, bob, _, _ = family
+    assert bob.get("/api/ingest/inbox").status_code == 403
+
+
+def test_single_user_mode_has_no_folder_names(client: TestClient, inbox) -> None:  # type: ignore[no-untyped-def]
+    mine = client.get("/api/ingest/inbox/me").json()
+    assert mine["per_user"] is False
+    assert mine["path"] == str(inbox.folder)
+    assert client.put("/api/ingest/inbox/me", json={"inbox_name": "me"}).status_code == 409
+
+
+def test_slugs() -> None:
+    from app.services.inbox_names import slugify
+
+    assert slugify("Jürgen Müller-Lüdenscheidt") == "jurgen-muller-ludenscheidt"
+    assert slugify("  ..Rosie!! ") == "rosie"
+    assert slugify("张伟") == ""
 
 
 # --- recorded_at detection ------------------------------------------------------------

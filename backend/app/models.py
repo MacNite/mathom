@@ -262,6 +262,11 @@ class User(Base):
         DateTime(timezone=True), default=utcnow, onupdate=utcnow
     )
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # This user's subfolder of the watched folder (``<inbox>/<inbox_name>/``).
+    # Lowercase, unique, assigned from the display name and editable.
+    inbox_name: Mapped[str | None] = mapped_column(
+        String(64), unique=True, index=True, nullable=True
+    )
 
     sessions: Mapped[list[AuthSession]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
@@ -388,6 +393,9 @@ class IngestLedgerEntry(Base):
     path: Mapped[str] = mapped_column(String(1000), unique=True, index=True)
     size: Mapped[int] = mapped_column(Integer, default=0)
     mtime_ns: Mapped[int] = mapped_column(Integer, default=0)
+    # Whose archive the file was filed into (NULL in single-user mode). Content
+    # is de-duplicated per owner, so two people can each import the same note.
+    user_id: Mapped[int | None] = mapped_column(Integer, index=True, nullable=True)
     # "imported", "duplicate" (same content already archived), or why the file
     # was skipped ("too_large", "invalid").
     outcome: Mapped[str] = mapped_column(String(30), default="imported")

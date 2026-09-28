@@ -80,6 +80,8 @@ See [ingest.md](ingest.md).
 | `POST /ingest/audio/raw?filename=`     | Same, with the file as the raw body                       |
 | `GET /ingest/inbox`                    | Watched-folder status (admins when auth is on)            |
 | `POST /ingest/inbox/scan`              | Scan the watched folder now                               |
+| `GET /ingest/inbox/me`                 | Your folder name, path, and import count                  |
+| `PUT /ingest/inbox/me`                 | Rename your folder `{inbox_name}` (sign-in mode)          |
 
 ## Authentication (optional)
 

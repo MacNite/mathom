@@ -64,9 +64,9 @@ services:
       MATHOM_NOTIFICATIONS_ENABLED: ${NOTIFICATIONS_ENABLED:-true}
       MATHOM_WEB_PUSH_CONTACT: ${WEB_PUSH_CONTACT:-}
       # Optional watched folder: the path *inside* the container (e.g. /inbox)
-      # of the folder mounted below. Empty = off. See docs/ingest.md.
+      # of the folder mounted below. Empty = off. With sign-in enabled each
+      # user fills their own subfolder (/inbox/<folder name>). See docs/ingest.md.
       MATHOM_INBOX_DIR: ${INBOX_DIR:-}
-      MATHOM_INBOX_OWNER_EMAIL: ${INBOX_OWNER_EMAIL:-}
       MATHOM_INBOX_POLL_SECONDS: ${INBOX_POLL_SECONDS:-30}
       MATHOM_INBOX_TEMPLATE: ${INBOX_TEMPLATE:-general-summary}
       MATHOM_INBOX_TEMPLATE_LANGUAGE: ${INBOX_TEMPLATE_LANGUAGE:-en}

@@ -152,6 +152,7 @@ provider only when enabled and does not download models or send audio anywhere.
 - [Threat model](docs/threat-model.md)
 - [Authentication & user management (Authentik SSO)](docs/authentication.md)
 - [PWA & Android Share Target](docs/pwa.md)
+- [Automated audio collection (exploration)](docs/automated-ingest.md)
 - [API overview](docs/api.md)
 - [Release notes: v0.1.0](docs/releases/v0.1.0.md)
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) ·

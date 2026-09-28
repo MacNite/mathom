@@ -384,11 +384,12 @@ class IngestLedgerEntry(Base):
     __tablename__ = "ingest_ledger"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    sha256: Mapped[str] = mapped_column(String(64), unique=True, index=True)
-    path: Mapped[str] = mapped_column(String(1000), index=True)
+    sha256: Mapped[str] = mapped_column(String(64), index=True)
+    path: Mapped[str] = mapped_column(String(1000), unique=True, index=True)
     size: Mapped[int] = mapped_column(Integer, default=0)
     mtime_ns: Mapped[int] = mapped_column(Integer, default=0)
-    # "imported", or why the file was skipped ("too_large", "invalid").
+    # "imported", "duplicate" (same content already archived), or why the file
+    # was skipped ("too_large", "invalid").
     outcome: Mapped[str] = mapped_column(String(30), default="imported")
     mathom_id: Mapped[int | None] = mapped_column(
         ForeignKey("mathoms.id", ondelete="SET NULL"), nullable=True

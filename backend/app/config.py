@@ -112,6 +112,21 @@ class Settings(BaseSettings):
         "push.apple.com,notify.windows.com"
     )
 
+    # --- Watched folder ("inbox") ----------------------------------------------
+    # A directory (inside the container) Mathom scans for new recordings, e.g. a
+    # Syncthing copy of WhatsApp's "Voice Notes" folder. Empty = off. Files are
+    # never modified; a ledger remembers what was already imported.
+    inbox_dir: str = ""
+    inbox_poll_seconds: float = Field(default=30, ge=5, le=3600)
+    # Required when auth is enabled: the account that owns imported recordings.
+    inbox_owner_email: str = ""
+    inbox_template: str = "general-summary"
+    inbox_template_language: str = Field(default="en", pattern=r"^(en|de|es)$")
+
+    @property
+    def inbox_path(self) -> Path | None:
+        return Path(self.inbox_dir) if self.inbox_dir.strip() else None
+
     @property
     def web_push_allowed_host_list(self) -> list[str]:
         return [h.strip().lower() for h in self.web_push_allowed_hosts.split(",") if h.strip()]

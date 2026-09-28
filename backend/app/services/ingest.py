@@ -8,14 +8,16 @@ only differ in how the bytes arrive and who the owner is.
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import logging
 import uuid
-from collections.abc import Iterable
+from collections.abc import AsyncIterator, Iterable
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
+from fastapi import UploadFile
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -24,8 +26,11 @@ from app.models import Mathom, Tag
 from app.services import jobs, transcription, vision
 from app.services.source_app import detect_source_app
 from app.services.tags import DEFAULT_TAG_COLOR, apply_source_tag
+from app.services.worker import worker
 
 logger = logging.getLogger("mathom.ingest")
+
+CHUNK_SIZE = 1024 * 1024
 
 UNTITLED = "Untitled Mathom"
 _VIDEO_EXTENSIONS = {".mp4", ".webm"}
@@ -194,6 +199,13 @@ def _apply_tags(session: Session, mathom: Mathom, names: Iterable[str]) -> None:
             mathom.tags.append(tag)
 
 
+def _utc(value: datetime | None) -> datetime | None:
+    # SQLite keeps no offset, so store UTC; a naive value is taken as UTC.
+    if value is None:
+        return None
+    return value.astimezone(UTC) if value.tzinfo else value.replace(tzinfo=UTC)
+
+
 def _title(request: IngestRequest) -> str:
     if request.title.strip():
         return request.title.strip()[:300]
@@ -231,7 +243,7 @@ def create_mathom(
         status="pending",
         template_language=request.template_language,
         user_id=request.user_id,
-        recorded_at=request.recorded_at,
+        recorded_at=_utc(request.recorded_at),
         content_sha256=sha256,
         external_source=request.external_source,
         external_id=request.external_id,
@@ -246,3 +258,61 @@ def create_mathom(
     # Durable: the job survives a restart and is picked up by the worker.
     jobs.enqueue(session, mathom.id, request.template_slug)
     return mathom
+
+
+async def upload_chunks(file: UploadFile) -> AsyncIterator[bytes]:
+    while chunk := await file.read(CHUNK_SIZE):
+        yield chunk
+
+
+async def ingest_stream(
+    session: Session,
+    chunks: AsyncIterator[bytes],
+    request: IngestRequest,
+    *,
+    dedupe: bool = False,
+) -> tuple[Mathom, bool]:
+    """Store, validate and queue a streamed file. Returns ``(mathom, created)``.
+
+    With ``dedupe`` an existing Mathom of the same owner for the same message
+    (external ID) or the same bytes (SHA-256) is returned instead of creating
+    a second one. Raises ``IngestError``.
+    """
+    if dedupe:
+        existing = find_duplicate(
+            session,
+            request.user_id,
+            external_source=request.external_source,
+            external_id=request.external_id,
+        )
+        if existing is not None:
+            return existing, False
+    ensure_capacity(session)
+    extension = check_extension(request.original_name)
+    target = new_audio_path(extension)
+    digest = hashlib.sha256()
+    written = 0
+    limit = max_bytes()
+    try:
+        with target.open("wb") as out:
+            async for chunk in chunks:
+                written += len(chunk)
+                if written > limit:
+                    raise too_large()
+                digest.update(chunk)
+                out.write(chunk)
+        if written == 0:
+            raise IngestError(400, "Uploaded file is empty")
+    except BaseException:
+        target.unlink(missing_ok=True)
+        raise
+    sha256 = digest.hexdigest()
+    if dedupe:
+        existing = find_duplicate(session, request.user_id, sha256=sha256)
+        if existing is not None:
+            target.unlink(missing_ok=True)
+            return existing, False
+    media = await asyncio.to_thread(validate_media, target, extension, request.analyze_visuals)
+    mathom = create_mathom(session, target, request, media, sha256)
+    worker.notify()
+    return mathom, True

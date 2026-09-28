@@ -383,3 +383,35 @@ class PushSubscriptionIn(BaseModel):
 
 class PushUnsubscribeIn(BaseModel):
     endpoint: str = Field(min_length=10, max_length=2000)
+
+
+class ApiTokenOut(ORMModel):
+    id: int
+    name: str
+    prefix: str
+    scope: str
+    created_at: datetime
+    expires_at: datetime | None = None
+    last_used_at: datetime | None = None
+
+
+class ApiTokenCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    # None = never expires.
+    expires_in_days: int | None = Field(default=None, ge=1, le=3650)
+
+
+class ApiTokenCreated(ApiTokenOut):
+    # The plaintext token; returned exactly once.
+    token: str
+
+
+class InboxStatusOut(BaseModel):
+    enabled: bool
+    path: str = ""
+    owner_email: str = ""
+    running: bool = False
+    last_scan_at: datetime | None = None
+    last_error: str = ""
+    imported_total: int = 0
+    waiting: int = 0

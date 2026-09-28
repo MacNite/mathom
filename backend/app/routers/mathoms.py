@@ -1,7 +1,5 @@
 """Mathom CRUD, upload, audio streaming, summaries, tags, and exports."""
 
-import asyncio
-import hashlib
 import json
 import uuid
 from collections.abc import Iterator
@@ -199,61 +197,10 @@ async def upload_mathom(
         analyze_visuals=analyze_visuals,
     )
     try:
-        mathom, _ = await ingest_upload(db, file, request)
+        mathom, _ = await ingest.ingest_stream(db, ingest.upload_chunks(file), request)
     except ingest.IngestError as exc:
         raise HTTPException(exc.status, exc.detail, headers=exc.headers) from exc
     return mathom
-
-
-async def ingest_upload(
-    db: Session,
-    file: UploadFile,
-    request: ingest.IngestRequest,
-    *,
-    dedupe: bool = False,
-) -> tuple[Mathom, bool]:
-    """Store, validate and queue an uploaded file. Returns ``(mathom, created)``;
-    with ``dedupe`` an existing Mathom for the same message/file is returned
-    instead of creating a second one. Raises ``ingest.IngestError``."""
-    if dedupe:
-        existing = ingest.find_duplicate(
-            db,
-            request.user_id,
-            external_source=request.external_source,
-            external_id=request.external_id,
-        )
-        if existing is not None:
-            return existing, False
-    ingest.ensure_capacity(db)
-    extension = ingest.check_extension(request.original_name)
-    target = ingest.new_audio_path(extension)
-    digest = hashlib.sha256()
-    written = 0
-    try:
-        with target.open("wb") as out:
-            while chunk := await file.read(CHUNK_SIZE):
-                written += len(chunk)
-                if written > ingest.max_bytes():
-                    raise ingest.too_large()
-                digest.update(chunk)
-                out.write(chunk)
-        if written == 0:
-            raise ingest.IngestError(400, "Uploaded file is empty")
-    except BaseException:
-        target.unlink(missing_ok=True)
-        raise
-    sha256 = digest.hexdigest()
-    if dedupe:
-        existing = ingest.find_duplicate(db, request.user_id, sha256=sha256)
-        if existing is not None:
-            target.unlink(missing_ok=True)
-            return existing, False
-    media = await asyncio.to_thread(
-        ingest.validate_media, target, extension, request.analyze_visuals
-    )
-    mathom = ingest.create_mathom(db, target, request, media, sha256)
-    worker.notify()
-    return mathom, True
 
 
 @router.post("/text", response_model=MathomOut, status_code=201)

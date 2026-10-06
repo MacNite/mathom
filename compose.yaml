@@ -74,6 +74,7 @@ services:
       MATHOM_AUTHENTIK_CLIENT_ID: ${AUTHENTIK_CLIENT_ID:-}
       MATHOM_AUTHENTIK_CLIENT_SECRET: ${AUTHENTIK_CLIENT_SECRET:-}
       MATHOM_AUTHENTIK_SCOPES: ${AUTHENTIK_SCOPES:-openid profile email}
+      MATHOM_LOCAL_LOGIN_ENABLED: ${LOCAL_LOGIN_ENABLED:-}
     volumes:
       - mathom-data:/data
       - whisper-models:/models

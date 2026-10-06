@@ -12,12 +12,16 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.db import get_db
-from app.deps import optional_user
+from app.deps import optional_user, require_local_login
 from app.models import User
 from app.schemas import AuthStatus, LocalLogin, OnboardingCreate, UserOut
 from app.services import auth, oidc
 from app.services.passwords import hash_password, validate_password
-from app.services.settings_store import AuthentikConfig, get_authentik_config
+from app.services.settings_store import (
+    AuthentikConfig,
+    get_authentik_config,
+    local_login_enabled,
+)
 
 logger = logging.getLogger("mathom.auth")
 
@@ -65,7 +69,7 @@ def auth_status(
         authenticated=user is not None,
         onboarding_required=settings.auth_enabled
         and int(db.execute(select(func.count(User.id))).scalar_one()) == 0,
-        local_login_available=settings.auth_enabled,
+        local_login_available=local_login_enabled(db),
         authentik_configured=config.configured,
         login_url="/api/auth/login/authentik",
         user=UserOut.model_validate(user) if user is not None else None,
@@ -147,6 +151,7 @@ def onboarding(
 def login_local(payload: LocalLogin, db: Session = Depends(get_db)) -> Response:
     if not get_settings().auth_enabled:
         raise HTTPException(404, "User management is disabled")
+    require_local_login(db)
     user = auth.local_login(db, payload.email, payload.password)
     if user is None:
         raise HTTPException(401, "Invalid email or password")
@@ -196,7 +201,14 @@ def callback(
         logger.warning("Authentik callback rejected: nonce mismatch")
         return RedirectResponse("/?auth_error=invalid_nonce", status_code=302)
 
-    user = auth.upsert_user_from_claims(db, claims, auto_create=config.auto_create_users)
+    try:
+        user = auth.upsert_user_from_claims(db, claims, auto_create=config.auto_create_users)
+    except IntegrityError:
+        # A local account already uses this email, and Authentik did not mark the
+        # email verified, so it was not linked. Never merge on unverified email.
+        db.rollback()
+        logger.warning("Authentik sign-in rejected: email belongs to an unlinked account")
+        return RedirectResponse("/?auth_error=email_conflict", status_code=302)
     if user is None:
         return RedirectResponse("/?auth_error=not_provisioned", status_code=302)
     if not user.is_active:

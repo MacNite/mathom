@@ -14,6 +14,7 @@ export default function AuthentikSettings() {
   const [publicBaseUrl, setPublicBaseUrl] = useState("");
   const [autoCreate, setAutoCreate] = useState(true);
   const [verifySsl, setVerifySsl] = useState(true);
+  const [localLogin, setLocalLogin] = useState(true);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -28,6 +29,7 @@ export default function AuthentikSettings() {
     setPublicBaseUrl(data.public_base_url);
     setAutoCreate(data.auto_create_users);
     setVerifySsl(data.verify_ssl);
+    setLocalLogin(data.local_login_enabled ?? true);
     setClientSecret("");
   };
 
@@ -50,6 +52,10 @@ export default function AuthentikSettings() {
         public_base_url: publicBaseUrl,
         auto_create_users: autoCreate,
         verify_ssl: verifySsl,
+        // Pinned by MATHOM_LOCAL_LOGIN_ENABLED: leave it to the environment.
+        ...(settings?.local_login_locked
+          ? {}
+          : { local_login_enabled: localLogin }),
       });
       apply(updated);
       setMessage(t("settings.saved"));
@@ -249,6 +255,23 @@ export default function AuthentikSettings() {
           />
           {t("settings.verifySsl")}
         </label>
+
+        <div>
+          <label className="flex items-center gap-2 text-sm text-ink-700">
+            <input
+              type="checkbox"
+              checked={localLogin}
+              disabled={settings?.local_login_locked}
+              onChange={(event) => setLocalLogin(event.target.checked)}
+            />
+            {t("settings.localLogin")}
+          </label>
+          <span className="mt-1 block text-xs text-ink-400">
+            {settings?.local_login_locked
+              ? t("settings.localLoginLocked")
+              : t("settings.localLoginHint")}
+          </span>
+        </div>
 
         <div className="flex items-center gap-3">
           <button type="submit" className="btn-primary" disabled={saving}>

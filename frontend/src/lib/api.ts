@@ -375,7 +375,7 @@ export const api = {
   createUser(data: {
     name: string;
     email: string;
-    password: string;
+    password?: string;
     must_change_password: boolean;
   }): Promise<User> {
     return request("/users", json("POST", data));

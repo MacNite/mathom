@@ -11,6 +11,17 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const passwordLogin = status.local_login_available !== false;
+  // The Authentik callback reports failures as ?auth_error=<code>.
+  const authError = new URLSearchParams(window.location.search).get(
+    'auth_error',
+  );
+  const authErrorKey = `auth.error.${authError}`;
+  const authErrorText = !authError
+    ? ''
+    : t(authErrorKey) === authErrorKey
+      ? t('auth.error.generic')
+      : t(authErrorKey);
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -34,40 +45,57 @@ export default function Login() {
         </div>
         <h1 className="font-display text-3xl text-hearth-600">Mathom</h1>
         <h2 className="mt-4 font-display text-xl">{t('login.title')}</h2>
-        <form onSubmit={submit} className="mt-5 space-y-3 text-left">
-          <label className="block text-sm text-ink-700">
-            {t('login.email')}
-            <input
-              required
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              autoComplete="email"
-              className="input mt-1"
-            />
-          </label>
-          <label className="block text-sm text-ink-700">
-            {t('login.password')}
-            <input
-              required
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              autoComplete="current-password"
-              className="input mt-1"
-            />
-          </label>
-          {error && (
-            <p className="text-sm text-red-700" role="alert">
-              {error}
-            </p>
-          )}
-          <button disabled={busy} className="btn-primary w-full justify-center disabled:opacity-60">
-            {busy ? t('login.signingIn') : t('login.signIn')}
-          </button>
-        </form>
+        {authErrorText && (
+          <p className="mt-3 text-sm text-red-700" role="alert">
+            {authErrorText}
+          </p>
+        )}
+        {passwordLogin && (
+          <form onSubmit={submit} className="mt-5 space-y-3 text-left">
+            <label className="block text-sm text-ink-700">
+              {t('login.email')}
+              <input
+                required
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                autoComplete="email"
+                className="input mt-1"
+              />
+            </label>
+            <label className="block text-sm text-ink-700">
+              {t('login.password')}
+              <input
+                required
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="current-password"
+                className="input mt-1"
+              />
+            </label>
+            {error && (
+              <p className="text-sm text-red-700" role="alert">
+                {error}
+              </p>
+            )}
+            <button
+              disabled={busy}
+              className="btn-primary w-full justify-center disabled:opacity-60"
+            >
+              {busy ? t('login.signingIn') : t('login.signIn')}
+            </button>
+          </form>
+        )}
         {status.authentik_configured && (
-          <button onClick={login} className="btn-ghost mt-3 w-full justify-center">
+          <button
+            onClick={login}
+            className={
+              passwordLogin
+                ? 'btn-ghost mt-3 w-full justify-center'
+                : 'btn-primary mt-5 w-full justify-center'
+            }
+          >
             {t('login.authentik')}
           </button>
         )}

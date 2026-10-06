@@ -52,7 +52,11 @@ export default function App() {
 
   // A signed-in account flagged for a mandatory password change is held at the
   // change screen until it sets a new password — no other route renders.
-  if (status.auth_enabled && user?.must_change_password) {
+  if (
+    status.auth_enabled &&
+    status.local_login_available !== false &&
+    user?.must_change_password
+  ) {
     return <ForcePasswordChange />;
   }
 

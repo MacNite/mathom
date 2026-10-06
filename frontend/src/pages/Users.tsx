@@ -11,7 +11,10 @@ const ROLES: Role[] = ["admin", "user"];
 export default function Users() {
   const { t } = useI18n();
   const toast = useToast();
-  const { user: me, isAdmin, refresh: refreshAuth } = useAuth();
+  const { user: me, isAdmin, status, refresh: refreshAuth } = useAuth();
+  // With password sign-in off, accounts are pre-created without a password
+  // and link to Authentik on first sign-in; invitations are paused.
+  const passwordLogin = status.local_login_available !== false;
   const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -63,7 +66,7 @@ export default function Users() {
 
   const createUser = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (password !== confirmation) {
+    if (passwordLogin && password !== confirmation) {
       setError(t("users.passwordMismatch"));
       return;
     }
@@ -71,12 +74,11 @@ export default function Users() {
     setCreating(true);
     setError("");
     try {
-      await api.createUser({
-        name,
-        email,
-        password,
-        must_change_password: mustChangePassword,
-      });
+      await api.createUser(
+        passwordLogin
+          ? { name, email, password, must_change_password: mustChangePassword }
+          : { name, email, must_change_password: false },
+      );
       setName("");
       setEmail("");
       setPassword("");
@@ -164,7 +166,10 @@ export default function Users() {
           <h3 className="font-display text-lg text-ink-900">
             {t("users.add")}
           </h3>
-          <p className="mt-1 text-sm text-ink-500">{t("users.addHint")}</p>
+          <p className="mt-1 text-sm text-ink-500">
+            {t("users.addHint")}
+            {!passwordLogin && ` ${t("users.addSsoHint")}`}
+          </p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block text-sm text-ink-700">
@@ -187,39 +192,45 @@ export default function Users() {
               autoComplete="email"
             />
           </label>
-          <label className="block text-sm text-ink-700">
-            {t("users.password")}
-            <input
-              required
-              minLength={12}
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="input mt-1"
-              autoComplete="new-password"
-            />
-          </label>
-          <label className="block text-sm text-ink-700">
-            {t("users.confirmPassword")}
-            <input
-              required
-              minLength={12}
-              type="password"
-              value={confirmation}
-              onChange={(event) => setConfirmation(event.target.value)}
-              className="input mt-1"
-              autoComplete="new-password"
-            />
-          </label>
+          {passwordLogin && (
+            <>
+              <label className="block text-sm text-ink-700">
+                {t("users.password")}
+                <input
+                  required
+                  minLength={12}
+                  type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  className="input mt-1"
+                  autoComplete="new-password"
+                />
+              </label>
+              <label className="block text-sm text-ink-700">
+                {t("users.confirmPassword")}
+                <input
+                  required
+                  minLength={12}
+                  type="password"
+                  value={confirmation}
+                  onChange={(event) => setConfirmation(event.target.value)}
+                  className="input mt-1"
+                  autoComplete="new-password"
+                />
+              </label>
+            </>
+          )}
         </div>
-        <label className="flex items-center gap-2 text-sm text-ink-700">
-          <input
-            type="checkbox"
-            checked={mustChangePassword}
-            onChange={(event) => setMustChangePassword(event.target.checked)}
-          />
-          {t("users.mustChangePassword")}
-        </label>
+        {passwordLogin && (
+          <label className="flex items-center gap-2 text-sm text-ink-700">
+            <input
+              type="checkbox"
+              checked={mustChangePassword}
+              onChange={(event) => setMustChangePassword(event.target.checked)}
+            />
+            {t("users.mustChangePassword")}
+          </label>
+        )}
         <div>
           <button
             disabled={creating}
@@ -236,33 +247,41 @@ export default function Users() {
             Invite user by email
           </h3>
           <p className="mt-1 text-sm text-ink-500">
-            The recipient sets their own password. Configure SMTP under Sign-in
-            first.
+            {passwordLogin
+              ? "The recipient sets their own password. Configure SMTP under Sign-in first."
+              : t("users.invitesPaused")}
           </p>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block text-sm text-ink-700">
-            Username
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="input mt-1"
-            />
-          </label>
-          <label className="block text-sm text-ink-700">
-            Email
-            <input
-              required
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="input mt-1"
-            />
-          </label>
-        </div>
-        <button disabled={inviting} className="btn-primary disabled:opacity-60">
-          {inviting ? "Sending…" : "Send invitation"}
-        </button>
+        {passwordLogin && (
+          <>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block text-sm text-ink-700">
+                Username
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="input mt-1"
+                />
+              </label>
+              <label className="block text-sm text-ink-700">
+                Email
+                <input
+                  required
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="input mt-1"
+                />
+              </label>
+            </div>
+            <button
+              disabled={inviting}
+              className="btn-primary disabled:opacity-60"
+            >
+              {inviting ? "Sending…" : "Send invitation"}
+            </button>
+          </>
+        )}
         {invitations.length > 0 && (
           <div className="space-y-2 border-t border-parchment-200 pt-3">
             {invitations.map((entry) => {

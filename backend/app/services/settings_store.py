@@ -18,7 +18,7 @@ from app.models import AppSetting
 
 _PREFIX = "authentik."
 _STR_KEYS = ("issuer", "client_id", "client_secret", "scopes", "public_base_url")
-_BOOL_KEYS = ("auto_create_users", "verify_ssl")
+_BOOL_KEYS = ("auto_create_users", "verify_ssl", "local_login_enabled")
 
 
 @dataclass
@@ -30,6 +30,9 @@ class AuthentikConfig:
     public_base_url: str
     auto_create_users: bool
     verify_ssl: bool
+    # The admin's "Allow password sign-in" switch. Use ``local_login_enabled()``
+    # for the effective value: the environment can override it.
+    local_login_enabled: bool = True
 
     @property
     def configured(self) -> bool:
@@ -64,7 +67,23 @@ def get_authentik_config(session: Session) -> AuthentikConfig:
         public_base_url=s("public_base_url", settings.public_base_url).rstrip("/"),
         auto_create_users=b("auto_create_users", settings.auth_auto_create_users),
         verify_ssl=b("verify_ssl", settings.oidc_verify_ssl),
+        local_login_enabled=b("local_login_enabled", True),
     )
+
+
+def local_login_override() -> bool | None:
+    """The ``MATHOM_LOCAL_LOGIN_ENABLED`` override, or None when unset."""
+    return get_settings().local_login_enabled
+
+
+def local_login_enabled(session: Session) -> bool:
+    """Whether email + password sign-in is currently allowed."""
+    if not get_settings().auth_enabled:
+        return False
+    override = local_login_override()
+    if override is not None:
+        return override
+    return get_authentik_config(session).local_login_enabled
 
 
 def _set(session: Session, key: str, value: str) -> None:

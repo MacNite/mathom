@@ -145,6 +145,8 @@ export interface AuthentikSettings {
   verify_ssl: boolean;
   configured: boolean;
   client_secret_set: boolean;
+  local_login_enabled?: boolean;
+  local_login_locked?: boolean;
 }
 
 export interface AuthentikSettingsUpdate {
@@ -155,6 +157,7 @@ export interface AuthentikSettingsUpdate {
   public_base_url?: string;
   auto_create_users?: boolean;
   verify_ssl?: boolean;
+  local_login_enabled?: boolean;
 }
 
 export interface Invitation {

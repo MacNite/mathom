@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.deps import require_admin
+from app.deps import require_admin, require_local_login
 from app.models import Invitation, User, as_aware, utcnow
 from app.schemas import InvitationAccept, InvitationCreate, InvitationOut, UserOut
 from app.services.invitations import new_token, send_invitation, token_hash
@@ -34,6 +34,8 @@ def list_invitations(
 def create_invitation(
     payload: InvitationCreate, db: Session = Depends(get_db), _: User = Depends(require_admin)
 ) -> Invitation:
+    # Invitations exist to set a password, so they pause with password sign-in.
+    require_local_login(db)
     email = normalize(payload.email)
     if db.scalar(select(User.id).where(User.email == email)) is not None:
         raise HTTPException(409, "Email address is already in use")
@@ -105,6 +107,8 @@ def delete_invitation(
 
 @router.post("/accept", response_model=UserOut)
 def accept_invitation(payload: InvitationAccept, db: Session = Depends(get_db)) -> User:
+    # Pending links are left untouched and work again once password sign-in returns.
+    require_local_login(db)
     invite = db.scalar(select(Invitation).where(Invitation.token_hash == token_hash(payload.token)))
     if (
         not invite

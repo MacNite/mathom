@@ -8,6 +8,13 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Authentik-only sign-in.** Admins can turn off password sign-in under
+  *Admin / Sign-in*; the login page then offers only Authentik, invitations
+  pause, and users are pre-created without a password. Guarded against
+  lockout (Authentik must be configured and the admin already linked), with
+  `LOCAL_LOGIN_ENABLED=true` as a break-glass override. Stored passwords are
+  kept. See [docs/authentication.md](docs/authentication.md#authentik-only-sign-in).
+
 - **"Your Mathom is ready" notifications.** A new *Notifications* page lets each
   person get told when a recording is ready (or couldn't be finished), with a
   link to it. Channels: Web Push to the installed PWA (RFC 8291-encrypted,
@@ -25,6 +32,13 @@ adheres to [Semantic Versioning](https://semver.org/).
   idempotent message IDs. See [docs/ingest.md](docs/ingest.md).
 - **Recorded time.** Mathoms carry `recorded_at` (from the sender or the
   filename); the Timeline files recordings by it when known.
+
+### Fixed
+
+- Signing in with Authentik no longer fails with an internal server error when
+  a local account already uses the same, unverified email; the login page
+  explains what happened instead. Authentik sign-in errors are now shown on the
+  login page.
 
 ## [0.1.0] — 2026-08-11
 

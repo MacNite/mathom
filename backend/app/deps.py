@@ -18,6 +18,7 @@ from app.config import get_settings
 from app.db import get_db
 from app.models import ROLE_ADMIN, User
 from app.services import api_tokens, auth
+from app.services.settings_store import local_login_enabled
 
 
 def _cookie_token(request: Request) -> str | None:
@@ -134,3 +135,9 @@ def ingest_user(request: Request, db: Session = Depends(get_db)) -> User | None:
             status_code=401, detail="Invalid or expired API token", headers=challenge
         )
     return user
+
+
+def require_local_login(db: Session = Depends(get_db)) -> None:
+    """Refuse password-based endpoints while password sign-in is turned off."""
+    if get_settings().auth_enabled and not local_login_enabled(db):
+        raise HTTPException(403, "Password sign-in is turned off; continue with Authentik")

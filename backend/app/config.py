@@ -3,7 +3,7 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -87,6 +87,11 @@ class Settings(BaseSettings):
     # Email address that becomes the Owner on first sign-in. When empty the very
     # first user to sign in is made Owner.
     auth_owner_email: str = ""
+    # Break-glass override for password (email + password) sign-in. Unset: the
+    # admin's "Allow password sign-in" switch decides. true: always on — the
+    # recovery path when Authentik is unreachable. false: always off, and the
+    # switch is locked.
+    local_login_enabled: bool | None = None
 
     # SMTP defaults for invitation delivery. Values can be overridden by an admin.
     smtp_host: str = ""
@@ -121,6 +126,12 @@ class Settings(BaseSettings):
     inbox_poll_seconds: float = Field(default=30, ge=5, le=3600)
     inbox_template: str = "general-summary"
     inbox_template_language: str = Field(default="en", pattern=r"^(en|de|es)$")
+
+    @field_validator("local_login_enabled", mode="before")
+    @classmethod
+    def _blank_is_unset(cls, value: object) -> object:
+        # Compose passes an empty string for an unset ${VAR:-}; treat it as unset.
+        return None if isinstance(value, str) and not value.strip() else value
 
     @property
     def inbox_path(self) -> Path | None:

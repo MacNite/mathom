@@ -301,6 +301,8 @@ const translations: Record<Lang, Record<string, string>> = {
     'auth.error.not_provisioned': 'Your account is not set up for Mathom yet.',
     'auth.error.account_disabled': 'Your account has been disabled.',
     'auth.error.generic': 'Sign-in failed. Please try again.',
+    'auth.error.email_conflict':
+      'A Mathom account already uses this email, but Authentik did not confirm it as verified, so the two were not linked. Ask an administrator for help.',
 
     'users.title': 'Users',
     'users.subtitle': 'Who can use this mathom.',
@@ -311,6 +313,10 @@ const translations: Record<Lang, Record<string, string>> = {
     'users.password': 'Password',
     'users.confirmPassword': 'Confirm password',
     'users.mustChangePassword': 'Require a password change on first sign-in',
+    'users.addSsoHint':
+      'Password sign-in is off: the account links to Authentik on first sign-in by verified email.',
+    'users.invitesPaused':
+      'Invitations are paused while password sign-in is off. Add the user above instead.',
     'users.create': 'Create user',
     'users.creating': 'Creating user…',
     'users.passwordMismatch': 'Passwords do not match',
@@ -345,6 +351,11 @@ const translations: Record<Lang, Record<string, string>> = {
     'settings.publicBaseUrlHint': 'Where users reach Mathom, e.g. https://mathom.example.com',
     'settings.autoCreate': 'Create accounts automatically on first sign-in',
     'settings.verifySsl': 'Verify the Authentik TLS certificate',
+    'settings.localLogin': 'Allow password sign-in',
+    'settings.localLoginHint':
+      'Turn off to sign in only with Authentik. Sign in with Authentik once first; stored passwords are kept and work again if you turn this back on.',
+    'settings.localLoginLocked':
+      'Set by MATHOM_LOCAL_LOGIN_ENABLED on the server, so it cannot be changed here.',
     'settings.save': 'Save',
     'settings.saved': 'Saved.',
     'settings.saveFailed': 'Saving failed',
@@ -693,6 +704,8 @@ const translations: Record<Lang, Record<string, string>> = {
     'auth.error.not_provisioned': 'Dein Konto ist noch nicht für Mathom eingerichtet.',
     'auth.error.account_disabled': 'Dein Konto wurde deaktiviert.',
     'auth.error.generic': 'Anmeldung fehlgeschlagen. Bitte versuche es erneut.',
+    'auth.error.email_conflict':
+      'Ein Mathom-Konto nutzt diese E-Mail bereits, aber Authentik hat sie nicht als bestätigt gemeldet, daher wurden die Konten nicht verknüpft. Bitte wende dich an einen Administrator.',
 
     'users.title': 'Benutzer',
     'users.subtitle': 'Wer dieses mathom nutzen darf.',
@@ -703,6 +716,10 @@ const translations: Record<Lang, Record<string, string>> = {
     'users.password': 'Passwort',
     'users.confirmPassword': 'Passwort bestätigen',
     'users.mustChangePassword': 'Passwortänderung bei der ersten Anmeldung verlangen',
+    'users.addSsoHint':
+      'Die Passwort-Anmeldung ist aus: Das Konto wird bei der ersten Anmeldung über die bestätigte E-Mail mit Authentik verknüpft.',
+    'users.invitesPaused':
+      'Einladungen sind pausiert, solange die Passwort-Anmeldung aus ist. Lege den Benutzer stattdessen oben an.',
     'users.create': 'Benutzer erstellen',
     'users.creating': 'Benutzer wird erstellt…',
     'users.passwordMismatch': 'Passwörter stimmen nicht überein',
@@ -735,6 +752,11 @@ const translations: Record<Lang, Record<string, string>> = {
     'settings.publicBaseUrl': 'Öffentliche Basis-URL',
     'settings.autoCreate': 'Konten bei der ersten Anmeldung automatisch anlegen',
     'settings.verifySsl': 'TLS-Zertifikat von Authentik prüfen',
+    'settings.localLogin': 'Anmeldung mit Passwort erlauben',
+    'settings.localLoginHint':
+      'Ausschalten, um nur noch per Authentik anzumelden. Melde dich vorher einmal mit Authentik an; gespeicherte Passwörter bleiben erhalten und gelten wieder, wenn du es erneut einschaltest.',
+    'settings.localLoginLocked':
+      'Durch MATHOM_LOCAL_LOGIN_ENABLED auf dem Server festgelegt und hier nicht änderbar.',
     'settings.save': 'Speichern',
     'settings.saved': 'Gespeichert.',
     'settings.saveFailed': 'Speichern fehlgeschlagen',
@@ -1080,6 +1102,8 @@ const translations: Record<Lang, Record<string, string>> = {
     'auth.error.not_provisioned': 'Tu cuenta aún no está configurada para Mathom.',
     'auth.error.account_disabled': 'Tu cuenta ha sido deshabilitada.',
     'auth.error.generic': 'Error al iniciar sesión. Inténtalo de nuevo.',
+    'auth.error.email_conflict':
+      'Ya existe una cuenta de Mathom con este correo, pero Authentik no lo confirmó como verificado, así que no se vincularon. Pide ayuda a un administrador.',
 
     'users.title': 'Usuarios',
     'users.subtitle': 'Quién puede usar este mathom.',
@@ -1090,6 +1114,10 @@ const translations: Record<Lang, Record<string, string>> = {
     'users.password': 'Contraseña',
     'users.confirmPassword': 'Confirmar contraseña',
     'users.mustChangePassword': 'Exigir un cambio de contraseña al iniciar sesión por primera vez',
+    'users.addSsoHint':
+      'El inicio de sesión con contraseña está desactivado: la cuenta se vincula a Authentik en el primer inicio de sesión mediante el correo verificado.',
+    'users.invitesPaused':
+      'Las invitaciones están en pausa mientras el inicio con contraseña esté desactivado. Añade el usuario arriba.',
     'users.create': 'Crear usuario',
     'users.creating': 'Creando usuario…',
     'users.passwordMismatch': 'Las contraseñas no coinciden',
@@ -1122,6 +1150,11 @@ const translations: Record<Lang, Record<string, string>> = {
     'settings.publicBaseUrl': 'URL base pública',
     'settings.autoCreate': 'Crear cuentas automáticamente en el primer acceso',
     'settings.verifySsl': 'Verificar el certificado TLS de Authentik',
+    'settings.localLogin': 'Permitir el inicio de sesión con contraseña',
+    'settings.localLoginHint':
+      'Desactívalo para iniciar sesión solo con Authentik. Inicia sesión una vez con Authentik antes; las contraseñas guardadas se conservan y vuelven a funcionar si lo reactivas.',
+    'settings.localLoginLocked':
+      'Definido por MATHOM_LOCAL_LOGIN_ENABLED en el servidor; no se puede cambiar aquí.',
     'settings.save': 'Guardar',
     'settings.saved': 'Guardado.',
     'settings.saveFailed': 'Error al guardar',

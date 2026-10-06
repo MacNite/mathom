@@ -93,20 +93,21 @@ all other endpoints are open. See [authentication.md](authentication.md).
 | `GET /auth/status`         | Whether auth is enabled/configured and the current user (public) |
 | `GET /auth/login?next=`    | Redirect to Authentik to sign in                               |
 | `GET /auth/callback`       | OAuth redirect target; sets the session cookie                 |
+| `POST /auth/login/local`   | Email + password sign-in; `403` while password sign-in is off  |
 | `POST /auth/logout`        | End the current session                                        |
-| `POST /users`              | Create a standard user *(Admin; admin role cannot be created here)* |
+| `POST /users`              | Create a standard user; `password` optional (Authentik-only account), refused while password sign-in is off *(Admin)* |
 | `GET /users`               | List users *(Admin/Owner)*                                     |
 | `PATCH /users/{id}`        | Change `role` *(Owner)* or `is_active` *(Admin for users)*     |
 | `DELETE /users/{id}`       | Remove a user *(Owner)*                                        |
 | `GET /invitations`          | List invitation status *(Admin)*                              |
-| `POST /invitations`         | Send a password-setup invitation *(Admin)*                    |
+| `POST /invitations`         | Send a password-setup invitation; `403` while password sign-in is off *(Admin)* |
 | `POST /invitations/{id}/revoke` | Revoke a pending invitation *(Admin)*                    |
 | `DELETE /invitations/{id}`  | Delete a revoked, expired, or accepted invitation *(Admin)*    |
 | `POST /invitations/accept`  | Accept invitation and set local password *(public)*            |
 | `GET /settings/smtp`        | Read SMTP setup, password masked *(Admin)*                     |
 | `PUT /settings/smtp`        | Update SMTP setup *(Admin)*                                    |
 | `GET /settings/authentik`  | Read Authentik connection settings, secret masked *(Owner)*    |
-| `PUT /settings/authentik`  | Update Authentik connection settings *(Owner)*                 |
+| `PUT /settings/authentik`  | Update Authentik connection settings and `local_login_enabled` (password sign-in switch; `409` if that would risk a lockout) *(Owner)* |
 
 When auth is enabled, all Mathom/chat/collection/search endpoints require a
 session cookie (`401` otherwise) and return only the caller's own rows.

@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.deps import authenticated_user, require_admin
+from app.deps import authenticated_user, require_admin, require_local_login
 from app.models import ROLE_ADMIN, ROLE_USER, User
 from app.schemas import PasswordChange, UserCreate, UserOut, UserUpdate
 from app.services import auth
@@ -54,16 +54,22 @@ def list_users(db: Session = Depends(get_db), _: User = Depends(require_admin)) 
 def create(
     payload: UserCreate, db: Session = Depends(get_db), _: User = Depends(require_admin)
 ) -> User:
+    if payload.password is not None:
+        require_local_login(db)
     try:
-        validate_password(payload.password)
+        password_hash = None
+        if payload.password is not None:
+            validate_password(payload.password)
+            password_hash = hash_password(payload.password)
         u = User(
             email=normalize(payload.email),
             name=payload.name.strip(),
             # Account creation is deliberately limited to standard users.
             # Administrator privileges can only be granted through user management.
             role=ROLE_USER,
-            password_hash=hash_password(payload.password),
-            must_change_password=payload.must_change_password,
+            password_hash=password_hash,
+            # Nothing to change without a password; the account signs in via Authentik.
+            must_change_password=payload.must_change_password and password_hash is not None,
         )
         db.add(u)
         db.commit()
@@ -105,6 +111,7 @@ def update_me(
 def change_password(
     payload: PasswordChange, db: Session = Depends(get_db), user: User = Depends(authenticated_user)
 ) -> User:
+    require_local_login(db)
     if user.password_hash and not verify_password(
         payload.current_password or "", user.password_hash
     ):
@@ -158,6 +165,7 @@ def reset(
     db: Session = Depends(get_db),
     _: User = Depends(require_admin),
 ) -> User:
+    require_local_login(db)
     target = get(user_id, db)
     try:
         target.password_hash = hash_password(payload.password)

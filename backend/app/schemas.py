@@ -254,7 +254,9 @@ class OnboardingCreate(BaseModel):
 class UserCreate(BaseModel):
     name: str = Field(default="", max_length=200)
     email: str = Field(min_length=3, max_length=320)
-    password: str = Field(min_length=12, max_length=256)
+    # Optional: without one the account can only sign in through Authentik,
+    # where it is linked on first sign-in by verified email.
+    password: str | None = Field(default=None, min_length=12, max_length=256)
     must_change_password: bool = True
 
 
@@ -273,6 +275,10 @@ class AuthentikSettingsOut(BaseModel):
     configured: bool
     # The secret itself is never returned; the UI only learns whether one is set.
     client_secret_set: bool
+    # Effective state of password sign-in, and whether MATHOM_LOCAL_LOGIN_ENABLED
+    # pins it (the UI switch is then read-only).
+    local_login_enabled: bool = True
+    local_login_locked: bool = False
 
 
 class AuthentikSettingsUpdate(BaseModel):
@@ -283,6 +289,7 @@ class AuthentikSettingsUpdate(BaseModel):
     public_base_url: str | None = None
     auto_create_users: bool | None = None
     verify_ssl: bool | None = None
+    local_login_enabled: bool | None = None
 
 
 class InvitationCreate(BaseModel):
